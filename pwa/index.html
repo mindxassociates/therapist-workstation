@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#315f6b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="咨询师工作台">
+  <title>心理咨询师工作台 · PWA</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    html,body,#app{width:100%;height:100%;margin:0;background:#f4f3ef}
+    body{overflow:hidden;font-family:system-ui,-apple-system,"Microsoft YaHei","PingFang SC",sans-serif}
+    #app{border:0;display:block}
+    #loading{position:fixed;inset:0;display:grid;place-items:center;color:#315f6b;background:#f4f3ef;font-size:14px}
+    #error{max-width:520px;padding:24px;line-height:1.7;color:#20252a}
+  </style>
+</head>
+<body>
+  <div id="loading">正在载入心理咨询师工作台…</div>
+  <iframe id="app" title="心理咨询师工作台" hidden></iframe>
+  <script>
+    const frame = document.getElementById('app');
+    const loading = document.getElementById('loading');
+
+    async function startApp() {
+      try {
+        const response = await fetch('../index.html', {cache: 'no-cache'});
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const html = await response.text();
+        frame.srcdoc = html;
+        frame.hidden = false;
+        loading.remove();
+      } catch (error) {
+        loading.innerHTML = '<div id="error"><b>无法载入工作台。</b><br>如果这是首次打开，请先联网载入一次；之后 PWA 可使用已缓存版本离线启动。<br><br><small>' + String(error.message || error) + '</small></div>';
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js', {scope: './'}).then(registration => {
+        registration.addEventListener('updatefound', () => {
+          const worker = registration.installing;
+          if (!worker) return;
+          worker.addEventListener('statechange', () => {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              worker.postMessage('SKIP_WAITING');
+            }
+          });
+        });
+      }).catch(console.error);
+    }
+
+    startApp();
+  </script>
+</body>
+</html>
