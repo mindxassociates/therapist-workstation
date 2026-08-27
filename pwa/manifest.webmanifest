@@ -1,0 +1,46 @@
+{
+  "id": "./",
+  "name": "心理咨询师工作台",
+  "short_name": "咨询师工作台",
+  "description": "面向中国大陆私人执业心理咨询师的本地优先个人工作台。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f4f3ef",
+  "theme_color": "#315f6b",
+  "categories": ["productivity", "medical"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "今日工作台",
+      "short_name": "今日",
+      "url": "./#today"
+    },
+    {
+      "name": "来访者",
+      "short_name": "来访者",
+      "url": "./#clients"
+    },
+    {
+      "name": "咨询记录",
+      "short_name": "记录",
+      "url": "./#sessions"
+    }
+  ]
+}
