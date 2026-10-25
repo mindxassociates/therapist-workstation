@@ -107,12 +107,64 @@ const saveBtnId = (w, prefix) => {
   w.resetAppearance();
   check('reset appearance restores brand defaults', S().settings.accent === '#4a778b' && S().settings.headerStyle === 'aurora' && S().settings.fontSize === 'normal');
 
+
+  // ---- Borrowed-from-EHR features: assessments / waitlist / event status / insights / statement / documents / default fee ----
+  const savedParsed = () => JSON.parse(w.localStorage.getItem('mx_counselor_lite_v1'));
+  w.openAssessment('', cid);
+  w.eval('assessmentAnswers[0]=3;assessmentAnswers[8]=1');
+  w.updateAssessmentTotal();
+  check('web PHQ-9 live total + risk note', w.document.getElementById('aTotal').textContent === '4' && w.document.getElementById('aRiskNote').innerHTML.includes('12356'));
+  const aBtn = w.document.querySelector('[onclick^="saveAssessment"]');
+  const aid2 = aBtn.getAttribute('onclick').match(/saveAssessment\('([^']+)'\)/)[1];
+  w.saveAssessment(aid2);
+  const asmt = savedParsed().assessments[0];
+  check('web assessment auto-scored + flagged + persisted', asmt && asmt.total === 4 && asmt.severity === '最小' && asmt.flag === true);
+
+  w.openWaitlist();
+  w.document.getElementById('wName').value = '候补网页版';
+  w.document.getElementById('wContact').value = '13900000000';
+  const wBtn = w.document.querySelector('[onclick^="saveWaitlist"]');
+  const wid2 = wBtn.getAttribute('onclick').match(/saveWaitlist\('([^']+)'\)/)[1];
+  w.saveWaitlist(wid2);
+  check('web waitlist saved', savedParsed().waitlist.length === 1);
+  w.convertToClient(wid2);
+  const conv = savedParsed();
+  check('web waitlist converted to client', conv.clients.some((c) => c.name === '候补网页版') && conv.waitlist[0].status === '已建档');
+  w.closeModal(true);
+
+  w.editEvent('', cid, '2026-11-02');
+  w.document.getElementById('eStatus').value = '爽约';
+  const eBtn = w.document.querySelector('[onclick^="saveEvent"]');
+  const eid2 = eBtn.getAttribute('onclick').match(/saveEvent\('([^']+)'\)/)[1];
+  w.saveEvent(eid2);
+  const ev = savedParsed().events[savedParsed().events.length - 1];
+  check('web event status persisted + color', ev.status === '爽约' && w.eventStatusColor(ev) === '#a13b3b');
+
+  w.go('insights');
+  check('web insights renders', w.document.getElementById('insights').innerHTML.includes('出勤情况'));
+  w.go('statement');
+  check('web statement renders', w.document.getElementById('statement').innerHTML.includes('收费对账单'));
+
+  w.openClient(cid);
+  w.document.getElementById('docName').value = '知情同意书';
+  w.addDocument(cid);
+  check('web client document added', savedParsed().clients.find((c) => c.id === cid).documents.length === 1);
+
+  w.editClient(cid);
+  w.document.getElementById('cFee').value = '600';
+  w.saveClient(cid, true);
+  check('web client default fee saved', savedParsed().clients.find((c) => c.id === cid).defaultFee === '600');
+  w.editFinanceForClient(cid);
+  await new Promise((r) => setTimeout(r, 30));
+  check('web finance prefilled from default fee', w.document.getElementById('fAmount').value === '600');
+  w.closeModal(true);
+
   // full client deletion cascades (seed a session + the task belongs to client)
   w.eval(`S.sessions.unshift({id:'s1',clientId:'${cid}',date:'2026-10-01'})`);
   w.eval(`S.tasks.find(x=>x.id==='${tid}').clientId='${cid}'`);
   w.save();
   await w.deleteClientForever(cid);
-  check('client + cascaded data deleted', S().clients.length === 0 && S().sessions.length === 0 && !S().tasks.some((x) => x.clientId === cid));
+  check('client + cascaded data deleted', !S().clients.some((x) => x.id === cid) && !S().sessions.some((x) => x.clientId === cid) && !S().tasks.some((x) => x.clientId === cid) && !S().assessments.some((x) => x.clientId === cid));
 
   dom.window.close();
   const failed = results.filter(([, ok]) => !ok);

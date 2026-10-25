@@ -271,6 +271,57 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   dom3.window.close();
 
 
+
+  // ---- Borrowed-from-EHR features: assessments / waitlist / event status / insights / statement / documents / default fee ----
+  w.showView('assessments');
+  w.openAssessment('', clientId);
+  w.document.querySelector('input[name="aq0"][value="3"]').checked = true;
+  w.document.querySelector('input[name="aq8"][value="1"]').checked = true;
+  w.updateAssessmentTotal();
+  check('PHQ-9 live total + risk note', w.document.getElementById('aTotal').textContent === '4' && w.document.getElementById('aRiskNote').innerHTML.includes('第 9 题'));
+  await w.saveAssessment(); await flush();
+  const asmt = savedState().assessments[0];
+  check('assessment auto-scored + flagged + persisted (Rust table round-trip)', asmt && asmt.total === 4 && asmt.severity === '最小' && asmt.flag === true);
+
+  w.openWaitlist();
+  w.document.getElementById('wName').value = '候补测试者';
+  w.document.getElementById('wContact').value = '13800000000';
+  w.document.getElementById('wIssues').value = '焦虑，睡眠';
+  await w.saveWaitlist(); await flush();
+  check('waitlist entry saved', savedState().waitlist.length === 1);
+  const wid = savedState().waitlist[0].id;
+  await w.convertToClient(wid); await flush();
+  const conv = savedState();
+  check('waitlist converted to client + marked 已建档', conv.clients.some((c) => c.name === '候补测试者') && conv.waitlist[0].status === '已建档');
+
+  w.openEvent('', clientId, '2026-10-27');
+  w.document.getElementById('eStatus').value = '爽约';
+  w.document.getElementById('eVideo').value = 'https://meet.example.com/abc';
+  w.saveEvent(); await flush();
+  const ev = savedState().events[savedState().events.length - 1];
+  check('event status + video link persisted', ev.status === '爽约' && ev.videoLink.includes('meet.example.com'));
+  check('no-show color coding is red', w.eventStatusColor(ev) === '#a13b3b');
+
+  w.showView('insights');
+  check('insights page renders stats', w.document.getElementById('insightsBody').innerHTML.includes('咨询场次'));
+  w.showView('statement');
+  w.initStatement();
+  w.document.getElementById('stmtClient').value = clientId;
+  w.renderStatement();
+  check('statement generated for client', w.document.getElementById('stmtBody').innerHTML.includes('收费对账单'));
+
+  w.viewClient(clientId);
+  w.document.getElementById('docName').value = '个人信息处理告知';
+  w.document.getElementById('docStatus').value = '已签署';
+  await w.addDocument(clientId); await flush();
+  check('client document record added', savedState().clients.find((c) => c.id === clientId).documents.length === 1);
+
+  w.openClient(clientId);
+  w.document.getElementById('cFee').value = '600';
+  w.saveClient(); await flush();
+  w.openFinance('', clientId);
+  check('finance prefilled from client default fee', w.document.getElementById('fAmount').value === '600');
+
   // ---- Customization: font size / density / header style / home modules / landing page ----
   w.showView('settings');
   w.document.getElementById('fontSize').value = 'large';
@@ -295,7 +346,7 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('client export + delete functions exist', typeof w.exportClientData === 'function' && typeof w.deleteClientForever === 'function');
   await w.deleteClientForever(clientId); await flush();
   const endState = savedState();
-  check('client fully deleted with cascade', endState.clients.length === 0 && endState.sessions.length === 0 && endState.finance.length === 0);
+  check('client fully deleted with cascade', !endState.clients.some((c) => c.id === clientId) && !endState.sessions.some((s) => s.clientId === clientId) && !endState.finance.some((f) => f.clientId === clientId) && !endState.assessments.some((a) => a.clientId === clientId));
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
