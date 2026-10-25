@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 chcp 65001 >nul
 echo ============================================================
-echo  Therapist Workstation - One-Click Windows Build
+echo  Therapist Workstation - One-Click Windows Build (Full + Lite editions)
 echo  (first run auto-installs missing tools; may take a while)
 echo ============================================================
 cd /d "%~dp0"
@@ -47,8 +47,9 @@ for /f %%v in ('node -p "require('./package.json').version"') do set "VER=%%v"
 
 echo [1/4] Installing JavaScript dependencies...
 call npm install || goto :fail
-echo [2/4] Checking Rust backend...
+echo [2/4] Checking Rust backend (full + lite editions)...
 call npm run check || goto :fail
+call cargo check --manifest-path src-tauri\Cargo.toml --no-default-features || goto :fail
 echo [3/4] Building Windows installer (NSIS)...
 call npm run build -- --bundles nsis || goto :fail
 
@@ -72,11 +73,32 @@ type nul > "%PDIR%\portable.mode"
 copy /y "便携版说明.md" "%PDIR%\便携版说明.md" >nul
 powershell -NoProfile -Command "Compress-Archive -Path '%PDIR%\*' -DestinationPath 'release\TherapistWorkstation-%VER%-Windows-Portable.zip' -Force" || ( echo [FAIL] Portable zip failed. & goto :fail )
 certutil -hashfile "release\TherapistWorkstation-%VER%-Windows-Portable.zip" SHA256 | findstr /v "hash CertUtil" > "release\TherapistWorkstation-%VER%-Windows-Portable.zip.sha256.txt"
+
+echo [6/7] Building Lite edition (no AI)...
+if exist "src-tauri\target\release\bundle\nsis" rmdir /s /q "src-tauri\target\release\bundle\nsis"
+call npm run build -- --bundles nsis --no-default-features --config src-tauri\tauri.lite.conf.json || goto :fail
+for %%f in ("src-tauri\target\release\bundle\nsis\*.exe") do (
+  copy /y "%%f" "release\TherapistWorkstation-%VER%-Windows-Lite-Setup.exe" >nul
+)
+if not exist "release\TherapistWorkstation-%VER%-Windows-Lite-Setup.exe" ( echo [FAIL] Lite installer not found in bundle output. & goto :fail )
+cd release
+certutil -hashfile "TherapistWorkstation-%VER%-Windows-Lite-Setup.exe" SHA256 | findstr /v "hash CertUtil" > "TherapistWorkstation-%VER%-Windows-Lite-Setup.exe.sha256.txt"
+cd ..
+
+echo [7/7] Building Lite portable package...
+set "LDIR=release\TherapistWorkstation-%VER%-Windows-Lite-Portable"
+if exist "%LDIR%" rmdir /s /q "%LDIR%"
+mkdir "%LDIR%"
+copy /y "src-tauri\target\release\therapist-workstation.exe" "%LDIR%\TherapistWorkstation-Lite.exe" >nul
+type nul > "%LDIR%\portable.mode"
+copy /y "便携版说明.md" "%LDIR%\便携版说明.md" >nul
+powershell -NoProfile -Command "Compress-Archive -Path '%LDIR%\*' -DestinationPath 'release\TherapistWorkstation-%VER%-Windows-Lite-Portable.zip' -Force" || ( echo [FAIL] Lite portable zip failed. & goto :fail )
+certutil -hashfile "release\TherapistWorkstation-%VER%-Windows-Lite-Portable.zip" SHA256 | findstr /v "hash CertUtil" > "release\TherapistWorkstation-%VER%-Windows-Lite-Portable.zip.sha256.txt"
 echo.
 echo ============================================================
 echo  BUILD SUCCESSFUL
-echo  Installer: release\TherapistWorkstation-%VER%-Windows-Setup.exe
-echo  Portable : release\TherapistWorkstation-%VER%-Windows-Portable.zip (unzip anywhere, no install)
+echo  Full edition : release\TherapistWorkstation-%VER%-Windows-Setup.exe + -Portable.zip
+echo  Lite (no AI) : release\TherapistWorkstation-%VER%-Windows-Lite-Setup.exe + -Lite-Portable.zip
 echo  Send that single .exe to the counselor. Data is NOT inside
 echo  the installer; it stays in the app data folder on their PC.
 echo ============================================================

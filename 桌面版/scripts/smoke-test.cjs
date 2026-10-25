@@ -16,10 +16,10 @@ const prefs = new Map();
 let user = null;
 const fakeInvoke = async (cmd, args = {}) => {
   switch (cmd) {
-    case 'startup_status': return { needsSetup: workspaceJson === null, authenticated: false, user: null };
+    case 'startup_status': return { needsSetup: workspaceJson === null, authenticated: false, user: null, edition: 'full' };
     case 'startup_setup': user = { id: 'u1', username: args.input.username, displayName: args.input.displayName || args.input.username, role: '管理员' }; workspaceJson = '{}'; return { ok: true, user };
     case 'startup_login': return { ok: true, user };
-    case 'auth_status': return { needsSetup: false, authenticated: !!user, user };
+    case 'auth_status': return { needsSetup: false, authenticated: !!user, user, edition: 'full' };
     case 'auth_lock': user = null; return { ok: true };
     case 'db_get_state': return workspaceJson;
     case 'db_set_state': workspaceJson = args.json; return true;
@@ -458,6 +458,11 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   await w.deleteClientForever(clientId); await flush();
   const endState = savedState();
   check('client fully deleted with cascade', !endState.clients.some((c) => c.id === clientId) && !endState.sessions.some((s) => s.clientId === clientId) && !endState.finance.some((f) => f.clientId === clientId) && !endState.assessments.some((a) => a.clientId === clientId));
+
+  // ---- Editions: full keeps AI; lite removes the AI entry and labels itself ----
+  check('full edition keeps the AI nav entry', !!w.document.querySelector('nav button[data-view="ai"]'));
+  w.applyEdition('lite');
+  check('lite edition removes AI nav and labels itself', !w.document.querySelector('nav button[data-view="ai"]') && w.document.querySelector('.nav-version').textContent.includes('精简版'));
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);

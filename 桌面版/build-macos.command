@@ -37,12 +37,13 @@ VER=$(node -p "require('./package.json').version")
 
 echo "[1/4] 安装 JavaScript 依赖…"
 npm install
-echo "[2/4] 检查 Rust 后端…"
+echo "[2/5] 检查 Rust 后端（完整版 + 精简版）…"
 npm run check
-echo "[3/4] 构建 macOS 应用（.app + .dmg）…"
+cargo check --manifest-path src-tauri/Cargo.toml --no-default-features
+echo "[3/5] 构建完整版 macOS 应用（.app + .dmg）…"
 npm run build -- --bundles app,dmg
 
-echo "[4/4] 收集成品到 ./release/ …"
+echo "[4/5] 收集完整版成品到 ./release/ …"
 mkdir -p release
 DMG=$(ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)
 APP=$(ls -d src-tauri/target/release/bundle/macos/*.app 2>/dev/null | head -1)
@@ -58,11 +59,28 @@ if [ -n "$APP" ]; then
   ditto -c -k --sequesterRsrc --keepParent "$PSTAGE" "release/TherapistWorkstation-$VER-macOS-Portable.zip"
   rm -rf "$PSTAGE"
 fi
+echo "[5/5] 构建精简版（无 AI）…"
+rm -rf src-tauri/target/release/bundle/dmg src-tauri/target/release/bundle/macos
+npm run build -- --bundles app,dmg --no-default-features --config src-tauri/tauri.lite.conf.json
+LDMG=$(ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)
+LAPP=$(ls -d src-tauri/target/release/bundle/macos/*.app 2>/dev/null | head -1)
+[ -n "$LDMG" ] && cp "$LDMG" "release/TherapistWorkstation-$VER-macOS-Lite.dmg"
+if [ -n "$LAPP" ]; then ditto -c -k --sequesterRsrc --keepParent "$LAPP" "release/TherapistWorkstation-$VER-macOS-Lite-app.zip"; fi
+if [ -n "$LAPP" ]; then
+  echo "[+] 制作精简版便携版…"
+  LPSTAGE="release/TherapistWorkstation-$VER-macOS-Lite-Portable"
+  rm -rf "$LPSTAGE"; mkdir -p "$LPSTAGE"
+  cp -R "$LAPP" "$LPSTAGE/"
+  touch "$LPSTAGE/portable.mode"
+  cp "便携版说明.md" "$LPSTAGE/便携版说明.md"
+  ditto -c -k --sequesterRsrc --keepParent "$LPSTAGE" "release/TherapistWorkstation-$VER-macOS-Lite-Portable.zip"
+  rm -rf "$LPSTAGE"
+fi
 (cd release && shasum -a 256 TherapistWorkstation-* > SHA256SUMS.txt)
 echo ""
 echo "============================================================"
 echo " 构建成功"
-echo " 成品在 release/ 文件夹：.dmg 是安装版；-Portable.zip 是便携版（解压到任意文件夹或移动硬盘即可用，数据保存在 .app 同目录）。"
+echo " 成品在 release/ 文件夹：无 -Lite 后缀的是完整版（含智能记录），带 -Lite 的是精简版（无 AI）；.dmg 是安装版，-Portable.zip 是便携版。"
 echo " 注意：本安装包未做 Apple 签名。首次打开请右键点击应用选"
 echo " 「打开」，或在 系统设置 → 隐私与安全性 中点「仍要打开」。"
 echo "============================================================"
