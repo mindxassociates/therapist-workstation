@@ -433,6 +433,21 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('clear-on-save emptied transcript + brief caches', w.eval('aiTranscriptCache') === '' && w.eval('aiBriefCache') === '');
   check('custom template persisted to prefs', w.eval("window.desktopDB.getPref('aiCustomTemplate')") === 'CUSTOM-TPL: always end with a risk line.');
 
+  // ---- V3.1.12: clinical-language corpus (zh) guidance in the generation prompt ----
+  w.document.getElementById('aiOrientation').value = '认知行为 CBT';
+  const corpusPromptCbt = w.eval("buildNotePrompt('来访者谈到工作压力与睡眠困难。')");
+  check('corpus: CBT orientation matches CBT frames (苏格拉底式提问)', corpusPromptCbt.includes('苏格拉底式提问') && corpusPromptCbt.includes('干预·按取向（CBT／认知行为）'));
+  check('corpus: prompt carries never-add-unsupported-content warning', corpusPromptCbt.includes('不得添加转写稿/小结中没有依据的干预、症状、风险判断或进展'));
+  check('corpus: prompt carries presentation + general intervention frames', corpusPromptCbt.includes('来访者本次咨询主要报告了') && corpusPromptCbt.includes('咨询师运用积极倾听、反映与肯定'));
+  check('corpus: block sits after orientation line and before custom template (custom stays highest priority)', corpusPromptCbt.indexOf('咨询师取向/风格') < corpusPromptCbt.indexOf('【临床语言语料库（中文）】') && corpusPromptCbt.indexOf('【临床语言语料库（中文）】') < corpusPromptCbt.indexOf('用户自定义模板/指令'));
+  w.document.getElementById('aiOrientation').value = '';
+  const corpusPromptDefault = w.eval("buildNotePrompt('来访者谈到工作压力与睡眠困难。')");
+  check('corpus: no orientation falls back to supportive/humanistic frames', corpusPromptDefault.includes('无条件积极关注') && corpusPromptDefault.includes('干预·按取向（支持性／人本）') && !corpusPromptDefault.includes('苏格拉底式提问'));
+  w.document.getElementById('aiOrientation').value = '创伤知情与 CBT';
+  const corpusPromptOrder = w.eval("buildNotePrompt('来访者谈到工作压力与睡眠困难。')");
+  check('corpus: modality match order puts trauma before CBT', corpusPromptOrder.includes('干预·按取向（创伤知情）') && corpusPromptOrder.includes('稳定化（着陆）技巧') && !corpusPromptOrder.includes('苏格拉底式提问'));
+  w.document.getElementById('aiOrientation').value = '';
+
   // ---- V3.1.11: recording source (in-person mic / telehealth mic + system audio) + input device picker ----
   check('recording source selector exists and defaults to mic', !!w.document.getElementById('aiRecSource') && w.document.getElementById('aiRecSource').value === 'mic');
   check('recording hint explains mic mode', (w.document.getElementById('aiRecHint') || {}).textContent.includes('线下面对面'));
