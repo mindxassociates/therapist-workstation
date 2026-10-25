@@ -37,13 +37,13 @@ VER=$(node -p "require('./package.json').version")
 
 echo "[1/4] 安装 JavaScript 依赖…"
 npm install
-echo "[2/5] 检查 Rust 后端（完整版 + 精简版）…"
+echo "[2/5] 检查 Rust 后端（主程序 + AI 组件程序）…"
 npm run check
-cargo check --manifest-path src-tauri/Cargo.toml --no-default-features
-echo "[3/5] 构建完整版 macOS 应用（.app + .dmg）…"
+cargo check --manifest-path src-tauri/helper/Cargo.toml
+echo "[3/5] 构建 macOS 应用（.app + .dmg）…"
 npm run build -- --bundles app,dmg
 
-echo "[4/5] 收集完整版成品到 ./release/ …"
+echo "[4/5] 收集成品到 ./release/ …"
 mkdir -p release
 DMG=$(ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)
 APP=$(ls -d src-tauri/target/release/bundle/macos/*.app 2>/dev/null | head -1)
@@ -59,28 +59,26 @@ if [ -n "$APP" ]; then
   ditto -c -k --sequesterRsrc --keepParent "$PSTAGE" "release/TherapistWorkstation-$VER-macOS-Portable.zip"
   rm -rf "$PSTAGE"
 fi
-echo "[5/5] 构建精简版（无 AI）…"
-rm -rf src-tauri/target/release/bundle/dmg src-tauri/target/release/bundle/macos
-npm run build -- --bundles app,dmg --no-default-features --config src-tauri/tauri.lite.conf.json
-LDMG=$(ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)
-LAPP=$(ls -d src-tauri/target/release/bundle/macos/*.app 2>/dev/null | head -1)
-[ -n "$LDMG" ] && cp "$LDMG" "release/TherapistWorkstation-$VER-macOS-Lite.dmg"
-if [ -n "$LAPP" ]; then ditto -c -k --sequesterRsrc --keepParent "$LAPP" "release/TherapistWorkstation-$VER-macOS-Lite-app.zip"; fi
-if [ -n "$LAPP" ]; then
-  echo "[+] 制作精简版便携版…"
-  LPSTAGE="release/TherapistWorkstation-$VER-macOS-Lite-Portable"
-  rm -rf "$LPSTAGE"; mkdir -p "$LPSTAGE"
-  cp -R "$LAPP" "$LPSTAGE/"
-  touch "$LPSTAGE/portable.mode"
-  cp "便携版说明.md" "$LPSTAGE/便携版说明.md"
-  ditto -c -k --sequesterRsrc --keepParent "$LPSTAGE" "release/TherapistWorkstation-$VER-macOS-Lite-Portable.zip"
-  rm -rf "$LPSTAGE"
-fi
+echo "[5/5] 构建 AI 组件包（上传到对应版本的 GitHub Release 后，安装版可一键下载启用）…"
+cargo build --release --manifest-path src-tauri/helper/Cargo.toml
+CSTAGE="release/ai-components-stage"
+rm -rf "$CSTAGE"; mkdir -p "$CSTAGE/engines/llama"
+cp "src-tauri/helper/target/release/tw-ai-helper" "$CSTAGE/tw-ai-helper"
+if [ "$(uname -m)" = "arm64" ]; then LARCH="arm64"; else LARCH="x64"; fi
+curl -sSL -o /tmp/tw-llama-mac.zip "https://github.com/ggml-org/llama.cpp/releases/download/b6123/llama-b6123-bin-macos-$LARCH.zip"
+unzip -q -o /tmp/tw-llama-mac.zip -d /tmp/tw-llama-mac
+LLDIR=$(dirname "$(find /tmp/tw-llama-mac -name llama-cli -type f | head -1)")
+cp -R "$LLDIR/"* "$CSTAGE/engines/llama/"
+printf '%s\n' "macOS 组件包说明" "" "本包包含智能记录组件程序与笔记生成引擎（llama-cli）。" "录音转写引擎（whisper-cli）在 macOS 上请通过 Homebrew 安装：brew install whisper-cpp" "或在智能记录页填写自定义引擎路径。" > "$CSTAGE/说明.txt"
+rm -rf /tmp/tw-llama-mac /tmp/tw-llama-mac.zip
+(cd "$CSTAGE" && zip -r -q "../ai-components-v$VER-macos.zip" .)
+rm -rf "$CSTAGE"
 (cd release && shasum -a 256 TherapistWorkstation-* > SHA256SUMS.txt)
 echo ""
 echo "============================================================"
 echo " 构建成功"
-echo " 成品在 release/ 文件夹：无 -Lite 后缀的是完整版（含智能记录），带 -Lite 的是精简版（无 AI）；.dmg 是安装版，-Portable.zip 是便携版。"
+echo " 成品在 release/ 文件夹：.dmg 是安装版，-Portable.zip 是便携版（便携版不含智能记录）；"
+echo " ai-components-v$VER-macos.zip 是智能记录组件包，请上传到 GitHub Release v$VER，安装版即可在应用内下载启用。"
 echo " 注意：本安装包未做 Apple 签名。首次打开请右键点击应用选"
 echo " 「打开」，或在 系统设置 → 隐私与安全性 中点「仍要打开」。"
 echo "============================================================"

@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 chcp 65001 >nul
 echo ============================================================
-echo  Therapist Workstation - One-Click Windows Build (Full + Lite editions)
+echo  Therapist Workstation - One-Click Windows Build (app + AI components)
 echo  (first run auto-installs missing tools; may take a while)
 echo ============================================================
 cd /d "%~dp0"
@@ -47,9 +47,9 @@ for /f %%v in ('node -p "require('./package.json').version"') do set "VER=%%v"
 
 echo [1/4] Installing JavaScript dependencies...
 call npm install || goto :fail
-echo [2/4] Checking Rust backend (full + lite editions)...
+echo [2/4] Checking Rust backend (app + AI helper)...
 call npm run check || goto :fail
-call cargo check --manifest-path src-tauri\Cargo.toml --no-default-features || goto :fail
+call cargo check --manifest-path src-tauri\helper\Cargo.toml || goto :fail
 echo [3/4] Building Windows installer (NSIS)...
 call npm run build -- --bundles nsis || goto :fail
 
@@ -74,31 +74,25 @@ copy /y "便携版说明.md" "%PDIR%\便携版说明.md" >nul
 powershell -NoProfile -Command "Compress-Archive -Path '%PDIR%\*' -DestinationPath 'release\TherapistWorkstation-%VER%-Windows-Portable.zip' -Force" || ( echo [FAIL] Portable zip failed. & goto :fail )
 certutil -hashfile "release\TherapistWorkstation-%VER%-Windows-Portable.zip" SHA256 | findstr /v "hash CertUtil" > "release\TherapistWorkstation-%VER%-Windows-Portable.zip.sha256.txt"
 
-echo [6/7] Building Lite edition (no AI)...
-if exist "src-tauri\target\release\bundle\nsis" rmdir /s /q "src-tauri\target\release\bundle\nsis"
-call npm run build -- --bundles nsis --no-default-features --config src-tauri\tauri.lite.conf.json || goto :fail
-for %%f in ("src-tauri\target\release\bundle\nsis\*.exe") do (
-  copy /y "%%f" "release\TherapistWorkstation-%VER%-Windows-Lite-Setup.exe" >nul
-)
-if not exist "release\TherapistWorkstation-%VER%-Windows-Lite-Setup.exe" ( echo [FAIL] Lite installer not found in bundle output. & goto :fail )
-cd release
-certutil -hashfile "TherapistWorkstation-%VER%-Windows-Lite-Setup.exe" SHA256 | findstr /v "hash CertUtil" > "TherapistWorkstation-%VER%-Windows-Lite-Setup.exe.sha256.txt"
-cd ..
-
-echo [7/7] Building Lite portable package...
-set "LDIR=release\TherapistWorkstation-%VER%-Windows-Lite-Portable"
-if exist "%LDIR%" rmdir /s /q "%LDIR%"
-mkdir "%LDIR%"
-copy /y "src-tauri\target\release\therapist-workstation.exe" "%LDIR%\TherapistWorkstation-Lite.exe" >nul
-type nul > "%LDIR%\portable.mode"
-copy /y "便携版说明.md" "%LDIR%\便携版说明.md" >nul
-powershell -NoProfile -Command "Compress-Archive -Path '%LDIR%\*' -DestinationPath 'release\TherapistWorkstation-%VER%-Windows-Lite-Portable.zip' -Force" || ( echo [FAIL] Lite portable zip failed. & goto :fail )
-certutil -hashfile "release\TherapistWorkstation-%VER%-Windows-Lite-Portable.zip" SHA256 | findstr /v "hash CertUtil" > "release\TherapistWorkstation-%VER%-Windows-Lite-Portable.zip.sha256.txt"
+echo [6/6] Building AI components package (uploaded to the GitHub Release for in-app download)...
+call cargo build --release --manifest-path src-tauri\helper\Cargo.toml || goto :fail
+set "CDIR=release\ai-components-stage"
+if exist "%CDIR%" rmdir /s /q "%CDIR%"
+mkdir "%CDIR%\engines\whisper" "%CDIR%\engines\llama"
+copy /y "src-tauri\helper\target\release\tw-ai-helper.exe" "%CDIR%\tw-ai-helper.exe" >nul
+curl.exe -sSL -o "%TEMP%\tw-whisper.zip" "https://github.com/ggml-org/whisper.cpp/releases/download/v1.7.6/whisper-bin-x64.zip" || goto :fail
+powershell -NoProfile -Command "Expand-Archive -Path '%TEMP%\tw-whisper.zip' -DestinationPath '%CDIR%\engines\whisper' -Force" || goto :fail
+curl.exe -sSL -o "%TEMP%\tw-llama.zip" "https://github.com/ggml-org/llama.cpp/releases/download/b6123/llama-b6123-bin-win-cpu-x64.zip" || goto :fail
+powershell -NoProfile -Command "Expand-Archive -Path '%TEMP%\tw-llama.zip' -DestinationPath '%CDIR%\engines\llama' -Force" || goto :fail
+powershell -NoProfile -Command "Compress-Archive -Path '%CDIR%\*' -DestinationPath 'release\ai-components-v%VER%-windows.zip' -Force" || goto :fail
+certutil -hashfile "release\ai-components-v%VER%-windows.zip" SHA256 | findstr /v "hash CertUtil" > "release\ai-components-v%VER%-windows.zip.sha256.txt"
+rmdir /s /q "%CDIR%"
 echo.
 echo ============================================================
 echo  BUILD SUCCESSFUL
-echo  Full edition : release\TherapistWorkstation-%VER%-Windows-Setup.exe + -Portable.zip
-echo  Lite (no AI) : release\TherapistWorkstation-%VER%-Windows-Lite-Setup.exe + -Lite-Portable.zip
+echo  App          : release\TherapistWorkstation-%VER%-Windows-Setup.exe + -Portable.zip
+echo  AI components: release\ai-components-v%VER%-windows.zip - upload it to the
+echo                 GitHub Release v%VER% so the app can download it in-app.
 echo  Send that single .exe to the counselor. Data is NOT inside
 echo  the installer; it stays in the app data folder on their PC.
 echo ============================================================

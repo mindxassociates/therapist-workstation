@@ -11,15 +11,16 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'u
 
 // ---- Fake Tauri backend (mirrors src-tauri/src/lib.rs command semantics) ----
 let workspaceJson = null;
+const compState = { portable: false, installed: true };
 let aiProc = null, aiDiscarded = '', lastPrompt = '';
 const prefs = new Map();
 let user = null;
 const fakeInvoke = async (cmd, args = {}) => {
   switch (cmd) {
-    case 'startup_status': return { needsSetup: workspaceJson === null, authenticated: false, user: null, edition: 'full' };
+    case 'startup_status': return { needsSetup: workspaceJson === null, authenticated: false, user: null };
     case 'startup_setup': user = { id: 'u1', username: args.input.username, displayName: args.input.displayName || args.input.username, role: '管理员' }; workspaceJson = '{}'; return { ok: true, user };
     case 'startup_login': return { ok: true, user };
-    case 'auth_status': return { needsSetup: false, authenticated: !!user, user, edition: 'full' };
+    case 'auth_status': return { needsSetup: false, authenticated: !!user, user };
     case 'auth_lock': user = null; return { ok: true };
     case 'db_get_state': return workspaceJson;
     case 'db_set_state': workspaceJson = args.json; return true;
@@ -37,6 +38,10 @@ const fakeInvoke = async (cmd, args = {}) => {
     case 'users_set_active': return { ok: true };
     case 'change_password': return { ok: true };
     case 'open_path': return true;
+    case 'ai_comp_status': return { portable: compState.portable, installed: compState.installed, version: '3.1.15', os: 'windows' };
+    case 'ai_comp_install': compState.installed = true; return true;
+    case 'ai_comp_poll': return { active: false, received: 100, total: 100, done: true, error: null };
+    case 'ai_comp_remove': compState.installed = false; return true;
     case 'ai_status': return { whisper: { found: true, path: '/fake/whisper-cli' }, llama: { found: true, path: '/fake/llama-cli' }, models: [
       { id: 'base', kind: 'whisper', label: '基础 base', file: 'ggml-base.bin', downloaded: false, bytes: 0 },
       { id: 'small', kind: 'whisper', label: '均衡 small', file: 'ggml-small.bin', downloaded: true, bytes: 487601967 },
@@ -528,18 +533,23 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   const endState = savedState();
   check('client fully deleted with cascade', !endState.clients.some((c) => c.id === clientId) && !endState.sessions.some((s) => s.clientId === clientId) && !endState.finance.some((f) => f.clientId === clientId) && !endState.assessments.some((a) => a.clientId === clientId));
 
-  // ---- Editions: full keeps AI; lite removes the AI entry and labels itself ----
-  check('full edition keeps the AI nav entry', !!w.document.querySelector('nav button[data-view="ai"]'));
-  w.applyEdition('lite');
-  check('lite edition removes AI nav and labels itself', !w.document.querySelector('nav button[data-view="ai"]') && w.document.querySelector('.nav-version').textContent.includes('精简版'));
+  // ---- AI components: installed -> full UI; missing -> enable card; portable -> no AI entry ----
+  check('components installed keeps the AI nav entry', !!w.document.querySelector('nav button[data-view="ai"]'));
+  compState.installed = false; w.eval('window.__aiComp=null'); await w.renderAi(); await tick();
+  check('components missing shows the enable/download card', w.document.getElementById('aiBody').innerHTML.includes('下载并启用智能记录组件'));
+  await w.installAiComponents(); await new Promise((r) => setTimeout(r, 1300));
+  check('component install completes into the full AI UI', w.document.getElementById('aiBody').innerHTML.includes('录音转写引擎'));
+  check('no in-app no-AI labeling anywhere', !w.document.body.textContent.includes('无 AI'));
   w.options();
-  check('lite edition keeps V3 templates in session picker', [...w.document.getElementById('sTemplate').options].some((o) => o.textContent === '督导记录'));
+  check('manual templates stay in session picker', [...w.document.getElementById('sTemplate').options].some((o) => o.textContent === '督导记录'));
   w.renderPhrasePanel();
   const liteWork = w.document.getElementById('sWork'); liteWork.value = '';
   w.eval('sessionFocusField=null');
   const liteChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('无条件积极关注'));
   liteChip.click(); await tick();
-  check('lite edition: phrase panel renders and inserts without AI', liteWork.value.includes('咨询师以无条件积极关注与温暖接纳建立咨询关系与信任。'));
+  check('phrase panel renders and inserts for manual writing', liteWork.value.includes('咨询师以无条件积极关注与温暖接纳建立咨询关系与信任。'));
+  compState.portable = true; await w.initAiGate();
+  check('portable mode removes the AI nav entry', !w.document.querySelector('nav button[data-view="ai"]'));
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
