@@ -117,7 +117,7 @@ dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);paddi
 <button data-view="settings">个性化设置</button>
 <button data-view="privacy">隐私与合规</button>
 </div></div>
-<div class="nav-developer"><div>程序开发</div><a onclick="openMindX()">Mind X社区 ↗</a><div class="nav-version">Desktop V3.1.15</div></div>
+<div class="nav-developer"><div>程序开发</div><a onclick="openMindX()">Mind X社区 ↗</a><div class="nav-version">Desktop V3.1.16</div></div>
 </nav>
 <main>
 <section id="dashboard" class="view active">
@@ -231,7 +231,7 @@ dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);paddi
 <label>文档联系方式</label><input id="docContact" placeholder="例如：电话 / 微信 / 邮箱（可空）">
 <label><input type="checkbox" id="docShowContact" style="width:auto"> 在文档页眉 / 页脚显示联系方式</label></div>
 <div class="card"><h3>账户与自动锁定</h3><p class="muted">工作台使用独立用户账户控制访问。锁定后必须重新输入当前用户密码。</p><label>无操作自动锁定</label><select id="autoLockMinutes" onchange="saveAutoLockSetting()"><option value="5">5 分钟</option><option value="10">10 分钟</option><option value="15">15 分钟（推荐）</option><option value="30">30 分钟</option><option value="60">60 分钟</option><option value="0">关闭自动锁定</option></select><div class="row" style="margin-top:12px"><button class="secondary" onclick="lockWorkspace()">立即锁定</button></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>修改登录密码</h3><label>当前密码</label><input id="currentUserPassword" type="password" autocomplete="current-password"><label>新密码</label><input id="newUserPassword" type="password" autocomplete="new-password" placeholder="至少 10 位"><label>再次输入新密码</label><input id="confirmUserPassword" type="password" autocomplete="new-password"><button class="primary" style="margin-top:12px" onclick="changeUserPassword()">修改密码</button></div></div>
-<div class="card"><h3>关于</h3><p><b>心理咨询师工作台</b></p><p class="muted">Desktop V3.1.15 · 本地加密数据存储</p><p>程序开发：<a class="action" onclick="openMindX()">Mind X社区 ↗</a></p></div>
+<div class="card"><h3>关于</h3><p><b>心理咨询师工作台</b></p><p class="muted">Desktop V3.1.16 · 本地加密数据存储</p><p>程序开发：<a class="action" onclick="openMindX()">Mind X社区 ↗</a></p></div>
 </div></section>
 
 <section id="security" class="view"><h2>安全与审计</h2><div class="two"><div class="card"><h3>当前用户</h3><p id="currentUserInfo" class="muted">—</p><p>审计日志用于记录登录、锁定以及工作台数据修改。普通界面不提供修改或删除审计日志的功能。</p><button class="secondary" onclick="verifyAuditLog()">校验审计日志完整性</button><p id="auditVerifyResult" class="muted"></p></div><div class="card"><h3>自动锁定</h3><p class="muted">达到设定的无操作时间后，工作台会遮蔽全部来访者资料并要求重新登录。</p><p id="autoLockSummary"></p><button class="secondary" onclick="lockWorkspace()">立即锁定</button></div></div><div class="card" id="userManagementCard"><div class="between row"><div><h3>用户与权限</h3><div class="muted">管理员可以创建或停用用户。咨询师账户可使用工作台，但不能管理其他用户。</div></div><button class="secondary" onclick="renderUsers()">刷新</button></div><div id="usersTable"></div><div class="two" style="margin-top:14px"><div><label>用户名</label><input id="newAccountUsername"></div><div><label>显示姓名</label><input id="newAccountDisplayName"></div><div><label>角色</label><select id="newAccountRole"><option>咨询师</option><option>管理员</option></select></div><div><label>初始密码</label><input id="newAccountPassword" type="password" placeholder="至少 10 位"></div></div><button class="primary" style="margin-top:12px" onclick="createUserAccount()">创建用户</button></div><div class="card"><div class="between row"><h3>审计日志</h3><button class="secondary" onclick="renderAuditLog()">刷新</button></div><div id="auditTable"><div class="empty">正在读取审计日志…</div></div></div></section>
@@ -655,8 +655,26 @@ function applyTemplate(id){const t=db.templates.find(x=>x.id===id);if(!t){templa
 let sessionFocusField=null;
 function trackSessionField(e){const el=e.target;if(el&&el.tagName==='TEXTAREA'&&el.closest('.session-mode-fields'))sessionFocusField=el}
 function phraseTargetField(){const active=sessionDialog.querySelector('.session-mode-fields.active');if(sessionFocusField&&active&&active.contains(sessionFocusField))return sessionFocusField;return sRecordMode.value==='simple'?sSimpleWork:sRecordMode.value==='key'?sKeyFocus:sWork}
-function renderPhrasePanel(){const groups=[['呈现',AI_CORPUS_ZH.presentation],['评估与进展',AI_CORPUS_ZH.assessmentProgress],['干预 · 通用',AI_CORPUS_ZH.interventionsGeneral],...AI_CORPUS_ZH.modalityOrder.map(id=>['干预 · '+AI_CORPUS_ZH.interventionsByModality[id].label,AI_CORPUS_ZH.interventionsByModality[id].frames]),['反应',AI_CORPUS_ZH.response],['计划',AI_CORPUS_ZH.plan]];phrasePanel.innerHTML=groups.map(([label,items])=>`<div style="margin:12px 0 2px"><div class="muted" style="font-weight:600;margin-bottom:6px">${esc(label)}</div><div class="row" style="flex-wrap:wrap;gap:6px">${items.map(t=>`<button type="button" class="secondary phrase-chip" style="padding:5px 10px;font-size:12px">${esc(t)}</button>`).join('')}</div></div>`).join('');const flat=groups.flatMap(([,items])=>items);phrasePanel.querySelectorAll('.phrase-chip').forEach((b,i)=>b.addEventListener('click',()=>insertPhrase(flat[i])))}
-function togglePhrasePanel(){const open=phrasePanel.style.display!=='none';if(!open&&!phrasePanel.innerHTML)renderPhrasePanel();phrasePanel.style.display=open?'none':'block';phraseToggle.setAttribute('aria-expanded',String(!open))}
+function renderPhrasePanel(){
+aiLoadPhrasePrefs();
+const favs=aiFavPhrasesCache||[],customs=aiCustomPhrasesCache||[];
+const chipTexts=[],starTexts=[],delTexts=[];
+const chipHtml=(t,del)=>{chipTexts.push(t);starTexts.push(t);const ci=chipTexts.length-1,si=starTexts.length-1;const isFav=favs.includes(t);let dh='';if(del){delTexts.push(t);dh=`<button type="button" class="secondary phrase-del" data-di="${delTexts.length-1}" title="删除这条自定义句式" style="padding:5px 8px;font-size:12px">×</button>`}return `<span style="display:inline-flex;gap:2px"><button type="button" class="secondary phrase-chip" data-ci="${ci}" style="padding:5px 10px;font-size:12px">${esc(t)}</button><button type="button" class="secondary phrase-star" data-si="${si}" title="收藏到「★ 我的常用」" style="padding:5px 8px;font-size:12px;${isFav?'color:#e8a13a;font-weight:700':''}">${isFav?'★':'☆'}</button>${dh}</span>`};
+const groupHtml=(label,items,del)=>`<div style="margin:12px 0 2px"><div class="muted" style="font-weight:600;margin-bottom:6px">${esc(label)}</div><div class="row" style="flex-wrap:wrap;gap:6px">${items.map(t=>chipHtml(t,del)).join('')}</div></div>`;
+let html=`<div style="margin:12px 0 2px"><div class="muted" style="font-weight:600;margin-bottom:6px">★ 我的常用</div>`;
+if(favs.length||customs.length)html+=`<div class="row" style="flex-wrap:wrap;gap:6px">${favs.map(t=>chipHtml(t,false)).join('')}${customs.map(t=>chipHtml(t,true)).join('')}</div>`;
+else html+='<div class="muted">点击任意句式右侧的 ☆ 即可收藏到这里，也可以添加你自己的常用句式。</div>';
+html+=`<div class="row" style="margin-top:8px;gap:6px"><input id="myPhraseInput" placeholder="输入你自己的常用句式，点「添加」保存到我的常用" style="flex:1;min-width:220px"><button type="button" class="secondary" id="myPhraseAdd">添加</button></div></div>`;
+const groups=[['呈现',AI_CORPUS_ZH.presentation],['评估与进展',AI_CORPUS_ZH.assessmentProgress],['干预 · 通用',AI_CORPUS_ZH.interventionsGeneral],...AI_CORPUS_ZH.modalityOrder.map(id=>['干预 · '+AI_CORPUS_ZH.interventionsByModality[id].label,AI_CORPUS_ZH.interventionsByModality[id].frames]),['反应',AI_CORPUS_ZH.response],['计划',AI_CORPUS_ZH.plan],...AI_CORPUS_ZH.problemOrder.map(id=>['问题句式：'+AI_CORPUS_ZH.problems[id].label,AI_CORPUS_ZH.problems[id].frames])];
+html+=groups.map(([label,items])=>groupHtml(label,items,false)).join('');
+phrasePanel.innerHTML=html;
+phrasePanel.querySelectorAll('.phrase-chip').forEach(b=>b.addEventListener('click',()=>insertPhrase(chipTexts[Number(b.dataset.ci)])));
+phrasePanel.querySelectorAll('.phrase-star').forEach(b=>b.addEventListener('click',()=>aiToggleFav(starTexts[Number(b.dataset.si)])));
+phrasePanel.querySelectorAll('.phrase-del').forEach(b=>b.addEventListener('click',()=>aiRemoveCustomPhrase(delTexts[Number(b.dataset.di)])));
+const addBtn=phrasePanel.querySelector('#myPhraseAdd'),inp=phrasePanel.querySelector('#myPhraseInput');
+if(addBtn&&inp){addBtn.addEventListener('click',()=>{if(aiAddCustomPhrase(inp.value))inp.value=''});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(aiAddCustomPhrase(inp.value))inp.value=''}})}
+}
+function togglePhrasePanel(){const open=phrasePanel.style.display!=='none';if(!open)renderPhrasePanel();phrasePanel.style.display=open?'none':'block';phraseToggle.setAttribute('aria-expanded',String(!open))}
 function insertPhrase(text){const el=phraseTargetField();if(!el||!text)return;const start=typeof el.selectionStart==='number'?el.selectionStart:el.value.length,end=typeof el.selectionEnd==='number'?el.selectionEnd:start;el.value=el.value.slice(0,start)+text+el.value.slice(end);sessionFocusField=el;el.focus();const slot=text.indexOf('〔'),close=slot>=0?text.indexOf('〕',slot):-1;if(slot>=0)el.setSelectionRange(start+slot,close>=0?start+close+1:start+slot+1);else el.setSelectionRange(start+text.length,start+text.length);el.dispatchEvent(new Event('input',{bubbles:true}))}
 function updateSessionMode(){const m=sRecordMode.value;detailedFields.classList.toggle('active',m==='detailed');simpleFields.classList.toggle('active',m==='simple');keyFields.classList.toggle('active',m==='key')}
 function copyPreviousSession(){
@@ -895,7 +913,76 @@ plan:[
 '咨询师布置了〔思维记录/活动安排/书写练习〕作为课后作业。',
 '维持当前咨询计划，下次咨询时评估目标进展。',
 '若症状加重，来访者同意使用〔应对/安全步骤〕。'
-]
+],
+problems:{
+anxiety:{label:'焦虑',keys:['anxiety','anxious','worry','worried','焦虑','担心','紧张不安'],frames:[
+'咨询师协助来访者识别维持其焦虑的认知扭曲与灾难化预期。',
+'咨询师教授来访者放松与呼吸技巧，以降低焦虑升级时的生理唤起。',
+'来访者自述焦虑发作的频率与强度较上次咨询有所下降。',
+'来访者仍持续过度担忧，已影响日常功能与睡眠。'
+]},
+depression:{label:'抑郁',keys:['depress','anhedonia','low mood','抑郁','情绪低落','兴趣减退'],frames:[
+'咨询师与来访者开展行为激活，制定愉悦与成就类活动安排以对抗退缩。',
+'咨询师探讨了来访者的负面自我对话及其在维持抑郁情绪中的作用。',
+'来访者自述情绪、精力与对日常活动的兴趣有轻度改善。',
+'来访者仍报告兴趣减退、精力不足，完成日常事务困难。'
+]},
+anger:{label:'愤怒管理',keys:['anger','angry','rage','temper','愤怒','发脾气','怒气'],frames:[
+'咨询师协助来访者识别愤怒的触发因素与升级的早期信号。',
+'咨询师教授来访者暂停与自我安抚策略，以控制冲动行为。',
+'来访者表现出在愤怒反应前停顿并运用应对技巧的能力有所提升。',
+'来访者在感到被批评或拒绝时，仍难以控制愤怒爆发。'
+]},
+grief:{label:'哀伤与丧失',keys:['grief','bereave','passed away','loss of a','哀伤','丧失','去世','离世','过世'],frames:[
+'咨询师为来访者提供安全的空间，处理与〔逝者〕相关的哀伤与丧失感受。',
+'咨询师将来访者的哀伤反应正常化，并探讨丧失对其的意义。',
+'来访者能够开放地表达悲伤与思念，并自述开始适应丧失后的生活。',
+'来访者仍经历强烈的哀伤波动，影响注意力与日常安排。'
+]},
+ocd:{label:'强迫',keys:['ocd','obsess','compuls','ritual','强迫','仪式行为'],frames:[
+'咨询师协助来访者识别强迫思维及其用以抵消焦虑的强迫行为。',
+'咨询师介绍了暴露与反应预防的原则，并与来访者制定循序渐进的暴露等级。',
+'来访者自述用于仪式行为的时间减少，抵抗强迫行为的能力提升。',
+'来访者仍反复进行仪式行为，耗时明显并造成困扰。'
+]},
+relationship:{label:'关系冲突',keys:['partner','spouse','couple','relationship conflict','伴侣','配偶','夫妻','争吵'],frames:[
+'咨询师促进双方讨论冲突模式，并指导减少升级的沟通方式。',
+'咨询师协助来访者识别自己在反复关系冲突中的角色与替代回应。',
+'来访者自述与伴侣的沟通有所改善，激烈争吵减少。',
+'来访者在关系中仍反复出现冲突，难以表达自身需要。'
+]},
+selfEsteem:{label:'自尊与自我价值',keys:['self-esteem','self esteem','worthless','自尊','自卑','自我价值'],frames:[
+'咨询师挑战来访者整体性的负面自我评价，并识别其能力与价值的证据。',
+'咨询师强化来访者的优势以及在自我肯定方面取得的积极进展。',
+'来访者表现出自信提升，对自我的看法更为平衡。',
+'来访者仍持续负面自我评价，并害怕他人的不认可。'
+]},
+family:{label:'家庭冲突',keys:['family conflict','in-laws','家庭冲突','婆媳','家人争吵'],frames:[
+'咨询师探讨了家庭内部的冲突模式及每位成员在其中的参与方式。',
+'咨询师促进更健康的家庭沟通，并澄清彼此的期待与界限。',
+'来访者自述家庭紧张有所缓解，对家庭冲突的回应更为建设性。',
+'来访者仍频繁经历家庭冲突，难以与家庭成员设立界限。'
+]},
+parenting:{label:'亲职与育儿',keys:['parenting','child discipline','toddler','育儿','管教','孩子不听话','亲子'],frames:[
+'咨询师就儿童发展与一致、正向的管教策略提供了心理教育。',
+'咨询师协助来访者制定以平静、一致的方式回应孩子行为的计划。',
+'来访者自述育儿信心提升，孩子的配合度有所改善。',
+'来访者仍感到育儿压力沉重，执行规则时难以保持一致。'
+]},
+panic:{label:'惊恐与恐惧',keys:['panic','phobia','agoraphobia','惊恐','恐惧症','心慌'],frames:[
+'咨询师就惊恐发作的循环及对身体感觉的灾难化解释提供了心理教育。',
+'咨询师教授来访者控制呼吸与应对惊恐发作的内感受应对技巧。',
+'来访者自述惊恐发作减少，对恐惧情境的回避有所下降。',
+'来访者仍回避与惊恐相关的情境，日常活动因此受限。'
+]},
+substance:{label:'物质使用',keys:['substance','alcohol','drinking','relapse','addiction','物质','饮酒','酗酒','复吸','成瘾'],frames:[
+'咨询师协助来访者识别高危情境与渴求应对策略。',
+'咨询师回顾了来访者在戒断目标上的进展，并强化支持康复的日常安排。',
+'来访者自述一段时间内保持戒断，并增加了对康复支持的使用。',
+'来访者仍难以保持戒断，自述上次咨询后出现反复，本次咨询中以不评判的方式进行了处理。'
+]}
+},
+problemOrder:['anxiety','depression','anger','grief','ocd','relationship','selfEsteem','family','parenting','panic','substance']
 };
 function aiMatchCorpusModality(orientText){
 const text=String(orientText||'').toLowerCase();
@@ -906,10 +993,37 @@ if(m&&m.keys.some(k=>text.includes(String(k).toLowerCase())))return{id,...m};
 const fallback=AI_CORPUS_ZH.interventionsByModality.supportive;
 return{id:'supportive',...fallback};
 }
-function aiCorpusGuidance(orientText){
+function aiMatchCorpusProblems(sourceText){
+const text=String(sourceText||'').toLowerCase();
+if(!text)return[];
+const scored=[];
+AI_CORPUS_ZH.problemOrder.forEach((id,idx)=>{
+const p=AI_CORPUS_ZH.problems[id];if(!p)return;
+let hits=0;
+for(const k of p.keys){const key=String(k).toLowerCase();let pos=text.indexOf(key);while(pos>=0){hits++;pos=text.indexOf(key,pos+key.length)}}
+if(hits>0)scored.push({id,idx,hits,label:p.label,frames:p.frames});
+});
+scored.sort((a,b)=>b.hits-a.hits||a.idx-b.idx);
+return scored.slice(0,2);
+}
+let aiFavPhrasesCache=null,aiCustomPhrasesCache=null;
+function aiLoadPhrasePrefs(){
+if(aiFavPhrasesCache===null){aiFavPhrasesCache=[];try{const v=JSON.parse((window.desktopDB&&window.desktopDB.getPref('aiFavPhrases'))||'[]');if(Array.isArray(v))aiFavPhrasesCache=v.filter(x=>typeof x==='string')}catch(_){}}
+if(aiCustomPhrasesCache===null){aiCustomPhrasesCache=[];try{const v=JSON.parse((window.desktopDB&&window.desktopDB.getPref('aiCustomPhrases'))||'[]');if(Array.isArray(v))aiCustomPhrasesCache=v.filter(x=>typeof x==='string')}catch(_){}}
+}
+function aiSavePhrasePref(key,val){try{if(window.desktopDB)window.desktopDB.setPref(key,JSON.stringify(val))}catch(_){}}
+function aiToggleFav(text){aiLoadPhrasePrefs();const i=aiFavPhrasesCache.indexOf(text);if(i>=0)aiFavPhrasesCache.splice(i,1);else aiFavPhrasesCache.push(text);aiSavePhrasePref('aiFavPhrases',aiFavPhrasesCache);renderPhrasePanel()}
+function aiAddCustomPhrase(text){aiLoadPhrasePrefs();const t=String(text||'').trim();if(!t)return false;if(!aiCustomPhrasesCache.includes(t))aiCustomPhrasesCache.push(t);aiSavePhrasePref('aiCustomPhrases',aiCustomPhrasesCache);renderPhrasePanel();return true}
+function aiRemoveCustomPhrase(text){aiLoadPhrasePrefs();const i=aiCustomPhrasesCache.indexOf(text);if(i>=0)aiCustomPhrasesCache.splice(i,1);aiSavePhrasePref('aiCustomPhrases',aiCustomPhrasesCache);renderPhrasePanel()}
+function aiPreferredPhrases(){aiLoadPhrasePrefs();const seen=new Set(),out=[];for(const t of [...aiFavPhrasesCache,...aiCustomPhrasesCache]){if(t&&!seen.has(t)){seen.add(t);out.push(t);if(out.length>=30)break}}return out}
+function aiCorpusGuidance(orientText,sourceText){
 const modality=aiMatchCorpusModality(orientText);
 const list=items=>items.map(x=>'- '+x).join('\n');
-return `\n【临床语言语料库（中文）】\n写作语体：${AI_CORPUS_ZH.register}\n${AI_CORPUS_ZH.warning}\n呈现：\n${list(AI_CORPUS_ZH.presentation)}\n评估与进展：\n${list(AI_CORPUS_ZH.assessmentProgress)}\n干预·通用：\n${list(AI_CORPUS_ZH.interventionsGeneral)}\n干预·按取向（${modality.label}）：\n${list(modality.frames)}\n反应：\n${list(AI_CORPUS_ZH.response)}\n计划：\n${list(AI_CORPUS_ZH.plan)}\n`;
+const matchedProblems=aiMatchCorpusProblems(sourceText);
+const problemBlock=matchedProblems.length?'\n'+matchedProblems.map(p=>`问题聚焦 · ${p.label}：\n${list(p.frames)}`).join('\n'):'';
+const mine=aiPreferredPhrases();
+const mineBlock=mine.length?`\n咨询师个人常用句式（在与咨询内容相符时，优先采用下列你收藏与自建的句式）：\n${list(mine)}`:'';
+return `\n【临床语言语料库（中文）】\n写作语体：${AI_CORPUS_ZH.register}\n${AI_CORPUS_ZH.warning}\n呈现：\n${list(AI_CORPUS_ZH.presentation)}\n评估与进展：\n${list(AI_CORPUS_ZH.assessmentProgress)}\n干预·通用：\n${list(AI_CORPUS_ZH.interventionsGeneral)}\n干预·按取向（${modality.label}）：\n${list(modality.frames)}${problemBlock}\n反应：\n${list(AI_CORPUS_ZH.response)}\n计划：\n${list(AI_CORPUS_ZH.plan)}${mineBlock}\n`;
 }
 const aiOpts=(list,sel)=>list.map(([v,l])=>`<option value="${v}"${v===sel?' selected':''}>${l}</option>`).join('');
 const aiEl=id=>document.getElementById(id);
@@ -1123,7 +1237,7 @@ function buildNotePrompt(source){
   const customTpl=((aiEl('aiCustomTemplate')?aiEl('aiCustomTemplate').value:aiCustomTemplateCache)||'').trim();aiCustomTemplateCache=customTpl;
   const customFrame=customTpl?`\n用户自定义模板/指令（优先遵循；与记录格式冲突时以本段为准）：\n${customTpl}\n`:'';
   const orientRule=orient?`咨询师取向/风格：${orient}。请在 work 与 response 字段的表述中体现该取向的专业术语与视角，但不得编造未实际发生的干预或内容。`:'';
-  const corpusBlock=aiCorpusGuidance(orient);
+  const corpusBlock=aiCorpusGuidance(orient,source);
   return `<|im_start|>system\n你是一名心理咨询记录整理助手。根据咨询师提供的内容，整理成规范的心理咨询记录草稿。要求：只使用提供内容中的信息，不得编造未提及的事实、诊断、数值或人名；使用第三人称、专业、简洁的书面语言；涉及自伤/自杀等风险信息时如实保留。${langRule}${orientRule} 记录结构：${AI_FORMAT_SPECS[fmt]||AI_FORMAT_SPECS.standard} 只输出一个 JSON 对象，不要输出其他文字。JSON 字段：focus、updates、work、response、plan、next。没有信息的字段填空字符串。<|im_end|>\n<|im_start|>user\n${frame}${corpusBlock}${customFrame}\n需要整理的内容如下：\n${source}<|im_end|>\n<|im_start|>assistant\n`;
 }
 function aiInsertSpeaker(who){const ta=aiEl('aiTranscript');if(!ta)return;const mark=who+'：';const s=ta.selectionStart||0,e=ta.selectionEnd||0;const prefix=(s>0&&ta.value[s-1]!=='\n')?'\n':'';ta.value=ta.value.slice(0,s)+prefix+mark+ta.value.slice(e);const pos=s+prefix.length+mark.length;ta.focus();ta.setSelectionRange(pos,pos);aiTranscriptCache=ta.value}

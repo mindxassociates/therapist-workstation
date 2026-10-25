@@ -38,7 +38,7 @@ const fakeInvoke = async (cmd, args = {}) => {
     case 'users_set_active': return { ok: true };
     case 'change_password': return { ok: true };
     case 'open_path': return true;
-    case 'ai_comp_status': return { portable: compState.portable, installed: compState.installed, version: '3.1.15', os: 'windows' };
+    case 'ai_comp_status': return { portable: compState.portable, installed: compState.installed, version: '3.1.16', os: 'windows' };
     case 'ai_comp_install': compState.installed = true; return true;
     case 'ai_comp_poll': return { active: false, received: 100, total: 100, done: true, error: null };
     case 'ai_comp_remove': compState.installed = false; return true;
@@ -487,6 +487,41 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('corpus: modality match order puts trauma before CBT', corpusPromptOrder.includes('干预·按取向（创伤知情）') && corpusPromptOrder.includes('稳定化（着陆）技巧') && !corpusPromptOrder.includes('苏格拉底式提问'));
   w.document.getElementById('aiOrientation').value = '';
 
+  // ---- V3.1.16: problem-focused corpus （问题聚焦） + My Phrases （我的句式） ----
+  const probPrompt = w.eval("buildNotePrompt('来访者近来总是担心工作表现，感到很焦虑，夜里紧张不安；同时情绪低落，对什么都提不起兴趣，有抑郁的感觉。')");
+  check('problem corpus: anxiety + depression matched from source keywords', probPrompt.includes('问题聚焦 · 焦虑') && probPrompt.includes('灾难化预期') && probPrompt.includes('问题聚焦 · 抑郁') && probPrompt.includes('行为激活'));
+  check('problem corpus: unmatched problems stay out (no OCD frames)', !probPrompt.includes('问题聚焦 · 强迫') && !probPrompt.includes('暴露与反应预防'));
+  check('problem corpus: subsection sits after modality frames', probPrompt.indexOf('干预·按取向') < probPrompt.indexOf('问题聚焦') && probPrompt.indexOf('问题聚焦') < probPrompt.indexOf('用户自定义模板/指令'));
+  const probNone = w.eval("buildNotePrompt('来访者谈到最近的生活安排与日常作息，希望保持规律。')");
+  check('problem corpus: keyword-free source adds no problem subsection', !probNone.includes('问题聚焦'));
+
+  // Phrase panel: problem groups + My Phrases (star / custom / delete)
+  w.openSession('', clientId);
+  w.document.getElementById('sRecordMode').value = 'detailed'; w.updateSessionMode();
+  w.renderPhrasePanel();
+  let minePanelHtml = w.document.getElementById('phrasePanel').innerHTML;
+  check('phrase panel renders problem groups', minePanelHtml.includes('问题句式：焦虑') && minePanelHtml.includes('问题句式：强迫') && minePanelHtml.includes('暴露与反应预防的原则'));
+  check('my-phrases pinned section renders at panel top', minePanelHtml.includes('★ 我的常用') && minePanelHtml.indexOf('★ 我的常用') < minePanelHtml.indexOf('呈现'));
+  const favText = '咨询师将来访者的〔情绪〕感受正常化，并肯定其应对努力。';
+  const favChipIdx = [...w.document.querySelectorAll('.phrase-chip')].findIndex((b) => b.textContent === favText);
+  check('star target chip found', favChipIdx >= 0);
+  w.document.querySelectorAll('.phrase-star')[favChipIdx].click(); await tick();
+  check('starring a phrase persists favorites to prefs', JSON.parse(w.eval("window.desktopDB.getPref('aiFavPhrases')") || '[]').includes(favText));
+  minePanelHtml = w.document.getElementById('phrasePanel').innerHTML;
+  check('favorited phrase renders inside pinned 我的常用 section', minePanelHtml.split('★ 我的常用')[1].split('呈现')[0].includes(favText));
+  const customText = '咨询师以一句话小结本次咨询的核心主题，并确认来访者的理解。';
+  w.document.getElementById('myPhraseInput').value = customText;
+  w.document.getElementById('myPhraseAdd').click(); await tick();
+  check('custom phrase persists to prefs', JSON.parse(w.eval("window.desktopDB.getPref('aiCustomPhrases')") || '[]').includes(customText));
+  check('custom phrase renders in pinned section', w.document.getElementById('phrasePanel').innerHTML.includes(customText));
+  const minePrompt = w.eval("buildNotePrompt('来访者近来感到很焦虑，总是担心工作表现，夜里紧张不安。')");
+  check('prompt appends preferred-phrasing subsection (favorites + custom, after problem focus, before custom template)',
+    minePrompt.includes('咨询师个人常用句式') && minePrompt.indexOf(customText) > minePrompt.indexOf('咨询师个人常用句式') &&
+    minePrompt.indexOf('问题聚焦') < minePrompt.indexOf('咨询师个人常用句式') && minePrompt.indexOf('咨询师个人常用句式') < minePrompt.indexOf('用户自定义模板/指令'));
+  w.document.querySelectorAll('.phrase-del')[0].click(); await tick();
+  check('custom phrase deletable and removed from prefs', !JSON.parse(w.eval("window.desktopDB.getPref('aiCustomPhrases')") || '[]').includes(customText));
+  w.eval('sessionDialog.close()');
+
   // ---- V3.1.11: recording source (in-person mic / telehealth mic + system audio) + input device picker ----
   check('recording source selector exists and defaults to mic', !!w.document.getElementById('aiRecSource') && w.document.getElementById('aiRecSource').value === 'mic');
   check('recording hint explains mic mode', (w.document.getElementById('aiRecHint') || {}).textContent.includes('线下面对面'));
@@ -550,6 +585,16 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('phrase panel renders and inserts for manual writing', liteWork.value.includes('咨询师以无条件积极关注与温暖接纳建立咨询关系与信任。'));
   compState.portable = true; await w.initAiGate();
   check('portable mode removes the AI nav entry', !w.document.querySelector('nav button[data-view="ai"]'));
+
+  // Portable (no AI at all): phrase panel + My Phrases remain fully usable for manual writing
+  w.renderPhrasePanel();
+  const portPanelHtml = w.document.getElementById('phrasePanel').innerHTML;
+  check('portable (no AI) keeps My Phrases + problem groups in phrase panel', portPanelHtml.includes('★ 我的常用') && portPanelHtml.includes('问题句式：焦虑') && portPanelHtml.includes(favText));
+  const portWork = w.document.getElementById('sWork'); portWork.value = '';
+  w.eval('sessionFocusField=null');
+  const portChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('灾难化预期'));
+  portChip.click(); await tick();
+  check('portable (no AI) problem phrase insert still works', portWork.value.includes('灾难化预期'));
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
