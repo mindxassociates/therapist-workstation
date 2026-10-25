@@ -88,6 +88,25 @@ const saveBtnId = (w, prefix) => {
   w.go('privacy');
   check('privacy page renders notice with practice name', w.document.getElementById('privacy').innerHTML.includes('测试工作室'));
 
+
+  // ---- Customization: font / density / header style / home modules / landing page ----
+  check('default header style is aurora (brand)', w.document.body.classList.contains('hdr-aurora'));
+  w.go('settings');
+  w.document.getElementById('setFontSize').value = 'large';
+  w.document.getElementById('setDensity').value = 'compact';
+  w.document.getElementById('setHeaderStyle').value = 'solid';
+  w.document.getElementById('setHomePage').value = 'tasks';
+  w.document.querySelector('.hm-input[data-module="fees"]').checked = false;
+  w.saveSettings();
+  const cs = S().settings;
+  check('customization persisted', cs.fontSize === 'large' && cs.density === 'compact' && cs.headerStyle === 'solid' && cs.homePage === 'tasks' && cs.homeModules.fees === false);
+  check('large font applies zoom', w.document.body.style.zoom === '1.08');
+  check('compact + solid header classes applied', w.document.body.classList.contains('compact') && w.document.body.classList.contains('hdr-solid'));
+  w.go('today');
+  check('hidden home module card not displayed', w.document.querySelector('#today [data-module="fees"]').style.display === 'none');
+  w.resetAppearance();
+  check('reset appearance restores brand defaults', S().settings.accent === '#4a778b' && S().settings.headerStyle === 'aurora' && S().settings.fontSize === 'normal');
+
   // full client deletion cascades (seed a session + the task belongs to client)
   w.eval(`S.sessions.unshift({id:'s1',clientId:'${cid}',date:'2026-10-01'})`);
   w.eval(`S.tasks.find(x=>x.id==='${tid}').clientId='${cid}'`);

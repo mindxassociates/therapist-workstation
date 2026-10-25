@@ -270,6 +270,27 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('session draft restored after restart', w3.document.getElementById('sFocus').value === '草稿恢复测试主题');
   dom3.window.close();
 
+
+  // ---- Customization: font size / density / header style / home modules / landing page ----
+  w.showView('settings');
+  w.document.getElementById('fontSize').value = 'large';
+  w.document.getElementById('density').value = 'compact';
+  w.document.getElementById('headerStyle').value = 'solid';
+  w.document.getElementById('homePage').value = 'tasks';
+  const feesBox = w.document.querySelector('#homeModuleChoices input[data-module="fees"]');
+  feesBox.checked = false;
+  w.saveSettings(); await flush();
+  const cs = savedState().settings;
+  check('customization persisted (font/density/header/homePage)', cs.fontSize === 'large' && cs.density === 'compact' && cs.headerStyle === 'solid' && cs.homePage === 'tasks');
+  check('home module toggle persisted', cs.homeModules && cs.homeModules.fees === false && cs.homeModules.tasks === true);
+  check('large font applies zoom', w.document.body.style.zoom === '1.08');
+  check('compact density class applied', w.document.body.classList.contains('compact'));
+  check('solid header class applied', w.document.querySelector('header').classList.contains('hdr-solid'));
+  w.showView('dashboard');
+  check('hidden home module card not displayed', w.document.getElementById('pendingFees').closest('.card').style.display === 'none');
+  await w.resetAppearance(); await flush();
+  check('reset appearance restores defaults', savedState().settings.themeColor === '#4a778b' && savedState().settings.headerStyle === 'aurora' && savedState().settings.fontSize === 'normal');
+
   // PIPL: full client deletion cascades (after export path exists)
   check('client export + delete functions exist', typeof w.exportClientData === 'function' && typeof w.deleteClientForever === 'function');
   await w.deleteClientForever(clientId); await flush();

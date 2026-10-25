@@ -1,4 +1,4 @@
-const CACHE_NAME = 'therapist-workstation-pwa-v1.11.0-1';
+const CACHE_NAME = 'therapist-workstation-pwa-v1.12.0-1';
 const APP_SHELL = [
   './',
   './index.html',
