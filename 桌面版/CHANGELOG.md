@@ -1,12 +1,18 @@
 # 变更日志
 
+## V3.1.8（2026-10-25）— 智能记录下载层修正
+
+- 引擎/模型下载改用**系统证书库**校验（原生 TLS），并自动识别代理环境变量（HTTPS_PROXY 等），提高在机构网络、装有安全软件的电脑上的下载成功率。
+- 说明：开发沙箱的网络代理会拦截此类直连请求，下载传输层无法在沙箱内端到端实测；逻辑已编译验证，真实下载请在实机首次使用时确认。
+
+
 ## V3.1.7（2026-10-25）— 智能记录（离线 AI）
 
 - 新增「智能记录」页，两种离线用法：
   - **咨询录音转写**：取得来访者同意后页内录音（WebAudio 采集、16 kHz WAV）或导入音频文件，本机 Whisper 引擎转写；转写稿可编辑，可设置转写后自动删除原录音。录音按钮有知情同意勾选门槛。
   - **小结生成记录**：输入简要小结，本机语言模型（llama 引擎 + Qwen2.5 GGUF）按记录六字段生成 JSON 草稿，自动打开记录编辑框填充；不自动保存。
 - 引擎与模型管理：页内下载（带进度/取消）、导入本地模型文件、自定义引擎路径；Windows 引擎可自动下载，macOS 转写引擎自动识别 Homebrew 安装；模型保存在数据目录 ai-models/，引擎在 ai-engines/，录音临时文件在 ai-audio/。
-- 新增 Rust 命令：ai_status / ai_download / ai_download_cancel / ai_set_engine_path / ai_import_model / audio_begin / audio_append / audio_finish / audio_discard / transcribe_start / generate_start / ai_proc_poll / ai_proc_cancel（子进程管理 + stderr 进度解析 + 取消）。新增依赖 ureq / zip / base64，已在独立 crate 中验证 API 用法。
+- 新增 Rust 命令：ai_status / ai_download / ai_download_cancel / ai_set_engine_path / ai_import_model / audio_begin / audio_append / audio_finish / audio_discard / transcribe_start / generate_start / ai_proc_poll / ai_proc_cancel（子进程管理 + stderr 进度解析 + 取消）。新增依赖 ureq / zip / base64；zip 解压、base64、进度解析与流式写入逻辑已在独立 crate 中真实运行验证。下载的网络传输在本开发沙箱中被代理拦截、无法端到端实测（见 V3.1.8），真实下载与引擎运行仍需实机验证。
 - 冒烟测试扩至 79/79（引擎命令桩驱动完整 UI 流程）。真实引擎的端到端运行仍需在 Windows / macOS 实机各验证一次。
 
 

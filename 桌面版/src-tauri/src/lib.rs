@@ -266,7 +266,18 @@ fn ai_download(state: State<AppState>, ai: State<AiState>, what: String) -> Resu
     { let mut rt = ai.0.lock().unwrap(); if let Some(d) = &rt.download { if !d.lock().unwrap().done { return Err("已有下载正在进行".into()); } } rt.download = Some(shared.clone()); }
     std::thread::spawn(move || {
         let fail = |shared: &Arc<Mutex<DownloadShared>>, msg: String| { let mut s = shared.lock().unwrap(); s.error = Some(msg); s.done = true; };
-        let resp = match ureq::get(&url).call() { Ok(r) => r, Err(e) => { fail(&shared, format!("下载失败：{}", e)); return; } };
+fn ai_http_agent() -> ureq::Agent {
+    // Downloads verify certificates against the OS trust store (native TLS), so
+    // institutional CAs / security software on user machines keep working, and
+    // honor proxy environment variables when present.
+    let mut builder = ureq::AgentBuilder::new();
+    if let Ok(connector) = native_tls::TlsConnector::new() { builder = builder.tls_connector(std::sync::Arc::new(connector)); }
+    let proxy_url = ["HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy", "HTTP_PROXY", "http_proxy"].iter().find_map(|k| std::env::var(k).ok()).filter(|v| !v.is_empty());
+    if let Some(u) = proxy_url { if let Ok(proxy) = ureq::Proxy::new(&u) { builder = builder.proxy(proxy); } }
+    builder.build()
+}
+        let agent = ai_http_agent();
+        let resp = match agent.get(&url).call() { Ok(r) => r, Err(e) => { fail(&shared, format!("下载失败：{}", e)); return; } };
         let total: u64 = resp.header("Content-Length").and_then(|v| v.parse().ok()).unwrap_or(0);
         { let mut s = shared.lock().unwrap(); s.total = total; }
         let mut reader = resp.into_reader();
