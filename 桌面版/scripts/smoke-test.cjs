@@ -11,6 +11,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'u
 
 // ---- Fake Tauri backend (mirrors src-tauri/src/lib.rs command semantics) ----
 let workspaceJson = null;
+let aiProc = null, aiDiscarded = '', lastPrompt = '';
 const prefs = new Map();
 let user = null;
 const fakeInvoke = async (cmd, args = {}) => {
@@ -36,6 +37,30 @@ const fakeInvoke = async (cmd, args = {}) => {
     case 'users_set_active': return { ok: true };
     case 'change_password': return { ok: true };
     case 'open_path': return true;
+    case 'ai_status': return { whisper: { found: true, path: '/fake/whisper-cli' }, llama: { found: true, path: '/fake/llama-cli' }, models: [
+      { id: 'base', kind: 'whisper', label: '基础 base', file: 'ggml-base.bin', downloaded: false, bytes: 0 },
+      { id: 'small', kind: 'whisper', label: '均衡 small', file: 'ggml-small.bin', downloaded: true, bytes: 487601967 },
+      { id: 'qwen15', kind: 'llm', label: 'Qwen2.5 1.5B', file: 'qwen2.5-1.5b-instruct-q4_k_m.gguf', downloaded: false, bytes: 0 },
+      { id: 'qwen3', kind: 'llm', label: 'Qwen2.5 3B', file: 'qwen2.5-3b-instruct-q4_k_m.gguf', downloaded: true, bytes: 2104049000 } ],
+      modelsDir: '/fake/ai-models', enginesDir: '/fake/ai-engines', os: 'windows', download: null, proc: null };
+    case 'ai_download': return true;
+    case 'ai_download_cancel': return true;
+    case 'ai_set_engine_path': return true;
+    case 'ai_import_model': return 'imported.gguf';
+    case 'audio_begin': return { id: 'a1', path: '/fake/ai-audio/a1.wav' };
+    case 'audio_append': return true;
+    case 'audio_finish': return { path: '/fake/ai-audio/a1.wav', bytes: 1234 };
+    case 'audio_discard': aiDiscarded = args.path; return true;
+    case 'transcribe_start': aiProc = { kind: 'transcribe', n: 0 }; return true;
+    case 'generate_start': lastPrompt = args.prompt; aiProc = { kind: 'generate', n: 0 }; return true;
+    case 'ai_proc_poll': { if (!aiProc) return { active: false, kind: '', done: true, output: '', progress: -1 };
+      aiProc.n++; if (aiProc.n < 2) return { active: true, kind: aiProc.kind, done: false, progress: 50, output: '' };
+      const kind = aiProc.kind; aiProc = null;
+      const output = kind === 'transcribe'
+        ? '来访者：最近睡眠不好，工作压力很大。\n咨询师：我们先看看睡眠的情况。'
+        : '前置噪音<|im_start|>assistant\n{"focus":"工作压力与失眠","updates":"来访者报告连续两周入睡困难","work":"讨论睡眠卫生与放松练习","response":"来访者表示愿意尝试","plan":"执行睡前放松练习","next":"跟进睡眠改善情况"}<|im_end|>\nllama_print_timings: total';
+      return { active: false, kind, done: true, progress: 100, output }; }
+    case 'ai_proc_cancel': aiProc = null; return true;
     case 'open_external': return true;
     default: throw new Error('unknown command ' + cmd);
   }
@@ -359,6 +384,31 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('minimal letterhead + footer text applied', !w.document.getElementById('stmtBody').innerHTML.includes('linear-gradient(125deg,#132228,#355564') && w.document.getElementById('stmtBody').innerHTML.includes('页脚测试文字'));
   w.removeLogo(); await flush();
   check('logo removed', !savedState().settings.logoData);
+
+
+  // ---- Offline AI: engine status, transcription flow, note generation ----
+  w.showView('ai'); await flush(); await tick(); await tick();
+  check('ai view renders, downloaded whisper model selected', w.document.getElementById('aiBody').innerHTML.includes('录音转写引擎') && w.document.getElementById('aiWhisperModel').value === 'small');
+  w.eval("aiAudioPath='/fake/ai-audio/a1.wav'");
+  w.document.getElementById('aiClient').value = clientId;
+  await w.startTranscribe();
+  await w.aiPollOnce();
+  await w.aiPollOnce();
+  check('transcript filled from engine output', w.document.getElementById('aiTranscript').value.includes('睡眠不好'));
+  check('recording discarded after transcription (default on)', aiDiscarded === '/fake/ai-audio/a1.wav');
+  w.document.getElementById('aiLlmModel').value = 'qwen3';
+  await w.generateNote('transcript');
+  check('generation prompt is ChatML + JSON-only instruction', lastPrompt.includes('<|im_start|>system') && lastPrompt.includes('JSON'));
+  await w.aiPollOnce();
+  await w.aiPollOnce();
+  check('generated JSON parsed into session fields', w.document.getElementById('sFocus').value === '工作压力与失眠' && w.document.getElementById('sPlan').value.includes('放松练习') && w.document.getElementById('sNext').value.includes('睡眠'));
+  w.eval('sessionDialog.close()');
+  w.document.getElementById('aiBrief').value = '来访者诉工作压力大，失眠两周。';
+  await w.generateNote('brief');
+  await w.aiPollOnce();
+  await w.aiPollOnce();
+  check('brief-summary generation fills the dialog too', w.document.getElementById('sFocus').value === '工作压力与失眠');
+  w.eval('sessionDialog.close()');
 
   // ---- Customization: font size / density / header style / home modules / landing page ----
   w.showView('settings');

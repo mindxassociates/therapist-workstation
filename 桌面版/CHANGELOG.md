@@ -1,5 +1,15 @@
 # 变更日志
 
+## V3.1.7（2026-10-25）— 智能记录（离线 AI）
+
+- 新增「智能记录」页，两种离线用法：
+  - **咨询录音转写**：取得来访者同意后页内录音（WebAudio 采集、16 kHz WAV）或导入音频文件，本机 Whisper 引擎转写；转写稿可编辑，可设置转写后自动删除原录音。录音按钮有知情同意勾选门槛。
+  - **小结生成记录**：输入简要小结，本机语言模型（llama 引擎 + Qwen2.5 GGUF）按记录六字段生成 JSON 草稿，自动打开记录编辑框填充；不自动保存。
+- 引擎与模型管理：页内下载（带进度/取消）、导入本地模型文件、自定义引擎路径；Windows 引擎可自动下载，macOS 转写引擎自动识别 Homebrew 安装；模型保存在数据目录 ai-models/，引擎在 ai-engines/，录音临时文件在 ai-audio/。
+- 新增 Rust 命令：ai_status / ai_download / ai_download_cancel / ai_set_engine_path / ai_import_model / audio_begin / audio_append / audio_finish / audio_discard / transcribe_start / generate_start / ai_proc_poll / ai_proc_cancel（子进程管理 + stderr 进度解析 + 取消）。新增依赖 ureq / zip / base64，已在独立 crate 中验证 API 用法。
+- 冒烟测试扩至 79/79（引擎命令桩驱动完整 UI 流程）。真实引擎的端到端运行仍需在 Windows / macOS 实机各验证一次。
+
+
 ## V3.1.6（2026-10-25）— 模板系统 + 品牌 Logo 与文档版式
 
 - **模板系统**：模板新增用途分类（咨询记录 / 咨询方案 / 通用）。内置 6 个模板（首次咨询 / 初始评估、结构化咨询记录、SOAP 记录、阶段小结、阶段性咨询方案、安全计划），首次登录自动加入；内置与自建模板均可编辑、删除，删除后不会重复加入。咨询方案编辑器新增方案模板套用。
