@@ -1,0 +1,15 @@
+{
+  "name": "therapist-workstation-tauri",
+  "version": "3.1.3",
+  "private": true,
+  "description": "心理咨询师工作台 - Tauri 2 + Web UI + SQLCipher + 本地多账户",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "check": "cargo check --manifest-path src-tauri/Cargo.toml"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.0"
+  }
+}

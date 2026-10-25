@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>心理咨询师工作台</title>
+<style>
+:root{
+ --nav:#132228;--nav2:#24414e;--ink:#20313d;--muted:#71808b;--line:#e3e9ed;
+ --bg:#f5f7f8;--card:#ffffff;--accent:#4a778b;--accent2:#e2e9ec;--soft:#eef3f5;
+ --danger:#a04444;--shadow:0 10px 30px rgba(31,49,61,.06);--radius:16px
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:"PingFang SC","Microsoft YaHei",Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);letter-spacing:.01em}
+body.dark{--nav:#0b151c;--nav2:#12242e;--ink:#e7eef2;--muted:#9aa9b3;--line:#2b3c46;--bg:#0f171d;--card:#172229;--accent:#93bccd;--accent2:#203b47;--soft:#202d35;--shadow:0 12px 32px rgba(0,0,0,.18)}
+header{height:68px;background-image:radial-gradient(620px 220px at 88% -50%,rgba(255,255,255,.20),transparent 60%),radial-gradient(520px 200px at 8% 130%,rgba(126,184,199,.28),transparent 62%),linear-gradient(125deg,#132228 0%,#24414e 42%,#355564 74%,#4a778b 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(255,255,255,.08)}
+header h1{margin:0;font-size:18px;font-weight:750;letter-spacing:.03em}header small{display:block;margin-top:2px;opacity:.62;font-size:11px}#saveStatus{font-size:12px;opacity:.72}
+.shell{display:block;min-height:calc(100vh - 68px);width:100%}
+nav{background:var(--card);border-right:1px solid var(--line);padding:18px 12px;position:fixed;left:0;top:68px;bottom:0;height:auto;overflow-y:auto;overflow-x:hidden;width:238px;z-index:15}
+nav .group{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:18px 12px 7px}
+nav button{width:100%;text-align:left;border:0;background:transparent;color:var(--ink);padding:10px 12px;border-radius:10px;cursor:pointer;margin:2px 0;font-size:13px;transition:.16s ease}
+nav button:hover{background:var(--soft);transform:translateX(2px)}nav button.active{background:var(--accent2);color:var(--accent);font-weight:750}
+.nav-developer{margin-top:18px;padding:14px 10px 4px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.7}.nav-developer a{color:var(--accent);font-weight:750;text-decoration:none;cursor:pointer}.nav-developer a:hover{text-decoration:underline}.nav-version{font-size:10px;color:var(--muted)}
+.nav-section{margin:3px 0}.nav-parent{display:flex!important;align-items:center;justify-content:space-between;font-weight:750!important;color:var(--muted)!important}.nav-parent:hover{color:var(--ink)!important}.nav-chevron{font-size:15px;transition:transform .18s ease}.nav-section.open .nav-chevron{transform:rotate(180deg)}.nav-children{display:none;margin:3px 0 7px;padding:4px 0 4px 10px}.nav-section.open .nav-children{display:block;animation:navDrop .16s ease}.nav-children button{font-size:12px;padding:9px 10px;border-radius:9px}.nav-section.has-active>.nav-parent{color:var(--accent)!important;background:color-mix(in srgb,var(--accent2) 45%,transparent)}@keyframes navDrop{from{opacity:.3;transform:translateY(-4px)}to{opacity:1;transform:none}}
+main{padding:32px 34px 54px;margin-left:238px;width:calc(100% - 238px);max-width:none;min-width:0;overflow-x:hidden;display:block;vertical-align:top}.view{display:none;animation:fade .18s ease;margin:0;padding:0;min-height:0}.view.active{display:block}
+@keyframes fade{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:none}}
+h2{font-size:25px;margin:0 0 5px;letter-spacing:-.02em}h3{font-size:15px;margin:4px 0 12px}.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin:16px 0;box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}
+.stat{font-size:30px;font-weight:800;margin-top:7px;letter-spacing:-.04em}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card);color:var(--ink);font:inherit;outline:none;transition:.15s}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}textarea{min-height:100px;resize:vertical}
+label{display:block;font-size:11px;font-weight:750;color:var(--muted);margin:12px 0 6px}
+.primary,.secondary,.danger{border:0;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer;transition:.15s}
+.primary{background:var(--accent);color:white;box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 18%,transparent)}.primary:hover{transform:translateY(-1px)}
+.secondary{background:var(--soft);color:var(--ink)}.danger{background:#f7e8e8;color:#8b3030}
+table{width:100%;border-collapse:collapse;table-layout:auto} .card{min-width:0;overflow-x:auto}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:13px}th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}tr:last-child td{border-bottom:0}tr:hover td{background:color-mix(in srgb,var(--soft) 45%,transparent)}
+.action{color:var(--accent);cursor:pointer;text-decoration:none;font-weight:650}.action:hover{text-decoration:underline}
+.pill,.tag{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:10px;margin:2px}.pill{background:var(--soft);color:var(--muted)}.tag{background:var(--accent2);color:var(--accent)}
+.empty{text-align:center;color:var(--muted);padding:38px 22px;font-size:13px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;padding:34px 22px;text-align:center;background:linear-gradient(180deg,color-mix(in srgb,var(--soft) 55%,transparent),transparent);border:1px dashed var(--line);border-radius:14px}
+.empty-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:var(--accent2);color:var(--accent);font-size:21px;margin-bottom:13px}
+.empty-title{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:5px}
+.empty-desc{max-width:430px;color:var(--muted);font-size:12px;line-height:1.7}
+.empty-action{margin-top:14px}.notice{background:#fff8df;border:1px solid #eadca7;border-radius:10px;padding:12px;font-size:12px;color:#655c3c}body.dark .notice{background:#302d22;color:#ded5b5;border-color:#50482f}
+dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);padding:0;background:var(--card);color:var(--ink);box-shadow:0 28px 90px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(7,20,28,.48);backdrop-filter:blur(3px)}dialog .inner{padding:24px}
+.calendar-head{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:16px}.weekday{text-align:center;color:var(--muted);font-size:10px;font-weight:700;padding:7px}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day{min-height:112px;border:1px solid var(--line);border-radius:11px;background:var(--card);padding:8px;cursor:pointer;transition:.15s}.day:hover{border-color:var(--accent);box-shadow:0 5px 15px rgba(0,0,0,.04)}.day.other{opacity:.35}.day.today{outline:2px solid var(--accent);outline-offset:-2px}.daynum{font-size:11px;font-weight:800}.event{font-size:10px;background:var(--accent2);color:var(--accent);padding:5px 6px;border-radius:6px;margin-top:5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.timeline{border-left:2px solid var(--line);margin-left:8px;padding-left:22px}.timeline-item{margin:0 0 22px;position:relative}.timeline-item:before{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:var(--accent);left:-28px;top:4px;box-shadow:0 0 0 4px var(--accent2)}
+.kanban{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:14px;overflow-x:auto;align-items:start;padding:2px}.kanban-col{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:11px;min-height:450px}.kanban-col h3{font-size:12px;margin:4px 5px 12px;color:var(--muted)}
+.task-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;cursor:grab;box-shadow:0 4px 14px rgba(31,49,61,.04);transition:.16s}.task-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(31,49,61,.08)}.task-card.dragging{opacity:.42;transform:rotate(1deg)}.kanban-col.dragover{outline:2px dashed var(--accent)}.task-title{font-weight:750;font-size:13px}.due-overdue{color:#a13b3b;font-weight:750}.due-today{color:#a56324;font-weight:750}.sub-progress{height:5px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:7px}.sub-progress>i{display:block;height:100%;background:var(--accent);border-radius:99px}.subtask-row{display:flex;gap:8px;align-items:center;margin:6px 0}.subtask-row input[type=text]{flex:1}.task-done{opacity:.55}.task-done .task-title{text-decoration:line-through}.task-meta{font-size:10px;color:var(--muted);margin-top:7px}.priority-high{border-left:4px solid #b85b5b}.priority-medium{border-left:4px solid #c69a45}.priority-low{border-left:4px solid #5d9070}
+.checklist{display:grid;gap:8px}.checkitem{display:flex;align-items:center;gap:9px;padding:9px 10px;background:var(--soft);border-radius:9px}.checkitem input{width:auto}.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.print-plan{page-break-inside:avoid}
+.theme-swatch{width:30px;height:30px;border-radius:50%;border:3px solid transparent;padding:0;cursor:pointer;box-shadow:0 0 0 1px var(--line)}.theme-swatch.selected{border-color:var(--card);box-shadow:0 0 0 2px var(--ink)}
+.risk-normal{background:#e8f3ed;color:#35654c}.risk-watch{background:#fff2cf;color:#765c16}.risk-high{background:#f8dddd;color:#8b3030}.lock-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}.lock-screen.show{display:flex}.lock-box{width:min(420px,100%);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:var(--shadow)}.privacy-strip{font-size:11px;color:var(--muted);display:flex;gap:12px;align-items:center;flex-wrap:wrap}.session-mode-fields{display:none}.session-mode-fields.active{display:block}
+.view-toggle{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:3px}.view-toggle button{border:0;background:transparent;color:var(--muted);padding:7px 13px;border-radius:7px;cursor:pointer;font-weight:700}.view-toggle button.active{background:var(--card);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.week-grid{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:8px;overflow-x:auto;padding-top:14px}.week-day{min-height:360px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px}.week-day.today{outline:2px solid var(--accent);outline-offset:-2px}.week-date{font-size:12px;font-weight:800;margin-bottom:9px}.week-event{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:9px;padding:9px;margin:7px 0;cursor:pointer}.week-event:hover{box-shadow:var(--shadow)}.list-date{font-size:12px;font-weight:800;color:var(--muted);padding:18px 2px 7px}.list-event{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border-bottom:1px solid var(--line);cursor:pointer}.list-event:hover{background:var(--soft)}.list-time{font-weight:800;color:var(--accent)}
+#toastBox{position:fixed;right:22px;bottom:22px;background:#24414e;color:#fff;padding:11px 15px;border-radius:10px;display:none;z-index:40;box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:12px}
+@media(max-width:720px){
+ .plan-grid{grid-template-columns:1fr}
+ .shell{display:block;min-height:0}
+ nav{display:block;position:relative;top:auto;left:auto;bottom:auto;height:auto;max-height:none;width:100%;overflow:visible;border-right:0;border-bottom:1px solid var(--line);padding:8px;background:var(--card);white-space:normal;z-index:1}
+ nav .group{display:none}
+ nav>button,nav .nav-parent{display:flex;width:100%!important;min-width:0!important;align-items:center;justify-content:space-between;padding:9px 11px;margin:2px 0;font-size:12px}
+ nav button:hover{transform:none}
+ .nav-section{display:block;width:100%;margin:2px 0;position:static}
+ .nav-children{display:none;position:static;min-width:0;width:100%;margin:2px 0 6px;padding:3px 0 3px 12px;background:transparent;border:0;border-radius:0;box-shadow:none;z-index:auto}
+ .nav-section.open .nav-children{display:block}
+ .nav-children button{display:block;width:100%;min-width:0;white-space:normal;padding:8px 10px;margin:1px 0}
+ main{margin-left:0;width:100%;padding:20px 15px;overflow-x:hidden}
+ .grid,.two{grid-template-columns:1fr}
+ .kanban{grid-template-columns:repeat(4,260px);overflow-x:auto}
+ .day{min-height:82px}.calendar-toolbar{align-items:flex-start}.calendar-toolbar>.row{width:100%}.view-toggle{width:100%;margin-top:8px}.view-toggle button{flex:1}.week-grid{grid-template-columns:repeat(7,230px)}.list-event{grid-template-columns:58px minmax(0,1fr)}.list-event>.pill{display:none}
+ header{padding:0 16px;position:relative;top:auto}
+}
+@media print{header,nav,.no-print{display:none!important}.shell{display:block}main{padding:0}.view{display:none!important}.view.active{display:block!important}.card{border:0;box-shadow:none}body{background:#fff;color:#000}}
+.password-wrap{position:relative}.password-wrap input{padding-right:44px}.password-eye{position:absolute;right:5px;top:5px;width:34px;height:34px;padding:0;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}.caps-hint{display:none;color:#a56324;font-size:12px;margin-top:5px}
+</style>
+</head>
+<body>
+<header><div><h1 id="appTitle">心理咨询师工作台</h1><small id="appSubtitle">本地心理咨询记录与工作管理</small></div><div class="row"><div><div id="saveStatus">已保存在本机</div><div class="privacy-strip">数据只保存在本机加密数据库中，不上传云端</div></div><button class="secondary no-print" style="padding:7px 10px" onclick="lockWorkspace()">锁定</button></div></header>
+<div class="shell">
+<nav class="no-print">
+<div class="group">工作台</div>
+<button data-view="dashboard" class="active">今日工作台</button>
+<button data-view="calendar">日程表</button>
+<button data-view="clients">来访者</button>
+<button data-view="tasks">任务看板</button>
+
+<div class="nav-section open" data-nav-section="records">
+<button type="button" class="nav-parent" onclick="toggleNavSection('records')"><span>记录与工作</span><span class="nav-chevron">⌄</span></button>
+<div class="nav-children">
+<button data-view="sessions">咨询记录</button>
+<button data-view="templates">记录模板</button>
+<button data-view="quicknotes">随手记</button>
+<button data-view="goals">咨询目标 / 待办</button>
+</div></div>
+
+<div class="nav-section" data-nav-section="practice">
+<button type="button" class="nav-parent" onclick="toggleNavSection('practice')"><span>执业管理</span><span class="nav-chevron">⌄</span></button>
+<div class="nav-children">
+<button data-view="finance">收入 / 收费</button>
+<button data-view="recent">最近查看</button>
+<button data-view="archive">归档</button>
+<button data-view="referrals">转介网络</button>
+<button data-view="search">全局搜索</button>
+</div></div>
+
+<div class="nav-section" data-nav-section="system">
+<button type="button" class="nav-parent" onclick="toggleNavSection('system')"><span>系统设置</span><span class="nav-chevron">⌄</span></button>
+<div class="nav-children">
+<button data-view="datacenter">数据中心</button>
+<button data-view="security">安全与审计</button>
+<button data-view="settings">个性化设置</button>
+<button data-view="privacy">隐私与合规</button>
+</div></div>
+<div class="nav-developer"><div>程序开发</div><a onclick="openMindX()">Mind X社区 ↗</a><div class="nav-version">Desktop V3.1.3</div></div>
+</nav>
+<main>
+<section id="dashboard" class="view active">
+<div class="between row"><div><h2>今日工作台</h2><div class="muted">集中处理今日咨询、待办、待收费和建档未完成项目</div></div><div class="row"><button class="secondary" onclick="openEvent()">+ 添加日程</button><button class="primary" onclick="openClient()">+ 新建来访者</button></div></div>
+<div class="grid"><div class="card"><div class="muted">活跃来访者</div><div class="stat" id="statClients">0</div></div><div class="card"><div class="muted">咨询记录</div><div class="stat" id="statSessions">0</div></div><div class="card"><div class="muted">今日安排</div><div class="stat" id="statToday">0</div></div></div>
+<div id="backupReminder"></div>
+<div class="two">
+<div class="card"><div class="between row"><h3>今日日程</h3><a class="action" onclick="showView('calendar')">查看日程</a></div><div id="todayEvents"></div></div>
+<div class="card"><div class="between row"><h3>今日咨询</h3><a class="action" onclick="showView('calendar')">查看日程</a></div><div id="todayConsultations"></div></div>
+<div class="card"><div class="between row"><h3>今日待办</h3><a class="action" onclick="showView('tasks')">查看任务</a></div><div id="todayTasks"></div></div>
+<div class="card"><div class="between row"><h3>待收费</h3><a class="action" onclick="showView('finance')">查看收费</a></div><div id="pendingFees"></div></div>
+<div class="card"><div class="between row"><h3>建档未完成</h3><a class="action" onclick="showView('clients')">查看来访者</a></div><div id="incompleteIntake"></div></div>
+<div class="card"><div class="between row"><h3>待补咨询记录</h3><a class="action" onclick="showView('calendar')">查看日程</a></div><div id="missingSessionNotes"></div></div>
+</div>
+<div class="card"><h3>最近咨询</h3><div id="recentSessions"></div></div>
+</section>
+
+<section id="calendar" class="view">
+<div class="between row"><div><h2>日程表</h2><div class="muted">咨询、督导、行政与个人安排</div></div><button class="primary" onclick="openEvent()">+ 新建日程</button></div>
+<div class="card">
+<div class="between row calendar-toolbar">
+<div class="row"><button class="secondary" id="calPrevBtn" onclick="changeCalendar(-1)">←</button><button class="secondary" onclick="calendarToday()">今天</button><button class="secondary" id="calNextBtn" onclick="changeCalendar(1)">→</button><h3 id="calendarTitle" style="margin:0 0 0 8px"></h3></div>
+<div class="view-toggle"><button id="calMonthBtn" onclick="setCalendarView('month')">月</button><button id="calWeekBtn" onclick="setCalendarView('week')">周</button><button id="calListBtn" onclick="setCalendarView('list')">清单</button></div>
+</div>
+<div id="calendarMonthView"><div class="calendar-head"><div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div><div class="weekday">日</div></div><div class="calendar" id="calendarGrid"></div></div>
+<div id="calendarWeekView" style="display:none"><div class="week-grid" id="weekGrid"></div></div>
+<div id="calendarListView" style="display:none"><div class="row" style="margin:14px 0 4px"><label class="checkitem" style="display:inline-flex;margin:0"><input id="showPastEvents" type="checkbox" onchange="renderCalendar()"> 显示过去日程</label></div><div id="calendarList"></div></div>
+</div>
+</section>
+
+<section id="clients" class="view">
+<div class="between row"><div><h2>来访者</h2><div class="muted">咨询档案与工作记录</div></div><button class="primary" onclick="openClient()">+ 新建来访者</button></div>
+<div class="card"><input id="clientFilter" placeholder="按姓名、标签、状态搜索…" oninput="renderClients()"><div id="clientsTable"></div></div>
+</section>
+
+<section id="sessions" class="view"><div class="between row"><div><h2>咨询记录</h2><div class="muted">结构化记录每次心理咨询</div></div><button class="primary" onclick="openSession()">+ 新建咨询记录</button></div><div class="row" style="margin:14px 0 0"><div class="view-toggle"><button id="sessionTabAll" class="active" onclick="setSessionTab('all')">全部记录</button><button id="sessionTabMissing" onclick="setSessionTab('missing')">待补记录</button></div></div><div class="card"><div id="sessionsTable"></div><div id="missingSessionsList" style="display:none"></div></div></section>
+
+<section id="templates" class="view">
+<div class="between row"><div><h2>咨询记录模板</h2><div class="muted">先把常用的提示语、问题框架或固定文字做成模板；以后新建咨询记录时选择模板，再根据本次咨询实际情况修改和补充。</div></div><button class="primary" onclick="openTemplate()">+ 新建模板</button></div>
+<div class="card">
+<h3>怎么使用</h3>
+<div class="muted" style="line-height:1.9">① 建立模板，例如「首次咨询」「常规咨询」「阶段回顾」　→　② 在各字段写入每次希望自动出现的提示或框架　→　③ 新建咨询记录时选择模板　→　④ 根据本次咨询内容修改、补充后保存。</div>
+<div class="notice" style="margin-top:14px"><b>模板 ≠ 咨询记录。</b> 模板适合放记录框架，不要预先填写某位来访者的实际咨询内容。使用模板时，只会填入当前为空的字段，不会覆盖你已经输入的内容。</div>
+</div>
+<div class="card"><div class="between row"><div><h3>我的模板</h3><div class="muted">你创建的模板会保存在本机数据库中。</div></div><button class="secondary" onclick="createExampleTemplate()">使用示例创建模板</button></div><div id="templatesList"></div></div>
+</section>
+<section id="quicknotes" class="view"><div class="between row"><div><h2>随手记</h2><div class="muted">快速记录想法，可选择关联来访者；置顶的随手记会排在最前面</div></div><button class="primary" onclick="openQuick()">+ 新建随手记</button></div><div class="card"><input id="quickFilter" placeholder="搜索随手记标题、内容、议题…" oninput="renderQuick()"><div id="quickList"></div></div></section>
+<section id="tasks" class="view">
+<div class="between row"><div><h2>任务看板</h2><div class="muted">拖拽任务卡片即可调整任务状态。任务可以关联来访者，也可以用于一般工作事项。</div></div><button class="primary" onclick="openTask()">+ 新建任务</button></div>
+<div class="card"><div class="row"><div class="view-toggle" id="taskQuickToggle"><button data-tq="all" class="active" onclick="setTaskQuick('all')">全部</button><button data-tq="overdue" onclick="setTaskQuick('overdue')">已逾期</button><button data-tq="today" onclick="setTaskQuick('today')">今天到期</button><button data-tq="week" onclick="setTaskQuick('week')">本周到期</button></div>
+<select id="taskFilter" style="width:auto" onchange="renderTasks()"><option value="all">全部任务</option><option value="client">仅来访者相关</option><option value="general">仅一般任务</option></select>
+<select id="taskClientFilter" style="width:auto" onchange="renderTasks()"><option value="">全部来访者</option></select>
+<select id="taskCategoryFilter" style="width:auto" onchange="renderTasks()"><option value="">全部分类</option><option>咨询记录</option><option>来访者跟进</option><option>行政事务</option><option>财务收费</option><option>督导学习</option><option>其他</option></select>
+<input id="taskSearch" placeholder="搜索任务…" style="width:180px" oninput="renderTasks()"></div>
+<div class="muted" style="margin-top:8px">已完成的任务保留 14 天后自动归档，可在「归档」中恢复。带重复设置的任务完成后会自动生成下一次。</div></div>
+<div class="kanban" id="kanban"></div></section>
+
+<section id="finance" class="view">
+<div class="between row"><div><h2>收入 / 收费记录</h2><div class="muted">记录咨询收费、收款状态和其他执业收入。金额仅作本地记录。</div></div><button class="primary" onclick="openFinance()">+ 新建收费记录</button></div>
+<div class="grid">
+<div class="card"><div class="muted">已收款总额</div><div class="stat" id="finPaid">¥0.00</div></div>
+<div class="card"><div class="muted">待收款总额</div><div class="stat" id="finPending">¥0.00</div></div>
+<div class="card"><div class="muted">本月已收</div><div class="stat" id="finMonth">¥0.00</div></div>
+</div>
+<div class="card row">
+<select id="finStatusFilter" style="width:auto" onchange="renderFinance()"><option value="">全部状态</option><option>已收款</option><option>待收款</option><option>部分收款</option><option>免收费</option><option>已取消</option></select>
+<select id="finClientFilter" style="width:auto" onchange="renderFinance()"><option value="">全部来访者 / 来源</option></select>
+</div>
+<div class="card"><div id="financeTable"></div></div>
+</section>
+<section id="goals" class="view"><div class="between row"><div><h2>咨询目标 / 待办</h2><div class="muted">记录咨询目标、家庭作业和后续事项</div></div><button class="primary" onclick="openGoal()">+ 新建</button></div><div class="card" id="goalsTable"></div></section>
+<section id="recent" class="view"><h2>最近查看</h2><div class="card" id="recentList"></div></section>
+<section id="archive" class="view"><h2>归档</h2><div class="muted">已结束或归档的咨询关系与任务</div><div class="card" id="archiveList"></div><div class="card"><h3>已归档任务</h3><div id="archivedTasksList"></div></div></section>
+<section id="referrals" class="view"><div class="between row"><div><h2>转介网络</h2><div class="muted">保存可转介的咨询师、精神科医生、医院与机构资源；需要转介时可快速查找</div></div><button class="primary" onclick="openReferral()">+ 新增转介资源</button></div><div class="card"><input id="referralFilter" placeholder="按名称、类型、擅长领域、地区搜索…" oninput="renderReferrals()"><div id="referralsTable"></div></div></section>
+<section id="search" class="view"><h2>全局搜索</h2><div class="card"><input id="globalSearch" placeholder="搜索来访者、记录、目标、随手记、标签…" oninput="renderSearch()"><div id="searchResults"></div></div></section>
+
+<section id="datacenter" class="view"><h2>数据中心</h2>
+<div class="grid"><div class="card"><div class="muted">来访者</div><div class="stat" id="dcClients">0</div></div><div class="card"><div class="muted">咨询记录</div><div class="stat" id="dcSessions">0</div></div><div class="card"><div class="muted">日程</div><div class="stat" id="dcEvents">0</div></div></div>
+<div class="card"><h3>备份与恢复</h3><p class="notice"><b>数据只保存在本机加密数据库中，不上传云端。</b> 标准模式下，数据库位于系统为本应用分配的本地数据目录（实际路径见下方）；便携版自带 <b>portable.mode</b> 标记，数据保存在程序同文件夹的 Data 子文件夹中，可整体放在 U 盘或移动硬盘上使用；安装版如在程序旁放置该标记文件，也会切换为便携模式。删除数据文件夹、云盘同步冲突、磁盘或设备故障都可能导致数据丢失，请保留备份，并避免在公共或共享设备上使用；<b>不要把数据库或备份文件存入云盘、网盘或境外服务器</b>，以免造成个人信息失控扩散或出境风险。</p>
+<div class="two" style="margin:14px 0"><div><label>备份提醒</label><select id="backupInterval" onchange="saveBackupPreference()"><option value="0">不提醒</option><option value="7">每 7 天</option><option value="14">每 14 天</option><option value="30">每 30 天</option></select></div><div><label>上次备份</label><div id="lastBackupText" style="padding:10px 0">尚未记录</div></div></div>
+<p class="muted">桌面版在每次成功登录后，若当天尚无自动备份，会自动创建一份加密数据库备份，并保留最近 30 份自动备份；也可以随时手动备份。JSON 导出是明文文件，仅作为额外备份手段，请只保存到安全位置。</p><div class="row" style="margin-bottom:12px"><button class="secondary" onclick="desktopBackup()">立即备份数据库</button><button class="secondary" onclick="openBackupFolder()">打开备份文件夹</button><button class="secondary" onclick="openDataFolder()">打开数据文件夹</button></div><p id="desktopDbInfo" class="muted"></p>
+<div class="row"><button class="primary" onclick="exportBackup()">导出完整 JSON 备份</button><button class="secondary" onclick="importFile.click()">恢复备份</button><input id="importFile" hidden type="file" accept=".json" onchange="importBackup(event)"></div>
+<p id="storageInfo" class="muted"></p><button class="danger" onclick="clearAll()">删除本机数据库中的全部工作台数据</button></div></section>
+
+<section id="settings" class="view"><h2>个性化设置</h2><div class="two">
+<div class="card"><h3>工作台</h3><label>工具名称</label><input id="toolName"><label>副标题</label><input id="toolSubtitle"><label>主题</label><select id="theme" onchange="previewAppearance()"><option value="light">浅色</option><option value="dark">深色</option></select>
+<label>主题色</label><div class="muted">选择按钮、链接、标签和当前菜单使用的主要颜色。</div>
+<div class="row" id="themeChoices" style="margin-top:8px">
+<button type="button" class="theme-swatch" data-color="#4a778b" style="background:#4a778b" title="门户蓝灰（Mind X Provider Portal）" onclick="chooseTheme('#4a778b')"></button>
+<button type="button" class="theme-swatch" data-color="#28736a" style="background:#28736a" title="海松绿" onclick="chooseTheme('#28736a')"></button>
+<button type="button" class="theme-swatch" data-color="#376f9e" style="background:#376f9e" title="静谧蓝" onclick="chooseTheme('#376f9e')"></button>
+<button type="button" class="theme-swatch" data-color="#575f9e" style="background:#575f9e" title="靛青" onclick="chooseTheme('#575f9e')"></button>
+<button type="button" class="theme-swatch" data-color="#66806a" style="background:#66806a" title="鼠尾草绿" onclick="chooseTheme('#66806a')"></button>
+<button type="button" class="theme-swatch" data-color="#946b52" style="background:#946b52" title="暖棕" onclick="chooseTheme('#946b52')"></button>
+<button type="button" class="theme-swatch" data-color="#756884" style="background:#756884" title="紫灰" onclick="chooseTheme('#756884')"></button>
+<button type="button" class="theme-swatch" data-color="#9a6f76" style="background:#9a6f76" title="玫瑰灰" onclick="chooseTheme('#9a6f76')"></button>
+<label style="margin:0">自定义 <input id="customThemeColor" type="color" value="#4a778b" style="width:42px;height:34px;padding:2px;vertical-align:middle" onchange="chooseTheme(this.value)"></label>
+<input type="hidden" id="themeColor"></div><button class="primary" style="margin-top:14px" onclick="saveSettings()">保存设置</button></div>
+<div class="card"><h3>打印 / PDF</h3><label>机构 / 工作室名称</label><input id="practiceName"><label>咨询师姓名</label><input id="counselorName"><label>页脚文字</label><input id="pdfFooter"><p class="muted">打印来访者档案时，这些信息会显示在记录底部。</p></div>
+<div class="card"><h3>账户与自动锁定</h3><p class="muted">工作台使用独立用户账户控制访问。锁定后必须重新输入当前用户密码。</p><label>无操作自动锁定</label><select id="autoLockMinutes" onchange="saveAutoLockSetting()"><option value="5">5 分钟</option><option value="10">10 分钟</option><option value="15">15 分钟（推荐）</option><option value="30">30 分钟</option><option value="60">60 分钟</option><option value="0">关闭自动锁定</option></select><div class="row" style="margin-top:12px"><button class="secondary" onclick="lockWorkspace()">立即锁定</button></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>修改登录密码</h3><label>当前密码</label><input id="currentUserPassword" type="password" autocomplete="current-password"><label>新密码</label><input id="newUserPassword" type="password" autocomplete="new-password" placeholder="至少 10 位"><label>再次输入新密码</label><input id="confirmUserPassword" type="password" autocomplete="new-password"><button class="primary" style="margin-top:12px" onclick="changeUserPassword()">修改密码</button></div></div>
+<div class="card"><h3>关于</h3><p><b>心理咨询师工作台</b></p><p class="muted">Desktop V3.1.3 · 本地加密数据存储</p><p>程序开发：<a class="action" onclick="openMindX()">Mind X社区 ↗</a></p></div>
+</div></section>
+
+<section id="security" class="view"><h2>安全与审计</h2><div class="two"><div class="card"><h3>当前用户</h3><p id="currentUserInfo" class="muted">—</p><p>审计日志用于记录登录、锁定以及工作台数据修改。普通界面不提供修改或删除审计日志的功能。</p><button class="secondary" onclick="verifyAuditLog()">校验审计日志完整性</button><p id="auditVerifyResult" class="muted"></p></div><div class="card"><h3>自动锁定</h3><p class="muted">达到设定的无操作时间后，工作台会遮蔽全部来访者资料并要求重新登录。</p><p id="autoLockSummary"></p><button class="secondary" onclick="lockWorkspace()">立即锁定</button></div></div><div class="card" id="userManagementCard"><div class="between row"><div><h3>用户与权限</h3><div class="muted">管理员可以创建或停用用户。咨询师账户可使用工作台，但不能管理其他用户。</div></div><button class="secondary" onclick="renderUsers()">刷新</button></div><div id="usersTable"></div><div class="two" style="margin-top:14px"><div><label>用户名</label><input id="newAccountUsername"></div><div><label>显示姓名</label><input id="newAccountDisplayName"></div><div><label>角色</label><select id="newAccountRole"><option>咨询师</option><option>管理员</option></select></div><div><label>初始密码</label><input id="newAccountPassword" type="password" placeholder="至少 10 位"></div></div><button class="primary" style="margin-top:12px" onclick="createUserAccount()">创建用户</button></div><div class="card"><div class="between row"><h3>审计日志</h3><button class="secondary" onclick="renderAuditLog()">刷新</button></div><div id="auditTable"><div class="empty">正在读取审计日志…</div></div></div></section>
+
+
+<section id="privacy" class="view"><h2>隐私与合规</h2><div class="muted">依据《个人信息保护法》《数据安全法》《精神卫生法》整理的工作台数据处理说明与实用模板。本页内容为产品功能说明与一般信息，不构成法律意见；具体合规义务请结合你的执业形态确认。</div>
+<div class="card"><h3>本工作台如何处理个人信息</h3>
+<p>· <b>本地储存、不上传云端：</b>来访者资料只保存在你电脑上的加密数据库中（SQLCipher），本软件不联网传输、不设云端账户、不做数据分析或广告。</p>
+<p>· <b>敏感个人信息：</b>心理健康信息属于《个人信息保护法》第二十八条规定的敏感个人信息。处理前应取得来访者的<b>单独同意</b>（建档清单已内置该确认项）；处理不满 14 周岁未成年人的个人信息，还应取得其监护人同意。</p>
+<p>· <b>安全措施（第五十一条）：</b>数据库加密存储；本地多账户与角色权限；无操作自动锁定；登录、锁定、备份、导出、删除等操作写入防篡改审计日志；每日自动加密备份（保留最近 30 份）+ 手动备份。</p>
+<p>· <b>来访者权利：</b>来访者有权查阅、复制、更正其个人信息，并在法定情形下请求删除。来访者档案页提供「导出本档案数据」与「彻底删除」功能以便响应这些请求；删除前请先确认专业伦理与相关规范对记录保存期限的要求。</p>
+<p>· <b>个人信息保护影响评估（第五十五条）：</b>处理敏感个人信息应事前进行影响评估并留存记录（评估报告与审计日志建议至少保存三年）。评估要点：处理目的与必要性、信息种类与敏感程度、安全措施、共享/委托/出境情况（本工作台均为无）、事故应急预案。</p>
+<p>· <b>安全事件处置（第五十七条）：</b>如发生或可能发生数据泄露，应立即采取补救措施，并依法通知主管部门与受影响的来访者。</p>
+<p>· <b>请勿做的事：</b>不要把数据库或备份文件存入云盘、网盘或境外服务器（可能构成个人信息出境与失控扩散）；不要在公共或共享电脑上使用本工作台；导出文件为明文，仅可保存在安全位置并在使用后及时删除。</p>
+<p>· <b>保密义务：</b>依《精神卫生法》，心理咨询人员应尊重来访者隐私、为其个人信息保密；心理咨询记录的保存、使用与披露应遵守专业伦理规范。</p></div>
+<div class="card"><div class="between row"><h3>《个人信息处理告知》模板（可打印交来访者签署）</h3><button class="secondary no-print" onclick="window.print()">打印 / 导出 PDF</button></div><div id="privacyNoticeTemplate"></div></div>
+</section>
+<section id="clientDetail" class="view"><div class="row no-print"><button class="secondary" onclick="showView('clients')">← 返回来访者</button><button class="secondary" onclick="window.print()">打印 / 导出 PDF</button></div><div id="clientDetailBody"></div></section>
+</main></div>
+
+<dialog id="clientDialog"><div class="inner"><h3>来访者档案</h3><input type="hidden" id="cId">
+<div class="two"><div><label>姓名 / 称呼</label><input id="cName"></div><div><label>状态</label><select id="cStatus"><option>进行中</option><option>暂停</option><option>已结束</option><option>已归档</option></select></div></div>
+<div class="two"><div><label>出生年月日</label><input id="cDob" type="date" class="date-cn"></div><div><label>性别</label><select id="cGender"><option value="">未填写</option><option>女性</option><option>男性</option><option>非二元</option><option>其他</option><option>不愿透露</option></select></div></div>
+<div class="two"><div><label>联系方式</label><input id="cContact"></div><div><label>首次咨询日期</label><input id="cStart" type="date" class="date-cn"></div></div>
+<label>议题（用逗号分隔）</label><input id="cTags" placeholder="例如：焦虑，职业发展，亲密关系">
+<label>咨询诉求 / 目标</label><textarea id="cGoals"></textarea><label>背景与重要信息</label><textarea id="cContext"></textarea>
+<div class="card" style="box-shadow:none;margin-top:16px"><h3>建档清单</h3>
+<div class="checklist">
+<label class="checkitem"><input type="checkbox" id="ckConsent"> 服务协议 / 知情同意已完成</label>
+<label class="checkitem"><input type="checkbox" id="ckConfidentiality"> 保密原则及保密例外已说明</label>
+<label class="checkitem"><input type="checkbox" id="ckPayment"> 收费标准及付款方式已确认</label>
+<label class="checkitem"><input type="checkbox" id="ckPolicy"> 取消 / 改期政策已确认</label>
+<label class="checkitem"><input type="checkbox" id="ckContact"> 联系方式已确认</label>
+<label class="checkitem"><input type="checkbox" id="ckEmergency"> 紧急联系人 / 紧急情况安排已确认</label>
+<label class="checkitem"><input type="checkbox" id="ckOnlineSafety"> 网络咨询所在地 / 紧急处理方式已确认（如适用）</label>
+<label class="checkitem"><input type="checkbox" id="ckMinor"> 未成年人及监护人同意事项已确认（如适用）</label>
+<label class="checkitem"><input type="checkbox" id="ckReferral"> 转介 / 精神科或医疗就诊信息已确认（如适用）</label>
+<label class="checkitem"><input type="checkbox" id="ckPrivacy"> 数据保存及隐私说明已告知</label>
+<label class="checkitem"><input type="checkbox" id="ckSensitive"> 敏感个人信息单独同意已取得（健康信息等敏感信息，依《个人信息保护法》须单独同意；不满 14 周岁来访者须经监护人同意）</label>
+</div><div style="margin-top:12px"><label>自定义建档项目</label><div class="row"><input id="ckCustomNew" placeholder="输入自定义项目"><button type="button" class="secondary" onclick="addCustomChecklistItem()">+ 添加</button></div><div id="ckCustomList" class="checklist" style="margin-top:8px"></div></div><label>备注</label><textarea id="ckNotes"></textarea></div>
+
+<div class="row" style="margin-top:14px"><button class="primary" onclick="saveClient()">保存</button><button class="secondary" onclick="clientDialog.close()">取消</button></div></div></dialog>
+
+<dialog id="sessionDialog"><div class="inner"><div class="between row"><h3>心理咨询记录</h3><button class="secondary" type="button" onclick="copyPreviousSession()">从前次咨询记录复制</button></div><input type="hidden" id="sId"><input type="hidden" id="sEventId">
+<div class="card" style="box-shadow:none;margin:10px 0 16px"><div class="two"><div><label>使用记录模板</label><select id="sTemplate" onchange="applyTemplate(this.value)"><option value="">不使用模板</option></select><div class="muted" id="templateHint" style="padding-top:7px">选择模板：套用固定的记录框架。</div></div><div><label>继续上次记录</label><div class="muted" style="padding-top:10px">「从前次咨询记录复制」会复制该来访者上一条真实记录，适合在其基础上继续编辑。</div></div></div></div>
+<div class="two"><div><label>来访者</label><select id="sClient"></select></div><div><label>日期</label><input id="sDate" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div></div><label>记录方式</label><select id="sRecordMode" onchange="updateSessionMode()"><option value="detailed">详细记录</option><option value="simple">简洁记录</option><option value="key">只记关键点</option></select>
+<div class="two"><div><label>时长（分钟）</label><input id="sDuration" type="number"></div><div><label>形式</label><select id="sMode"><option>视频</option><option>面询</option><option>电话</option><option>其他</option></select></div></div>
+<div id="detailedFields" class="session-mode-fields active"><label>本次主题 / 来访者主诉</label><textarea id="sFocus"></textarea><label>重要内容与变化</label><textarea id="sUpdates"></textarea><label>咨询师工作 / 使用的干预</label><textarea id="sWork"></textarea><label>来访者反应 / 洞察</label><textarea id="sResponse"></textarea><label>咨询目标进展 / 课后练习</label><textarea id="sPlan"></textarea><label>下次关注</label><textarea id="sNext"></textarea></div><div id="simpleFields" class="session-mode-fields"><label>本次主题</label><textarea id="sSimpleTheme"></textarea><label>重要变化</label><textarea id="sSimpleChanges"></textarea><label>咨询工作</label><textarea id="sSimpleWork"></textarea><label>后续计划</label><textarea id="sSimplePlan"></textarea></div><div id="keyFields" class="session-mode-fields"><label>本次重点</label><textarea id="sKeyFocus"></textarea><label>风险 / 重要变化</label><textarea id="sKeyRisk"></textarea><label>下次关注</label><textarea id="sKeyNext"></textarea></div>
+<div class="row" style="margin-top:14px"><button class="primary" onclick="saveSession()">保存并完成</button><button class="secondary" onclick="sessionDialog.close()">关闭</button><span class="muted" id="sessionDraftStatus">尚未自动保存</span></div></div></dialog>
+
+<dialog id="eventDialog"><div class="inner"><h3>日程</h3><input type="hidden" id="eId">
+<div class="two"><div><label>日期</label><input id="eDate" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div><div><label>时间</label><input id="eTime" type="time"></div></div>
+<label>类型</label><select id="eType" onchange="syncEventDefaults()"><option>心理咨询</option><option>督导</option><option>行政</option><option>个人</option><option>其他</option></select>
+<label>关联来访者（可选）</label><select id="eClient" onchange="syncEventDefaults()"></select>
+<div class="two"><div><label>咨询形式（可选）</label><select id="eMode"><option value="">未设置</option><option>视频</option><option>面询</option><option>电话</option></select></div><div><label>时区</label><select id="eTimezone"><option value="Asia/Shanghai">北京时间（UTC+8）</option><option value="Asia/Hong_Kong">香港时间（UTC+8）</option><option value="Asia/Tokyo">东京时间（UTC+9）</option><option value="America/New_York">美国东部时间</option><option value="America/Chicago">美国中部时间</option><option value="America/Denver">美国山地时间</option><option value="America/Los_Angeles">美国太平洋时间</option><option value="Europe/London">伦敦时间</option><option value="Australia/Sydney">悉尼时间</option></select></div></div>
+<label>标题</label><input id="eTitle" placeholder="关联来访者的心理咨询默认显示“心理咨询”"><label>备注</label><textarea id="eNotes"></textarea>
+<div class="row" style="margin-top:14px"><button class="primary" onclick="saveEvent()">保存</button><button class="secondary" id="eRecordBtn" style="display:none" onclick="openRecordFromEvent()">填写咨询记录</button><button class="secondary" onclick="eventDialog.close()">取消</button></div></div></dialog>
+
+
+
+<dialog id="templateDialog"><div class="inner"><h3>咨询记录模板</h3><input type="hidden" id="rtId">
+<label>模板名称</label><input id="rtName" placeholder="例如：常规个体咨询、首次咨询、阶段回顾">
+<div class="notice">这里是在设计「记录框架」，不是填写某一次咨询记录。可以写提示语、问题框架或你每次都会使用的固定文字。</div>
+<label>本次主题 / 来访者主诉</label><div class="muted">例如：本次主要关注：／来访者希望讨论：</div><textarea id="rtFocus" placeholder="本次主要关注：&#10;来访者希望讨论："></textarea>
+<label>重要内容与变化</label><div class="muted">例如：自上次咨询以来的重要变化：／本次主要讨论：</div><textarea id="rtUpdates" placeholder="自上次咨询以来的重要变化：&#10;本次主要讨论："></textarea>
+<label>咨询师工作 / 使用的干预</label><div class="muted">例如：本次使用的干预／咨询师回应：</div><textarea id="rtWork" placeholder="本次使用的干预：&#10;咨询师回应："></textarea>
+<label>来访者反应 / 洞察</label><div class="muted">例如：来访者的反应：／新的觉察或理解：</div><textarea id="rtResponse" placeholder="来访者的反应：&#10;新的觉察或理解："></textarea>
+<label>咨询目标进展 / 课后练习</label><div class="muted">例如：目标进展：／本次约定或练习：</div><textarea id="rtPlan" placeholder="目标进展：&#10;本次约定或练习："></textarea>
+<label>下次关注</label><div class="muted">例如：下次继续关注：</div><textarea id="rtNext" placeholder="下次继续关注："></textarea>
+<div class="row" style="margin-top:14px"><button class="primary" onclick="saveTemplate()">保存模板</button><button class="secondary" onclick="templateDialog.close()">取消</button></div>
+</div></dialog>
+<dialog id="planDialog"><div class="inner"><h3>咨询方案</h3><input type="hidden" id="pClientId">
+<div class="two"><div><label>方案开始日期</label><input id="pStart" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div><div><label>预计咨询总时间（月）</label><input id="pMonths" type="number" min="0" step="0.5" placeholder="例如：6"></div></div>
+<label>主要咨询目标</label><textarea id="pGoals"></textarea>
+<label>初步咨询思路 / 工作重点</label><textarea id="pApproach"></textarea>
+<div class="two"><div><label>咨询频率</label><select id="pFrequency"><option value="">未设置</option><option>每周</option><option>每两周</option><option>每月</option><option>不固定</option><option>自定义</option></select></div><div><label>当前阶段</label><select id="pStage"><option value="">未设置</option><option>初始评估</option><option>建立工作关系</option><option>核心工作</option><option>巩固整合</option><option>结束阶段</option></select></div></div><div class="two"><div><label>方案复盘日期</label><input id="pReviewDate" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div><div><label>自定义频率 / 安排</label><input id="pFrequencyNote" placeholder="例如：视情况调整"></div></div>
+<label>阶段性评估 / 调整计划</label><textarea id="pReview"></textarea>
+<label>其他说明</label><textarea id="pNotes"></textarea>
+<div class="row" style="margin-top:14px"><button class="primary" onclick="savePlan()">保存咨询方案</button><button class="secondary" onclick="planDialog.close()">关闭</button><span class="muted" id="planDraftStatus">尚未自动保存</span></div>
+</div></dialog>
+<dialog id="riskDialog"><div class="inner"><h3>风险与转介</h3><input type="hidden" id="rClientId"><div class="two"><div><label>当前关注级别</label><select id="rLevel"><option>正常</option><option>需关注</option><option>高风险</option></select></div><div><label>最近评估日期</label><input id="rDate" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div></div><div class="checklist"><label class="checkitem"><input type="checkbox" id="rSelfHarm"> 自伤 / 自杀风险需要关注</label><label class="checkitem"><input type="checkbox" id="rHarmOthers"> 伤人风险需要关注</label><label class="checkitem"><input type="checkbox" id="rMentalState"> 精神状态明显异常需要关注</label><label class="checkitem"><input type="checkbox" id="rSafety"> 家庭暴力 / 虐待或其他安全问题需要关注</label><label class="checkitem"><input type="checkbox" id="rMedical"> 已建议精神科 / 医疗评估</label><label class="checkitem"><input type="checkbox" id="rReferred"> 已进行转介</label></div><label>转介机构 / 专业人员</label><input id="rReferralTo"><label>风险观察、处置与转介备注</label><textarea id="rNotes"></textarea><div class="notice">本模块用于记录咨询师的风险关注、处置和转介工作，不用于精神障碍诊断。</div><div class="notice" style="margin-top:10px"><b>紧急情况（中国大陆）：</b>如来访者正处于即时危险中，请拨打 <b>110</b>（报警）或 <b>120</b>（急救）；全国统一心理援助热线 <b>12356</b> 提供 24 小时心理援助。</div><div class="row" style="margin-top:14px"><button class="primary" onclick="saveRisk()">保存</button><button class="secondary" onclick="riskDialog.close()">取消</button></div></div></dialog>
+<dialog id="endDialog"><div class="inner"><h3>结束咨询</h3><input type="hidden" id="endClientId"><div class="notice">结束咨询后，来访者将从进行中的来访者列表移至归档区域。既有咨询记录、收费、任务等不会删除。</div><div class="two"><div><label>结束日期</label><input id="endDate" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div><div><label>结束原因</label><select id="endReason"><option>双方协商结束</option><option>来访者主动结束</option><option>失联</option><option>转介</option><option>目标基本完成</option><option>其他</option></select></div></div><label>咨询目标完成情况 / 阶段总结</label><textarea id="endOutcome"></textarea><label>后续建议</label><textarea id="endFollowup"></textarea><div class="two"><div><label>未来重新联系</label><select id="endRecontact"><option value="">未记录</option><option>可以</option><option>不建议 / 不适用</option><option>需重新评估</option></select></div><div><label>未结费用</label><select id="endFees"><option>已确认无未结费用</option><option>仍有未结费用</option><option>尚未核对</option></select></div></div><label class="checkitem"><input type="checkbox" id="endSummaryDone"> 结束记录 / 总结已完成</label><div class="row" style="margin-top:14px"><button class="primary" onclick="completeEnding()">完成并归档</button><button class="secondary" onclick="endDialog.close()">取消</button></div></div></dialog>
+<dialog id="financeDialog"><div class="inner"><h3>收费 / 收入记录</h3><input type="hidden" id="fId">
+<div class="two"><div><label>日期</label><input id="fDate" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div><div><label>类型</label><select id="fType"><option>心理咨询</option><option>督导</option><option>培训 / 讲座</option><option>咨询 / 顾问</option><option>其他收入</option></select></div></div>
+<label>关联来访者（可选）</label><select id="fClient"></select>
+<div class="two"><div><label>应收金额（元）</label><input id="fAmount" type="number" min="0" step="0.01"></div><div><label>实收金额（元）</label><input id="fReceived" type="number" min="0" step="0.01"></div></div>
+<div class="two"><div><label>收款状态</label><select id="fStatus"><option>已收款</option><option>待收款</option><option>部分收款</option><option>免收费</option><option>已取消</option></select></div><div><label>收款方式</label><select id="fMethod"><option value="">未记录</option><option>微信</option><option>支付宝</option><option>银行转账</option><option>现金</option><option>其他</option></select></div></div>
+<label>项目 / 说明</label><input id="fDescription" placeholder="例如：个体心理咨询">
+<label>备注</label><textarea id="fNotes"></textarea>
+<div class="row" style="margin-top:14px"><button class="primary" onclick="saveFinance()">保存</button><button class="secondary" onclick="financeDialog.close()">取消</button></div>
+</div></dialog>
+<dialog id="taskDialog"><div class="inner"><h3>任务</h3><input type="hidden" id="tId">
+<div class="two"><div><label>任务标题</label><input id="tTitle"></div><div><label>状态</label><select id="tStatus"><option>待处理</option><option>进行中</option><option>等待中</option><option>已完成</option></select></div></div>
+<div class="two"><div><label>关联来访者（可选）</label><select id="tClient"></select></div><div><label>优先级</label><select id="tPriority"><option>中</option><option>高</option><option>低</option></select></div></div>
+<div class="two"><div><label>截止日期</label><input id="tDue" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div><div><label>标签</label><input id="tTags" placeholder="回访, 行政, 文档"></div></div>
+<div class="two"><div><label>分类</label><select id="tCategory"><option value="">自动归类</option><option>咨询记录</option><option>来访者跟进</option><option>行政事务</option><option>财务收费</option><option>督导学习</option><option>其他</option></select></div><div><label>重复</label><select id="tRepeat"><option value="">不重复</option><option value="weekly">每周</option><option value="biweekly">每两周</option><option value="monthly">每月</option></select></div></div>
+<label>任务说明</label><textarea id="tDetails"></textarea>
+<label>子任务清单</label><div id="tSubtasks"></div>
+<div class="row"><input id="tSubtaskNew" placeholder="添加一个子任务…" style="flex:1"><button type="button" class="secondary" onclick="addSubtask()">+ 添加</button></div>
+<div class="row" style="margin-top:14px"><button class="primary" onclick="saveTask()">保存</button><button class="secondary" onclick="taskDialog.close()">取消</button></div></div></dialog>
+<dialog id="referralDialog"><div class="inner"><h3>转介资源</h3><input type="hidden" id="rfId">
+<div class="two"><div><label>姓名 / 机构名称</label><input id="rfName"></div><div><label>类型</label><select id="rfType"><option>心理咨询师</option><option>精神科医生</option><option>医院</option><option>心理咨询机构</option><option>其他专业人员</option><option>其他</option></select></div></div>
+<div class="two"><div><label>擅长领域（用逗号分隔）</label><input id="rfSpecialty" placeholder="例如：青少年，创伤，家庭治疗"></div><div><label>所在地区</label><input id="rfLocation"></div></div>
+<div class="two"><div><label>联系电话</label><input id="rfPhone"></div><div><label>微信 / 邮箱</label><input id="rfContact"></div></div>
+<label>收费说明</label><input id="rfFee" placeholder="例如：¥400–600 / 次，以对方公布为准">
+<label>备注</label><textarea id="rfNotes"></textarea>
+<label class="checkitem" style="margin-top:12px"><input type="checkbox" id="rfFavorite"> 设为常用（排在前面）</label>
+<div class="row" style="margin-top:14px"><button class="primary" onclick="saveReferral()">保存</button><button class="secondary" onclick="referralDialog.close()">取消</button></div></div></dialog>
+<dialog id="quickDialog"><div class="inner"><h3>随手记</h3><input type="hidden" id="qId"><label>关联来访者（可选）</label><select id="qClient"></select><label>标题</label><input id="qTitle"><label>内容</label><textarea id="qBody" style="min-height:180px"></textarea><label>议题（用逗号分隔）</label><input id="qTags"><label class="checkitem" style="margin-top:12px"><input type="checkbox" id="qPinned"> 置顶这条随手记</label><div class="row" style="margin-top:14px"><button class="primary" onclick="saveQuick()">保存</button><button class="secondary" onclick="quickDialog.close()">关闭</button><span class="muted" id="quickDraftStatus">尚未自动保存</span></div></div></dialog>
+
+<dialog id="goalDialog"><div class="inner"><h3>咨询目标 / 待办</h3><input type="hidden" id="gId"><label>来访者</label><select id="gClient"></select><label>类型</label><select id="gType"><option>咨询目标</option><option>待办事项</option><option>课后练习</option></select><label>标题</label><input id="gTitle"><label>详情</label><textarea id="gDetails"></textarea><div class="two"><div><label>状态</label><select id="gStatus"><option>待开始</option><option>进行中</option><option>已完成</option><option>暂停</option></select></div><div><label>日期 / 截止日期</label><input id="gDue" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div></div><div class="row" style="margin-top:14px"><button class="primary" onclick="saveGoal()">保存</button><button class="secondary" onclick="goalDialog.close()">取消</button></div></div></dialog>
+<div id="lockScreen" class="lock-screen show"><div class="lock-box"><h2 id="lockTitle">用户登录</h2><p id="lockHelp" class="muted">请输入用户账户登录。</p><div id="setupFields" style="display:none"><label>用户名</label><input id="setupUsername" autocomplete="username"><label>显示姓名</label><input id="setupDisplayName"><label>设置登录密码</label><div class="password-wrap"><input id="setupPassword" type="password" data-password-field autocomplete="new-password" placeholder="至少 10 位"><button type="button" class="password-eye" onclick="togglePassword('setupPassword',this)" title="显示密码">◉</button></div><div class="caps-hint" id="setupPasswordCaps">大写锁定已开启</div><label>再次输入密码</label><div class="password-wrap"><input id="setupPassword2" type="password" data-password-field autocomplete="new-password"><button type="button" class="password-eye" onclick="togglePassword('setupPassword2',this)" title="显示密码">◉</button></div><div class="caps-hint" id="setupPassword2Caps">大写锁定已开启</div><button id="setupAdminButton" type="button" class="primary" style="margin-top:12px">创建管理员账户</button></div><div id="loginFields"><label>用户名</label><input id="loginUsername" autocomplete="username"><label>密码</label><div class="password-wrap"><input id="unlockPassword" type="password" data-password-field autocomplete="current-password" onkeydown="if(event.key==='Enter')unlockWorkspace()"><button type="button" class="password-eye" onclick="togglePassword('unlockPassword',this)" title="显示密码">◉</button></div><div class="caps-hint" id="unlockPasswordCaps">大写锁定已开启</div><div class="row" style="margin-top:12px"><button id="loginButton" type="button" class="primary">登录</button></div></div><p id="unlockError" class="muted"></p></div></div><div id="toastBox"></div>
+<script>
+
+/* Tauri 2 runtime compatibility bridge (V3.0.2) */
+(function () {
+  function resolveInvoke() {
+    if (window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function') {
+      return window.__TAURI__.core.invoke.bind(window.__TAURI__.core);
+    }
+    if (window.__TAURI_INTERNALS__ && typeof window.__TAURI_INTERNALS__.invoke === 'function') {
+      return window.__TAURI_INTERNALS__.invoke.bind(window.__TAURI_INTERNALS__);
+    }
+    return null;
+  }
+
+  const invoke = resolveInvoke();
+  window.__COUNSELOR_TAURI_INVOKE__ = invoke;
+  let stateCache = null;
+  const prefCache = new Map();
+  let writeQueue = Promise.resolve();
+
+  function visibleRuntimeError(message) {
+    console.error(message);
+    const show = () => {
+      const el = document.getElementById('unlockError');
+      if (el) {
+        el.textContent = message;
+        el.style.color = '#b42318';
+      }
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show, { once: true });
+    else show();
+  }
+
+  if (!invoke) {
+    visibleRuntimeError('桌面后端连接失败：未检测到 Tauri API。请确认使用的是最新重新构建并安装的桌面版。');
+    window.desktopDB = null;
+    return;
+  }
+
+  const reportWriteError = (e) => {
+    // Preference writes are non-critical: log + status line only.
+    // Business-data writes go through persistWorkspace(), which alerts.
+    console.error('本地数据库保存失败', e);
+    try {
+      const status = document.getElementById('saveStatus');
+      if (status) status.textContent = '保存失败';
+    } catch (_) {}
+  };
+  const queueWrite = (fn) => {
+    const pending = writeQueue.then(fn, fn);
+    writeQueue = pending.catch(() => {});
+    return pending;
+  };
+  const hydrate = async () => {
+    stateCache = await invoke('db_get_state');
+    try {
+      const all = await invoke('db_list_prefs');
+      if (all && typeof all === 'object') Object.entries(all).forEach(([k, v]) => prefCache.set(k, v));
+    } catch (_) {
+      const common = ['autoLockMinutes', 'calendarView'];
+      await Promise.all(common.map(async key => {
+        try { prefCache.set(key, await invoke('db_get_pref', { key })); } catch (_) {}
+      }));
+    }
+  };
+
+  window.desktopDB = {
+    async startupStatus() { return invoke('startup_status'); },
+    async authStatus() { return invoke('auth_status'); },
+    async authSetup(input) {
+      const r = await invoke('startup_setup', { input });
+      if (r && r.ok) await hydrate();
+      return r;
+    },
+    async authLogin(input) {
+      const r = await invoke('startup_login', { input });
+      if (r && r.ok) await hydrate();
+      return r;
+    },
+    async authLock() {
+      await writeQueue;
+      stateCache = null; prefCache.clear();
+      return invoke('auth_lock');
+    },
+    getState() { return stateCache; },
+    setState(json) {
+      stateCache = json;
+      const pending = queueWrite(() => invoke('db_set_state', { json }));
+      pending.catch((e) => { console.error('本地数据库保存失败', e); });
+      return pending;
+    },
+    getPref(key) { return prefCache.has(key) ? prefCache.get(key) : null; },
+    setPref(key, val) {
+      const value = String(val);
+      prefCache.set(key, value);
+      return queueWrite(() => invoke('db_set_pref', { key, val: value })).catch(reportWriteError);
+    },
+    removePref(key) {
+      prefCache.delete(key);
+      return queueWrite(() => invoke('db_remove_pref', { key })).catch(reportWriteError);
+    },
+    async info() { await writeQueue; return invoke('db_info'); },
+    async backup() { await writeQueue; return invoke('db_backup'); },
+    async auditList(limit) { await writeQueue; return invoke('audit_list', { limit }); },
+    async auditVerify() { await writeQueue; return invoke('audit_verify'); },
+    async auditEvent(input) { await writeQueue; return invoke('audit_event', { input }); },
+    async usersList() { return invoke('users_list'); },
+    async usersCreate(input) { return invoke('users_create', { input }); },
+    async usersSetActive(input) { return invoke('users_set_active', { input }); },
+    async changePassword(input) { await writeQueue; return invoke('change_password', { input }); },
+    async openDataFolder() { return invoke('open_path', { kind: 'data' }); },
+    async openBackupFolder() { return invoke('open_path', { kind: 'backup' }); },
+    async openExternal(url) { return invoke('open_external', { url }); },
+    async flush() { await writeQueue; return true; },
+    async _hydrate() { await hydrate(); }
+  };
+})();
+
+
+const KEY='ziji_counseling_workspace_v1';
+// Bind element IDs explicitly. Do not rely on Chromium's legacy named-window behavior.
+document.querySelectorAll('[id]').forEach(el=>{if(el.id&&typeof window[el.id]!=='function')window[el.id]=el});
+const blank=()=>({schemaVersion:1,clients:[],sessions:[],events:[],quickNotes:[],goals:[],tasks:[],finance:[],templates:[],referrals:[],recent:[],settings:{toolName:'心理咨询师工作台',subtitle:'本地心理咨询记录与工作管理',practiceName:'',counselorName:'',pdfFooter:'',themeColor:'#4a778b',backupInterval:14,lastBackup:'',theme:'light',passwordHash:''}});
+let db=blank(),calDate=new Date(),currentAuthUser=null,lastActivity=Date.now(),autoLockTimer=null;
+function load(){try{const raw=window.desktopDB?window.desktopDB.getState():null;const x=raw?JSON.parse(raw):null;if(!x)return blank();if(x.settings&&x.settings.themeColor==='#28736a')x.settings.themeColor='#4a778b';x.tasks=x.tasks||[];x.finance=x.finance||[];x.templates=x.templates||[];x.referrals=x.referrals||[];return {...blank(),...x,settings:{...blank().settings,...(x.settings||{})}}}catch(e){return blank()}}
+async function persistWorkspace(reason = '') {
+  // The ONLY business-data write path: in-memory state -> SQLCipher commit -> status.
+  if (!window.desktopDB) { saveStatus.textContent = '保存失败'; return false; }
+  saveStatus.textContent = '正在保存…';
+  try {
+    await window.desktopDB.setState(JSON.stringify(db));
+    saveStatus.textContent = '已保存在本机 · ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    return true;
+  } catch (err) {
+    console.error('数据库保存失败', reason, err);
+    saveStatus.textContent = '保存失败';
+    alert('数据保存失败：' + (err?.message || err || '未知错误') + '\n\n数据尚未写入本地数据库，请不要关闭程序，并先复制当前录入内容后重试。');
+    return false;
+  }
+}
+function save(){ persistWorkspace(); renderAll(); return true }
+function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function nl(s=''){return esc(s).replace(/\n/g,'<br>')} function cn(cid){return db.clients.find(c=>c.id===cid)?.name||'未关联来访者'}
+function todayLocal(){return dateStr(new Date())}
+function validDate(v){return /^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(new Date(v+'T00:00:00').getTime())}
+function requireDate(v,label='日期'){if(!validDate(v)){alert(label+'请使用 YYYY-MM-DD 格式，例如 2026-08-17。');return false}return true}
+function normalizeDateValue(v){const m=String(v||'').trim().match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:String(v||'').trim()}
+function setupDateInputs(){document.querySelectorAll('.date-cn').forEach(el=>{if(el.dataset.dateReady)return;el.dataset.dateReady='1';el.addEventListener('blur',()=>{el.value=normalizeDateValue(el.value)})})}
+function toast(t){toastEl=document.getElementById('toastBox');toastEl.textContent=t;toastEl.style.display='block';setTimeout(()=>toastEl.style.display='none',1600)}
+function openMindX(){if(window.desktopDB&&window.desktopDB.openExternal)window.desktopDB.openExternal('https://mindx.us/zh/');}
+function showView(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(v).classList.add('active');document.querySelectorAll('nav button[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));syncNavSections(v);if(v==='security'){renderAuditLog();renderUsers();}if(v==='calendar')renderCalendar();if(v==='sessions')renderSessions();if(v==='quicknotes')renderQuick();if(v==='tasks')renderTasks();if(v==='goals')renderGoals();if(v==='search')renderSearch();if(v==='referrals')renderReferrals();if(v==='privacy')renderPrivacyNotice();window.scrollTo({top:0,left:0,behavior:'auto'})}
+function toggleNavSection(name){const el=document.querySelector(`[data-nav-section="${name}"]`);if(el)el.classList.toggle('open')}
+function syncNavSections(view){document.querySelectorAll('.nav-section').forEach(sec=>{const has=!!sec.querySelector(`[data-view="${view}"]`);sec.classList.toggle('has-active',has);if(has)sec.classList.add('open')})}
+document.querySelectorAll('nav button[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+function clientLabel(c){const bits=[c.name];if(c.dob)bits.push(c.dob);if(c.gender)bits.push(c.gender);return bits.map(esc).join(' · ')}
+function options(){sTemplate.innerHTML='<option value="">不使用模板</option>'+db.templates.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');const o='<option value="">不关联</option>'+db.clients.map(c=>`<option value="${c.id}">${clientLabel(c)}</option>`).join('');sClient.innerHTML='<option value="">请选择来访者</option>'+db.clients.map(c=>`<option value="${c.id}">${clientLabel(c)}</option>`).join('');eClient.innerHTML=o;qClient.innerHTML=o;tClient.innerHTML=o;fClient.innerHTML=o;taskClientFilter.innerHTML='<option value="">全部来访者</option>'+db.clients.map(c=>`<option value="${c.id}">${clientLabel(c)}</option>`).join('');finClientFilter.innerHTML='<option value="">全部来访者 / 来源</option>'+db.clients.map(c=>`<option value="${c.id}">${clientLabel(c)}</option>`).join('');gClient.innerHTML='<option value="">请选择来访者</option>'+db.clients.map(c=>`<option value="${c.id}">${clientLabel(c)}</option>`).join('')}
+function safeRender(name,fn){try{fn()}catch(err){console.error('渲染失败：'+name,err)}}
+function renderAll(){setupDateInputs();safeRender('标题',()=>{appTitle.textContent=db.settings.toolName;appSubtitle.textContent=db.settings.subtitle;document.body.classList.toggle('dark',db.settings.theme==='dark');statClients.textContent=db.clients.filter(c=>c.status==='进行中').length;statSessions.textContent=db.sessions.length;const today=todayLocal();statToday.textContent=db.events.filter(e=>e.date===today).length;dcClients.textContent=db.clients.length;dcSessions.textContent=db.sessions.length;dcEvents.textContent=db.events.length});safeRender('选项',options);safeRender('备份状态',renderBackupStatus);safeRender('备份提醒',renderBackupReminder);safeRender('今日工作台',renderTodayWorkspace);safeRender('今日',renderToday);safeRender('最近咨询',renderRecentSessions);safeRender('来访者',renderClients);safeRender('咨询记录',renderSessions);safeRender('随手记',renderQuick);safeRender('任务',renderTasks);safeRender('收费',renderFinance);safeRender('模板',renderTemplates);safeRender('目标',renderGoals);safeRender('最近查看',renderRecent);safeRender('归档',renderArchive);safeRender('转介网络',renderReferrals);safeRender('日程',renderCalendar);safeRender('设置',renderSettings);safeRender('存储',storage)}
+
+function saveBackupPreference(){db.settings.backupInterval=Number(backupInterval.value||0);window.desktopDB&&window.desktopDB.setState(JSON.stringify(db));renderBackupStatus();renderBackupReminder();toast('备份提醒设置已保存')}
+function daysSince(iso){if(!iso)return Infinity;return Math.floor((Date.now()-new Date(iso).getTime())/86400000)}
+function renderBackupStatus(){if(typeof backupInterval!=='undefined')backupInterval.value=String(db.settings.backupInterval??14);if(typeof lastBackupText!=='undefined'){const d=daysSince(db.settings.lastBackup);lastBackupText.textContent=!db.settings.lastBackup?'尚未记录':d===0?'今天已备份':`${d} 天前已备份`}}
+function hasBusinessData(){return ['clients','sessions','events','quickNotes','goals','tasks','finance','templates'].some(k=>(db[k]||[]).length>0)}
+function renderBackupReminder(){if(typeof backupReminder==='undefined')return;if(!hasBusinessData()){backupReminder.innerHTML='';return}const n=Number(db.settings.backupInterval??14),d=daysSince(db.settings.lastBackup);if(!n||d<n){backupReminder.innerHTML='';return}backupReminder.innerHTML=`<div class="notice between row" style="margin:0 0 16px"><div><b>建议备份数据</b><div>${db.settings.lastBackup?`距离上次完整备份已经 ${d} 天。`:'已有工作数据但还没有记录过完整备份。'} 建议导出一份当前数据。</div></div><button class="primary" onclick="exportBackup()">立即导出备份</button></div>`}
+function emptyState(icon,title,desc,actionLabel='',action=''){return `<div class="empty-state"><div class="empty-icon">${icon}</div><div class="empty-title">${esc(title)}</div><div class="empty-desc">${esc(desc)}</div>${actionLabel&&action?`<button class="secondary empty-action" onclick="${action}">${esc(actionLabel)}</button>`:''}</div>`}
+function renderTodayWorkspace(){
+ const today=todayLocal();
+ const consults=db.events.filter(e=>e.date===today&&e.type==='心理咨询').sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+ todayConsultations.innerHTML=consults.length?consults.map(e=>{const rec=e.clientId?sessionForEvent(e):null;return `<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${esc(e.time||'时间未定')}</b> · ${e.clientId?`<a class="action" onclick="viewClient('${e.clientId}')">${esc(cn(e.clientId))}</a>`:esc(e.title)}${e.mode?` <span class="pill">${esc(e.mode)}</span>`:''}<div class="muted">${esc(e.title)} · ${esc(e.timezone==='Asia/Shanghai'?'北京时间':e.timezone||'北京时间')}</div>${e.clientId?(rec?`<a class="action" onclick="openSession('${rec.id}')">查看咨询记录</a>`:`<a class="action" onclick="openSession('','${e.clientId}','${e.date}','${e.id}')">填写咨询记录</a>`):''}</div>`}).join(''):'<div class="empty">今天暂无心理咨询安排</div>';
+ const missing=missingConsultEvents();
+ missingSessionNotes.innerHTML=missing.length?missing.slice(0,10).map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${esc(cn(e.clientId))}</b> · ${esc(e.date)} ${esc(e.time||'')}<div><a class="action" onclick="openSession('','${e.clientId}','${e.date}','${e.id}')">补写咨询记录</a></div></div>`).join(''):'<div class="empty">没有已发生但尚未填写记录的咨询</div>';
+ const tasks=(db.tasks||[]).filter(t=>t.status!=='已完成'&&(!t.due||t.due<=today)).sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+ todayTasks.innerHTML=tasks.length?tasks.slice(0,8).map(t=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${esc(t.title)}</b> <span class="pill">${esc(t.status)}</span>${t.clientId?` <span class="tag">${esc(cn(t.clientId))}</span>`:''}<div class="muted">${t.due?'截止 '+esc(t.due):'未设置截止日期'} · 优先级 ${esc(t.priority)}</div></div>`).join(''):'<div class="empty">暂无到期或未设日期的待办</div>';
+ const fees=(db.finance||[]).filter(f=>['待收款','部分收款'].includes(f.status)&&Number(f.amount||0)>Number(f.received||0));
+ pendingFees.innerHTML=fees.length?fees.slice(0,8).map(f=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${f.clientId?esc(cn(f.clientId)):esc(f.description||f.type)}</b><div class="muted">${esc(f.date)} · 待收 ${money(Math.max(0,Number(f.amount||0)-Number(f.received||0)))}</div></div>`).join(''):'<div class="empty">暂无待收费项目</div>';
+ const labels=[['服务协议 / 知情同意','consent'],['保密原则及例外','confidentiality'],['收费标准及付款方式','payment'],['联系方式','contact'],['紧急联系人 / 紧急安排','emergency'],['取消 / 改期政策','policy'],['网络咨询安全安排','onlineSafety'],['未成年人 / 监护人事项','minor'],['转介 / 医疗信息','referral'],['数据保存及隐私说明','privacy'],['敏感个人信息单独同意','sensitiveConsent']];
+ const incomplete=db.clients.filter(c=>c.status==='进行中').map(c=>({c,missing:labels.filter(x=>!(c.checklist||{})[x[1]])})).filter(x=>x.missing.length);
+ incompleteIntake.innerHTML=incomplete.length?incomplete.slice(0,8).map(x=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><a class="action" onclick="viewClient('${x.c.id}')"><b>${esc(x.c.name)}</b></a><div class="muted">未完成：${x.missing.map(m=>esc(m[0])).join('、')}</div></div>`).join(''):'<div class="empty">所有进行中来访者的建档清单均已完成</div>';
+}
+function renderToday(){const d=todayLocal(),a=db.events.filter(e=>e.date===d).sort((a,b)=>(a.time||'').localeCompare(b.time||''));todayEvents.innerHTML=a.length?a.map(e=>`<p><b>${esc(e.time||'全天')}</b> ${esc(e.title)} <span class="pill">${esc(e.type)}</span>${e.clientId?' · '+esc(cn(e.clientId)):''}</p>`).join(''):'<div class="empty">今天暂无安排</div>'}
+function renderRecentSessions(){const a=[...db.sessions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);recentSessions.innerHTML=a.length?a.map(s=>`<p><b>${esc(cn(s.clientId))}</b> · ${esc(s.date)}<br><span class="muted">${esc(s.focus).slice(0,70)}</span></p>`).join(''):emptyState('≡','还没有咨询记录','完成咨询后，可在这里建立记录并使用你设置的记录模板。','新建咨询记录',"openSession()")}
+function openClient(cid=''){const c=db.clients.find(x=>x.id===cid)||{id:'',name:'',status:'进行中',contact:'',dob:'',gender:'',start:'',tags:[],goals:'',context:'',checklist:{},plan:{}};const ck=c.checklist||{};cId.value=c.id;cName.value=c.name;cStatus.value=c.status;cDob.value=c.dob||'';cGender.value=c.gender||'';cContact.value=c.contact;cStart.value=c.start;cTags.value=(c.tags||[]).join(', ');cGoals.value=c.goals;cContext.value=c.context;ckConsent.checked=!!ck.consent;ckConfidentiality.checked=!!ck.confidentiality;ckPayment.checked=!!ck.payment;ckContact.checked=!!ck.contact;ckEmergency.checked=!!ck.emergency;ckPolicy.checked=!!ck.policy;ckOnlineSafety.checked=!!ck.onlineSafety;ckMinor.checked=!!ck.minor;ckReferral.checked=!!ck.referral;ckPrivacy.checked=!!ck.privacy;ckSensitive.checked=!!ck.sensitiveConsent;ckNotes.value=ck.notes||'';renderCustomChecklist(ck.custom||[]);clientDialog.showModal()}
+function renderCustomChecklist(items=[]){ckCustomList.innerHTML=(items||[]).map((it,i)=>`<label class="checkitem"><input type="checkbox" class="ck-custom-check" data-index="${i}" ${it.checked?'checked':''}> <input class="ck-custom-label" data-index="${i}" value="${esc(it.label||'')}" style="margin:0;flex:1"><button type="button" class="secondary ck-custom-remove" data-index="${i}" style="padding:4px 8px">删除</button></label>`).join('');ckCustomList.querySelectorAll('.ck-custom-remove').forEach(b=>b.onclick=()=>{b.closest('.checkitem').remove()})}
+function addCustomChecklistItem(){const label=ckCustomNew.value.trim();if(!label)return;const items=getCustomChecklist();items.push({label,checked:false});renderCustomChecklist(items);ckCustomNew.value=''}
+function getCustomChecklist(){return [...ckCustomList.querySelectorAll('.checkitem')].map(row=>({label:row.querySelector('.ck-custom-label')?.value.trim()||'',checked:!!row.querySelector('.ck-custom-check')?.checked})).filter(x=>x.label)}
+function saveClient(){if(!cName.value.trim())return alert('请填写来访者姓名或称呼。');cDob.value=normalizeDateValue(cDob.value);cStart.value=normalizeDateValue(cStart.value);if(cDob.value&&!requireDate(cDob.value,'出生年月日'))return;if(cStart.value&&!requireDate(cStart.value,'首次咨询日期'))return;const isNew=!cId.value;const x={id:cId.value||uid(),name:cName.value.trim(),status:cStatus.value,dob:cDob.value,gender:cGender.value,contact:cContact.value.trim(),start:cStart.value,tags:cTags.value.split(/[,，]/).map(x=>x.trim()).filter(Boolean),goals:cGoals.value,context:cContext.value,checklist:{consent:ckConsent.checked,confidentiality:ckConfidentiality.checked,payment:ckPayment.checked,contact:ckContact.checked,emergency:ckEmergency.checked,policy:ckPolicy.checked,onlineSafety:ckOnlineSafety.checked,minor:ckMinor.checked,referral:ckReferral.checked,privacy:ckPrivacy.checked,sensitiveConsent:ckSensitive.checked,custom:getCustomChecklist(),notes:ckNotes.value},plan:(db.clients.find(c=>c.id===(cId.value||''))?.plan||{}),updatedAt:new Date().toISOString()};const i=db.clients.findIndex(c=>c.id===x.id);i>=0?db.clients[i]={...db.clients[i],...x}:db.clients.push({...x,createdAt:new Date().toISOString()});clientDialog.close();if(isNew&&typeof clientFilter!=='undefined')clientFilter.value='';save();options();renderClients();if(isNew)showView('clients');toast(isNew?'来访者已建立，并已加入来访者列表':'来访者档案已保存')}
+function renderClients(){const q=(clientFilter.value||'').toLowerCase(),a=db.clients.filter(c=>c.status!=='已归档'&&c.status!=='已结束').filter(c=>JSON.stringify(c).toLowerCase().includes(q));clientsTable.innerHTML=a.length?`<table><tr><th>来访者</th><th>出生年月日</th><th>性别</th><th>状态</th><th>首次咨询</th><th>记录</th><th></th></tr>${a.map(c=>`<tr><td><a class="action" onclick="viewClient('${c.id}')">${esc(c.name)}</a><br>${(c.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</td><td>${esc(c.dob||'—')}</td><td>${esc(c.gender||'—')}</td><td>${esc(c.status)}</td><td>${esc(c.start)}</td><td>${db.sessions.filter(s=>s.clientId===c.id).length}</td><td><a class="action" onclick="openClient('${c.id}')">编辑</a> · <a class="action" onclick="archiveClient('${c.id}')">归档</a></td></tr>`).join('')}</table>`:'<div class="empty">暂无来访者</div>'}
+function touch(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;db.recent=db.recent.filter(r=>r.id!==cid);db.recent.unshift({id:cid,name:c.name,time:new Date().toISOString()});db.recent=db.recent.slice(0,15);window.desktopDB&&window.desktopDB.setState(JSON.stringify(db));renderRecent()}
+function viewClient(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;touch(cid);const ss=db.sessions.filter(s=>s.clientId===cid).sort((a,b)=>b.date.localeCompare(a.date)),gs=db.goals.filter(g=>g.clientId===cid),qs=db.quickNotes.filter(q=>q.clientId===cid);clientDetailBody.innerHTML=`<div class="card"><div class="between row"><div><h2>${esc(c.name)}</h2><span class="pill">${esc(c.status)}</span><div class="muted" style="margin-top:7px">出生年月日：${esc(c.dob||'未填写')} · 性别：${esc(c.gender||'未填写')}</div> ${(c.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><div class="no-print"><button class="primary" onclick="openSession('', '${c.id}')">+ 咨询记录</button> <button class="secondary" onclick="exportClientData('${c.id}')">导出本档案数据</button> <button class="danger" onclick="deleteClientForever('${c.id}')">彻底删除</button> <button class="secondary" onclick="openEvent('', '${c.id}')">+ 日程</button> <button class="secondary" onclick="openRisk('${c.id}')">风险与转介</button> <button class="secondary" onclick="openEnding('${c.id}')">结束咨询</button></div></div><p><b>联系方式：</b>${esc(c.contact)||'—'}　<b>首次咨询：</b>${esc(c.start)||'—'}</p><h3>咨询诉求 / 目标</h3><p>${nl(c.goals)||'—'}</p><h3>背景与重要信息</h3><p>${nl(c.context)||'—'}</p></div>
+<div class="two">
+<div class="card"><div class="between row"><h3>建档清单</h3><button class="secondary no-print" onclick="openClient('${c.id}')">编辑</button></div>
+${(()=>{const ck=c.checklist||{},items=[['服务协议 / 知情同意',ck.consent],['保密原则及保密例外',ck.confidentiality],['收费标准及付款方式',ck.payment],['取消 / 改期政策',ck.policy],['联系方式',ck.contact],['紧急联系人 / 紧急情况安排',ck.emergency],['网络咨询所在地 / 紧急处理方式',ck.onlineSafety],['未成年人及监护人事项',ck.minor],['转介 / 精神科或医疗信息',ck.referral],['数据保存及隐私说明',ck.privacy],['敏感个人信息单独同意',ck.sensitiveConsent],...(ck.custom||[]).map(x=>[x.label,!!x.checked])];return `<div class="checklist">${items.map(i=>`<div class="checkitem"><span>${i[1]?'✓':'○'}</span><span>${i[0]}</span></div>`).join('')}</div>${ck.notes?`<p class="muted">${nl(ck.notes)}</p>`:''}`})()}
+</div>
+<div class="card"><div class="between row"><h3>风险与转介</h3><button class="secondary no-print" onclick="openRisk('${c.id}')">更新</button></div>${(()=>{const r=c.risk||{},cl=r.level==='高风险'?'risk-high':r.level==='需关注'?'risk-watch':'risk-normal';return `<span class="pill ${cl}">${esc(r.level||'正常')}</span><p class="muted">最近评估：${esc(r.date||'未记录')}</p>${r.medical?'<p>已建议精神科 / 医疗评估</p>':''}${r.referred?`<p>已转介${r.referralTo?'：'+esc(r.referralTo):''}</p>`:''}${r.notes?`<p>${nl(r.notes)}</p>`:''}`})()}</div>
+<div class="card print-plan"><div class="between row"><h3>咨询方案</h3><div class="row no-print"><button class="secondary" onclick="openPlan('${c.id}')">编辑方案</button><button class="secondary" onclick="printPlan('${c.id}')">打印 / PDF</button></div></div>
+${(()=>{const p=c.plan||{};return `<div class="plan-grid"><div><div class="muted">开始日期</div><b>${esc(p.start)||'—'}</b></div><div><div class="muted">预计总时间</div><b>${p.months?esc(p.months)+' 个月':'—'}</b></div><div><div class="muted">咨询频率</div><b>${esc(p.frequency)||'—'}${p.frequencyNote?' · '+esc(p.frequencyNote):''}</b></div></div><div class="plan-grid" style="margin-top:12px"><div><div class="muted">当前阶段</div><b>${esc(p.stage)||'—'}</b></div><div><div class="muted">方案复盘日期</div><b>${esc(p.reviewDate)||'—'}</b></div></div><h3 style="margin-top:18px">主要咨询目标</h3><p>${nl(p.goals)||'—'}</p><h3>初步咨询思路 / 工作重点</h3><p>${nl(p.approach)||'—'}</p><h3>阶段性评估 / 调整计划</h3><p>${nl(p.review)||'—'}</p>${p.notes?`<h3>其他说明</h3><p>${nl(p.notes)}</p>`:''}`})()}
+</div></div>
+<div class="two"><div class="card"><h3>目标 / 待办</h3>${gs.length?gs.map(g=>`<p><b>${esc(g.title)}</b> · ${esc(g.status)}<br><span class="muted">${nl(g.details)}</span></p>`).join(''):'<p class="muted">暂无</p>'}</div><div class="card"><h3>关联随手记</h3>${qs.length?qs.map(q=>`<p><b>${esc(q.title)}</b><br>${nl(q.body)}</p>`).join(''):'<p class="muted">暂无</p>'}</div></div><div class="card"><div class="between row"><h3>关联任务</h3><button class="secondary no-print" onclick="openTask('', '${c.id}')">+ 添加任务</button></div>${db.tasks.filter(t=>t.clientId===cid).length?db.tasks.filter(t=>t.clientId===cid).map(t=>`<p><b>${esc(t.title)}</b> · ${esc(t.status)} · 优先级 ${esc(t.priority)}${t.due?' · 截止 '+esc(t.due):''}</p>`).join(''):'<p class="muted">暂无关联任务</p>'}</div><div class="card"><div class="between row"><h3>收费记录</h3><button class="secondary no-print" onclick="openFinance('', '${c.id}')">+ 添加收费</button></div>${db.finance.filter(f=>f.clientId===cid).length?`<table><tr><th>日期</th><th>项目</th><th>应收</th><th>实收</th><th>状态</th></tr>${db.finance.filter(f=>f.clientId===cid).sort((a,b)=>b.date.localeCompare(a.date)).map(f=>`<tr><td>${esc(f.date)}</td><td>${esc(f.description||f.type)}</td><td>${money(f.amount)}</td><td>${money(f.received)}</td><td>${esc(f.status)}</td></tr>`).join('')}</table>`:'<p class="muted">暂无收费记录</p>'}</div><div class="card"><h3>咨询历程</h3><div class="timeline">${ss.length?ss.map(s=>`<div class="timeline-item"><b>${esc(s.date)} · ${esc(s.duration)} 分钟 · ${esc(s.mode)}</b>${s.recordMode==='simple'?`<p><b>本次主题：</b>${nl(s.simpleTheme)}</p><p><b>重要变化：</b>${nl(s.simpleChanges)}</p><p><b>咨询工作：</b>${nl(s.simpleWork)}</p><p><b>后续计划：</b>${nl(s.simplePlan)}</p>`:s.recordMode==='key'?`<p><b>本次重点：</b>${nl(s.keyFocus)}</p><p><b>风险 / 重要变化：</b>${nl(s.keyRisk)}</p><p><b>下次关注：</b>${nl(s.keyNext)}</p>`:`<p><b>主题 / 主诉：</b>${nl(s.focus)}</p><p><b>重要内容与变化：</b>${nl(s.updates)}</p><p><b>咨询师工作：</b>${nl(s.work)}</p><p><b>来访者反应 / 洞察：</b>${nl(s.response)}</p><p><b>目标进展 / 课后练习：</b>${nl(s.plan)}</p><p><b>下次关注：</b>${nl(s.next)}</p>`}</div>`).join(''):'<p class="muted">暂无咨询记录</p>'}</div></div><div style="text-align:center" class="muted">${esc(db.settings.practiceName)}${db.settings.counselorName?' · '+esc(db.settings.counselorName):''}${db.settings.pdfFooter?' · '+esc(db.settings.pdfFooter):''}</div>`;showView('clientDetail')}
+const draftTimers={};
+function draftKey(kind,id='new'){return `draft:${kind}:${id||'new'}`}
+function draftSet(kind,id,data,statusId){clearTimeout(draftTimers[kind]);const st=document.getElementById(statusId);if(st)st.textContent='正在保存草稿…';draftTimers[kind]=setTimeout(()=>{try{window.desktopDB.setPref(draftKey(kind,id),JSON.stringify({...data,_savedAt:new Date().toISOString()}));if(st)st.textContent='已自动保存 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}catch(e){if(st)st.textContent='自动保存失败，请勿关闭程序'}},1200)}
+function draftGet(kind,id){try{const raw=window.desktopDB.getPref(draftKey(kind,id));return raw?JSON.parse(raw):null}catch{return null}}
+function draftClear(kind,id){try{window.desktopDB.removePref(draftKey(kind,id))}catch{}}
+function sessionDraftData(){return {id:sId.value,eventId:sEventId.value,clientId:sClient.value,date:sDate.value,duration:sDuration.value,mode:sMode.value,recordMode:sRecordMode.value,focus:sFocus.value,updates:sUpdates.value,work:sWork.value,response:sResponse.value,plan:sPlan.value,next:sNext.value,simpleTheme:sSimpleTheme.value,simpleChanges:sSimpleChanges.value,simpleWork:sSimpleWork.value,simplePlan:sSimplePlan.value,keyFocus:sKeyFocus.value,keyRisk:sKeyRisk.value,keyNext:sKeyNext.value}}
+function scheduleSessionDraft(){if(!sessionDialog.open)return;const id=sId.value||sEventId.value||`${sClient.value||'new'}:${sDate.value||'new'}`;draftSet('session',id,sessionDraftData(),'sessionDraftStatus')}
+function planDraftData(){return {start:pStart.value,months:pMonths.value,goals:pGoals.value,approach:pApproach.value,frequency:pFrequency.value,stage:pStage.value,reviewDate:pReviewDate.value,frequencyNote:pFrequencyNote.value,review:pReview.value,notes:pNotes.value}}
+function schedulePlanDraft(){if(planDialog.open&&pClientId.value)draftSet('plan',pClientId.value,planDraftData(),'planDraftStatus')}
+function quickDraftData(){return {id:qId.value,clientId:qClient.value,title:qTitle.value,body:qBody.value,tags:qTags.value}}
+function scheduleQuickDraft(){if(!quickDialog.open)return;draftSet('quick',qId.value||'new',quickDraftData(),'quickDraftStatus')}
+function setupAutosave(){
+ ['sClient','sDate','sDuration','sMode','sRecordMode','sFocus','sUpdates','sWork','sResponse','sPlan','sNext','sSimpleTheme','sSimpleChanges','sSimpleWork','sSimplePlan','sKeyFocus','sKeyRisk','sKeyNext'].forEach(id=>{const e=document.getElementById(id);if(e&&!e.dataset.autosave){e.dataset.autosave='1';e.addEventListener('input',scheduleSessionDraft);e.addEventListener('change',scheduleSessionDraft)}});
+ ['pStart','pMonths','pGoals','pApproach','pFrequency','pStage','pReviewDate','pFrequencyNote','pReview','pNotes'].forEach(id=>{const e=document.getElementById(id);if(e&&!e.dataset.autosave){e.dataset.autosave='1';e.addEventListener('input',schedulePlanDraft);e.addEventListener('change',schedulePlanDraft)}});
+ ['qClient','qTitle','qBody','qTags'].forEach(id=>{const e=document.getElementById(id);if(e&&!e.dataset.autosave){e.dataset.autosave='1';e.addEventListener('input',scheduleQuickDraft);e.addEventListener('change',scheduleQuickDraft)}});
+}
+function openPlan(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;const saved=c.plan||{},d=draftGet('plan',cid),p=d||saved;pClientId.value=cid;pStart.value=p.start||'';pMonths.value=p.months||'';pGoals.value=p.goals||'';pApproach.value=p.approach||'';pFrequency.value=p.frequency||'';pStage.value=p.stage||'';pReviewDate.value=p.reviewDate||'';pFrequencyNote.value=p.frequencyNote||'';pReview.value=p.review||'';pNotes.value=p.notes||'';planDraftStatus.textContent=d?'已恢复自动保存的草稿':'尚未自动保存';planDialog.showModal()}
+function savePlan(){pStart.value=normalizeDateValue(pStart.value);if(pStart.value&&!requireDate(pStart.value,'日期'))return;pReviewDate.value=normalizeDateValue(pReviewDate.value);if(pReviewDate.value&&!requireDate(pReviewDate.value,'日期'))return;const c=db.clients.find(x=>x.id===pClientId.value);if(!c)return;c.plan={start:pStart.value,months:pMonths.value,goals:pGoals.value,approach:pApproach.value,frequency:pFrequency.value,stage:pStage.value,reviewDate:pReviewDate.value,frequencyNote:pFrequencyNote.value,review:pReview.value,notes:pNotes.value};c.updatedAt=new Date().toISOString();draftClear('plan',c.id);planDialog.close();save();viewClient(c.id);toast('咨询方案已保存')}
+function printPlan(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;const p=c.plan||{},w=window.open('','_blank','width=900,height=800');w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(c.name)} - 咨询方案</title><style>body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:#222;max-width:820px;margin:40px auto;padding:0 28px;line-height:1.7}h1{font-size:24px;margin-bottom:4px}h2{font-size:16px;border-bottom:1px solid #ddd;padding-bottom:6px;margin-top:24px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;background:#f5f6f7;padding:14px;border-radius:8px}.muted{color:#777;font-size:12px}.footer{text-align:center;color:#777;font-size:11px;margin-top:45px;border-top:1px solid #ddd;padding-top:12px}@media print{body{margin:0 auto}}.password-wrap{position:relative}.password-wrap input{padding-right:44px}.password-eye{position:absolute;right:5px;top:5px;width:34px;height:34px;padding:0;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}.caps-hint{display:none;color:#a56324;font-size:12px;margin-top:5px}
+</style></head><body><h1>心理咨询方案</h1><div class="muted">来访者：${esc(c.name)}</div><div class="meta"><div><span class="muted">开始日期</span><br><b>${esc(p.start)||'—'}</b></div><div><span class="muted">预计咨询总时间</span><br><b>${p.months?esc(p.months)+' 个月':'—'}</b></div><div><span class="muted">咨询频率</span><br><b>${esc(p.frequency)||'—'}${p.frequencyNote?' · '+esc(p.frequencyNote):''}</b></div></div><div class="meta" style="margin-top:12px"><div><span class="muted">当前阶段</span><br><b>${esc(p.stage)||'—'}</b></div><div><span class="muted">方案复盘日期</span><br><b>${esc(p.reviewDate)||'—'}</b></div></div><h2>主要咨询目标</h2><p>${nl(p.goals)||'—'}</p><h2>初步咨询思路 / 工作重点</h2><p>${nl(p.approach)||'—'}</p><h2>阶段性评估 / 调整计划</h2><p>${nl(p.review)||'—'}</p>${p.notes?`<h2>其他说明</h2><p>${nl(p.notes)}</p>`:''}<div class="footer">${esc(db.settings.practiceName)}${db.settings.counselorName?' · '+esc(db.settings.counselorName):''}${db.settings.pdfFooter?' · '+esc(db.settings.pdfFooter):''}</div><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close()}
+function openRisk(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;const r=c.risk||{};rClientId.value=cid;rLevel.value=r.level||'正常';rDate.value=r.date||todayLocal();rSelfHarm.checked=!!r.selfHarm;rHarmOthers.checked=!!r.harmOthers;rMentalState.checked=!!r.mentalState;rSafety.checked=!!r.safety;rMedical.checked=!!r.medical;rReferred.checked=!!r.referred;rReferralTo.value=r.referralTo||'';rNotes.value=r.notes||'';riskDialog.showModal()}
+function saveRisk(){rDate.value=normalizeDateValue(rDate.value);if(rDate.value&&!requireDate(rDate.value,'日期'))return;const c=db.clients.find(x=>x.id===rClientId.value);if(!c)return;c.risk={level:rLevel.value,date:rDate.value,selfHarm:rSelfHarm.checked,harmOthers:rHarmOthers.checked,mentalState:rMentalState.checked,safety:rSafety.checked,medical:rMedical.checked,referred:rReferred.checked,referralTo:rReferralTo.value.trim(),notes:rNotes.value};c.updatedAt=new Date().toISOString();riskDialog.close();save();viewClient(c.id);toast('风险与转介记录已保存')}
+function openEnding(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;const e=c.ending||{};endClientId.value=cid;endDate.value=e.date||todayLocal();endReason.value=e.reason||'双方协商结束';endOutcome.value=e.outcome||'';endFollowup.value=e.followup||'';endRecontact.value=e.recontact||'';endFees.value=e.fees||'尚未核对';endSummaryDone.checked=!!e.summaryDone;endDialog.showModal()}
+function completeEnding(){endDate.value=normalizeDateValue(endDate.value);if(endDate.value&&!requireDate(endDate.value,'日期'))return;const c=db.clients.find(x=>x.id===endClientId.value);if(!c)return;if(!endDate.value)return alert('请填写结束日期。');if(endFees.value==='仍有未结费用'&&!confirm('该来访者仍有未结费用。仍要完成结束咨询并归档吗？'))return;c.ending={date:endDate.value,reason:endReason.value,outcome:endOutcome.value,followup:endFollowup.value,recontact:endRecontact.value,fees:endFees.value,summaryDone:endSummaryDone.checked,completedAt:new Date().toISOString()};c.status='已结束';c.updatedAt=new Date().toISOString();if(save()){endDialog.close();renderArchive();showView('archive');toast('结束咨询流程已完成，来访者已移至归档')}}
+function archiveClient(cid){const c=db.clients.find(x=>x.id===cid);if(c&&confirm('将该来访者移入归档？')){c.status='已归档';save()}}
+function renderArchive(){const a=db.clients.filter(c=>['已归档','已结束'].includes(c.status));archiveList.innerHTML=a.length?a.map(c=>`<p class="between row"><span><b>${esc(c.name)}</b> · ${esc(c.status)}</span><span><a class="action" onclick="viewClient('${c.id}')">查看</a> · <a class="action" onclick="restoreClient('${c.id}')">恢复</a></span></p>`).join(''):'<div class="empty">归档为空</div>';const at=(db.tasks||[]).filter(x=>x.archived);if(typeof archivedTasksList!=='undefined')archivedTasksList.innerHTML=at.length?at.map(x=>`<p class="between row"><span><b>${esc(x.title)}</b> · ${esc(x.status)}${x.archivedAt?' · 归档于 '+esc(String(x.archivedAt).slice(0,10)):''}</span><span><a class="action" onclick="restoreTask('${x.id}')">恢复</a> · <a class="action" onclick="deleteTask('${x.id}');renderArchive()">删除</a></span></p>`).join(''):'<div class="empty">暂无归档任务</div>'}
+async function exportClientData(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;if(!confirm('导出文件是明文 JSON，不受数据库加密保护，仅可保存在安全位置、使用后及时删除。继续导出？'))return;await window.desktopDB.auditEvent({action:'导出',objectType:'来访者档案',objectId:cid,detail:'单个来访者数据导出（响应查阅/复制请求）'});const data={exportedAt:new Date().toISOString(),client:c,sessions:db.sessions.filter(s=>s.clientId===cid),events:db.events.filter(e=>e.clientId===cid),goals:db.goals.filter(g=>g.clientId===cid),tasks:db.tasks.filter(x=>x.clientId===cid),quickNotes:db.quickNotes.filter(q=>q.clientId===cid),finance:db.finance.filter(f=>f.clientId===cid)};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='来访者档案-'+c.name+'-'+todayLocal()+'.json';a.click();URL.revokeObjectURL(a.href);toast('档案数据已导出')}
+async function deleteClientForever(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;const counts={咨询记录:db.sessions.filter(s=>s.clientId===cid).length,日程:db.events.filter(e=>e.clientId===cid).length,目标:db.goals.filter(g=>g.clientId===cid).length,任务:db.tasks.filter(x=>x.clientId===cid).length,随手记:db.quickNotes.filter(q=>q.clientId===cid).length,收费:db.finance.filter(f=>f.clientId===cid).length};const summary=Object.entries(counts).map(([k,v])=>k+' '+v+' 条').join('、');if(!confirm('将彻底删除来访者「'+c.name+'」及其全部关联数据（'+summary+'）。此操作不可撤销。\n\n如该请求来自来访者本人，请确认你已核实其身份，且专业伦理与相关规范不要求继续保存这些记录。'))return;if(!confirm('再次确认：彻底删除「'+c.name+'」的全部数据？'))return;await window.desktopDB.auditEvent({action:'删除',objectType:'来访者档案',objectId:cid,detail:'彻底删除及级联数据：'+summary});db.clients=db.clients.filter(x=>x.id!==cid);db.sessions=db.sessions.filter(s=>s.clientId!==cid);db.events=db.events.filter(e=>e.clientId!==cid);db.goals=db.goals.filter(g=>g.clientId!==cid);db.tasks=db.tasks.filter(x=>x.clientId!==cid);db.quickNotes=db.quickNotes.filter(q=>q.clientId!==cid);db.finance=db.finance.filter(f=>f.clientId!==cid);db.recent=db.recent.filter(r=>r.id!==cid);await persistWorkspace('彻底删除来访者');showView('clients');toast('已彻底删除该来访者及其关联数据')}
+function restoreClient(cid){const c=db.clients.find(x=>x.id===cid);if(c){c.status='进行中';save()}}
+
+function createExampleTemplate(){const name='常规咨询（示例）';if(db.templates.some(t=>t.name===name)){alert('已经有这个示例模板了。你可以直接编辑现有模板。');return}const t={id:uid(),name,focus:'本次主要关注：\n来访者希望讨论：',updates:'自上次咨询以来的重要变化：\n本次主要讨论：',work:'本次使用的干预：\n咨询师回应：',response:'来访者的反应：\n新的觉察或理解：',plan:'目标进展：\n本次约定或练习：',next:'下次继续关注：',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};db.templates.push(t);save();openTemplate(t.id);toast('已创建示例模板，可按你的记录习惯修改')}
+function openTemplate(id=''){const t=db.templates.find(x=>x.id===id)||{id:'',name:'',focus:'',updates:'',work:'',response:'',plan:'',next:''};rtId.value=t.id;rtName.value=t.name;rtFocus.value=t.focus;rtUpdates.value=t.updates;rtWork.value=t.work;rtResponse.value=t.response;rtPlan.value=t.plan;rtNext.value=t.next;templateDialog.showModal()}
+function saveTemplate(){if(!rtName.value.trim())return alert('请填写模板名称。');const x={id:rtId.value||uid(),name:rtName.value.trim(),focus:rtFocus.value,updates:rtUpdates.value,work:rtWork.value,response:rtResponse.value,plan:rtPlan.value,next:rtNext.value,updatedAt:new Date().toISOString()};const i=db.templates.findIndex(t=>t.id===x.id);i>=0?db.templates[i]={...db.templates[i],...x}:db.templates.push({...x,createdAt:new Date().toISOString()});templateDialog.close();save();toast('记录模板已保存')}
+function renderTemplates(){templatesList.innerHTML=db.templates.length?db.templates.map(t=>`<div style="padding:13px 0;border-bottom:1px solid var(--line)" class="between row"><div><b>${esc(t.name)}</b><div class="muted">${[t.focus,t.updates,t.work,t.response,t.plan,t.next].filter(Boolean).length} 个字段包含预设内容</div></div><span><a class="action" onclick="openTemplate('${t.id}')">编辑</a> · <a class="action" onclick="deleteTemplate('${t.id}')">删除</a></span></div>`).join(''):emptyState('▤','还没有记录模板','建立常用记录框架后，新建咨询记录时可以直接套用。','新建模板',"openTemplate()")}
+function deleteTemplate(id){if(confirm('确认删除这个记录模板？已有咨询记录不会受到影响。')){db.templates=db.templates.filter(t=>t.id!==id);save()}}
+function applyTemplate(id){const t=db.templates.find(x=>x.id===id);if(!t){templateHint.textContent='选择模板：套用固定的记录框架。';return}const pairs=[[sFocus,t.focus],[sUpdates,t.updates],[sWork,t.work],[sResponse,t.response],[sPlan,t.plan],[sNext,t.next]];let n=0;pairs.forEach(([el,val])=>{if(!el.value.trim()&&val){el.value=val;n++}});templateHint.textContent=`已应用“${t.name}”，填入 ${n} 个空白字段。已有内容不会被覆盖。`}
+function updateSessionMode(){const m=sRecordMode.value;detailedFields.classList.toggle('active',m==='detailed');simpleFields.classList.toggle('active',m==='simple');keyFields.classList.toggle('active',m==='key')}
+function copyPreviousSession(){
+ if(!sClient.value)return alert('请先选择来访者。');
+ const currentDate=normalizeDateValue(sDate.value)||todayLocal();
+ const prev=db.sessions.filter(x=>x.clientId===sClient.value&&x.id!==sId.value&&x.date&&x.date<currentDate).sort((a,b)=>b.date.localeCompare(a.date))[0];
+ if(!prev)return alert('没有找到该来访者在当前日期之前的咨询记录。');
+ if(!confirm(`复制 ${prev.date} 的咨询记录内容到当前记录？当前已填写的记录内容会被替换。`))return;
+ sRecordMode.value=prev.recordMode||'detailed';sDuration.value=prev.duration||'50';sMode.value=prev.mode||'视频';
+ ['Focus','Updates','Work','Response','Plan','Next','SimpleTheme','SimpleChanges','SimpleWork','SimplePlan','KeyFocus','KeyRisk','KeyNext'].forEach(k=>{const el=window['s'+k];const prop=k[0].toLowerCase()+k.slice(1);if(el)el.value=prev[prop]||''});
+ updateSessionMode();toast('已复制前次咨询记录');
+}
+function openSession(sid='',cid='',date='',eventId=''){
+ if(!db.clients.length)return alert('请先建立来访者档案。');options();
+ const ev=eventId?db.events.find(x=>x.id===eventId):null;
+ let s=db.sessions.find(x=>x.id===sid)||{id:'',clientId:cid||(ev?.clientId||''),date:date||(ev?.date||todayLocal()),duration:'50',mode:ev?.mode||'视频',recordMode:'detailed',focus:'',updates:'',work:'',response:'',plan:'',next:'',eventId:eventId||''};
+ const dk=sid||eventId||`${s.clientId||'new'}:${s.date||'new'}`,draft=draftGet('session',dk);if(draft&&!sid)s={...s,...draft};
+ sId.value=s.id;sEventId.value=s.eventId||eventId||'';sTemplate.value='';templateHint.textContent='选择模板：套用固定的记录框架。';sClient.value=s.clientId;sDate.value=s.date;sDuration.value=s.duration||'50';sMode.value=s.mode||'视频';sRecordMode.value=s.recordMode||'detailed';sFocus.value=s.focus||'';sUpdates.value=s.updates||'';sWork.value=s.work||'';sResponse.value=s.response||'';sPlan.value=s.plan||'';sNext.value=s.next||'';sSimpleTheme.value=s.simpleTheme||'';sSimpleChanges.value=s.simpleChanges||'';sSimpleWork.value=s.simpleWork||'';sSimplePlan.value=s.simplePlan||'';sKeyFocus.value=s.keyFocus||'';sKeyRisk.value=s.keyRisk||'';sKeyNext.value=s.keyNext||'';updateSessionMode();sessionDraftStatus.textContent=draft?'已恢复自动保存的草稿':'尚未自动保存';sessionDialog.showModal()
+}
+function saveSession(){
+ if(!sClient.value)return alert('请选择来访者。');sDate.value=normalizeDateValue(sDate.value);if(!requireDate(sDate.value,'咨询日期'))return;
+ const x={id:sId.value||uid(),eventId:sEventId.value||'',clientId:sClient.value,date:sDate.value,duration:sDuration.value,mode:sMode.value,recordMode:sRecordMode.value,focus:sFocus.value,updates:sUpdates.value,work:sWork.value,response:sResponse.value,plan:sPlan.value,next:sNext.value,simpleTheme:sSimpleTheme.value,simpleChanges:sSimpleChanges.value,simpleWork:sSimpleWork.value,simplePlan:sSimplePlan.value,keyFocus:sKeyFocus.value,keyRisk:sKeyRisk.value,keyNext:sKeyNext.value,updatedAt:new Date().toISOString()};
+ const i=db.sessions.findIndex(s=>s.id===x.id);i>=0?db.sessions[i]={...db.sessions[i],...x}:db.sessions.push({...x,createdAt:new Date().toISOString()});draftClear('session',sId.value||sEventId.value||`${sClient.value||'new'}:${sDate.value||'new'}`);sessionDialog.close();renderSessions();save();showView('sessions');renderSessions();toast('咨询记录已保存并加入记录列表')
+}
+let sessionTab='all';
+function missingConsultEvents(){const today=todayLocal();const nowMinutes=new Date().getHours()*60+new Date().getMinutes();return db.events.filter(e=>e.type==='心理咨询'&&e.clientId&&e.date<=today&&!sessionForEvent(e)&&(e.date<today||!e.time||Number(e.time.slice(0,2))*60+Number(e.time.slice(3,5))<=nowMinutes)).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')))}
+function setSessionTab(tab){sessionTab=tab;renderSessions()}
+function renderSessions(){const isMissing=sessionTab==='missing';if(typeof sessionTabAll!=='undefined'){sessionTabAll.classList.toggle('active',!isMissing);sessionTabMissing.classList.toggle('active',isMissing)}sessionsTable.style.display=isMissing?'none':'block';missingSessionsList.style.display=isMissing?'block':'none';if(isMissing){const m=missingConsultEvents();missingSessionsList.innerHTML=m.length?m.map(e=>`<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(cn(e.clientId))}</b> · ${esc(e.date)} ${esc(e.time||'')}<div class="muted">${esc(e.title||'心理咨询')}${e.mode?' · '+esc(e.mode):''}</div><a class="action" onclick="openSession('','${e.clientId}','${e.date}','${e.id}')">补写咨询记录</a></div>`).join(''):'<div class="empty">没有待补的咨询记录</div>';return}const a=[...db.sessions].sort((a,b)=>(b.date||'').localeCompare(a.date||''));sessionsTable.innerHTML=a.length?`<table><tr><th>日期</th><th>来访者</th><th>主题</th><th>时长</th><th></th></tr>${a.map(s=>`<tr><td>${esc(s.date)}</td><td>${esc(cn(s.clientId))}</td><td>${esc(s.focus||s.simpleTheme||s.keyFocus||'—').slice(0,80)}</td><td>${esc(s.duration||'—')} 分钟</td><td><a class="action" onclick="openSession('${s.id}')">编辑</a> · <a class="action" onclick="del('sessions','${s.id}')">删除</a></td></tr>`).join('')}</table>`:emptyState('≡','还没有咨询记录','完成咨询后，可在这里建立记录并使用你设置的记录模板。','新建咨询记录',"openSession()")}
+function syncEventDefaults(){if(eClient.value&&eType.value==='心理咨询'&&!eTitle.value.trim())eTitle.value='心理咨询';if(eType.value!=='心理咨询'&&eTitle.value==='心理咨询')eTitle.value=''}
+function openEvent(eid='',cid='',date=''){options();const e=db.events.find(x=>x.id===eid)||{id:'',date:date||todayLocal(),time:'',type:'心理咨询',clientId:cid,title:cid?'心理咨询':'',notes:'',mode:'',timezone:'Asia/Shanghai'};eId.value=e.id;eDate.value=e.date;eTime.value=e.time;eType.value=e.type;eClient.value=e.clientId;eMode.value=e.mode||'';eTimezone.value=e.timezone||'Asia/Shanghai';eTitle.value=e.title||(e.clientId&&e.type==='心理咨询'?'心理咨询':'');eNotes.value=e.notes;const rec=e.id?sessionForEvent(e):null;eRecordBtn.style.display=(e.id&&e.type==='心理咨询'&&e.clientId)?'inline-block':'none';eRecordBtn.textContent=rec?'查看咨询记录':'填写咨询记录';eventDialog.showModal()}
+function openRecordFromEvent(){const e=db.events.find(x=>x.id===eId.value);if(!e||!e.clientId)return;const rec=sessionForEvent(e);eventDialog.close();rec?openSession(rec.id):openSession('',e.clientId,e.date,e.id)}
+function saveEvent(){eDate.value=normalizeDateValue(eDate.value);if(!requireDate(eDate.value,'日程日期'))return;if(eClient.value&&eType.value==='心理咨询'&&!eTitle.value.trim())eTitle.value='心理咨询';if(!eTitle.value.trim())return alert('请填写标题。');const x={id:eId.value||uid(),date:eDate.value,time:eTime.value,type:eType.value,clientId:eClient.value,title:eTitle.value.trim(),notes:eNotes.value,mode:eMode.value,timezone:eTimezone.value||'Asia/Shanghai',updatedAt:new Date().toISOString()};const i=db.events.findIndex(e=>e.id===x.id);i>=0?db.events[i]={...db.events[i],...x}:db.events.push({...x,createdAt:new Date().toISOString()});eventDialog.close();renderCalendar();renderTodayWorkspace();save();renderCalendar();renderTodayWorkspace();toast('日程已保存')}
+function sessionForEvent(e){return db.sessions.find(s=>s.eventId===e.id)||db.sessions.find(s=>s.clientId===e.clientId&&s.date===e.date)}
+function eventRecordAction(e){if(!(e.type==='心理咨询'&&e.clientId))return '';const existing=sessionForEvent(e);return existing?`<a class="action" onclick="event.stopPropagation();openSession('${existing.id}')">查看咨询记录</a>`:`<a class="action" onclick="event.stopPropagation();openSession('','${e.clientId}','${e.date}','${e.id}')">填写咨询记录</a>`}
+let calendarView=(window.desktopDB&&window.desktopDB.getPref('calendarView'))||'month';
+function dateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function mondayOf(d){const x=new Date(d),n=(x.getDay()+6)%7;x.setDate(x.getDate()-n);x.setHours(0,0,0,0);return x}
+function setCalendarView(v){calendarView=v;window.desktopDB&&window.desktopDB.setPref('calendarView',v);renderCalendar()}
+function calendarToday(){calDate=new Date();renderCalendar()}
+function changeCalendar(n){if(calendarView==='month')calDate=new Date(calDate.getFullYear(),calDate.getMonth()+n,1);else if(calendarView==='week'){const x=new Date(calDate);x.setDate(x.getDate()+n*7);calDate=x}else{const x=new Date(calDate);x.setDate(x.getDate()+n*14);calDate=x}renderCalendar()}
+function changeMonth(n){changeCalendar(n)}
+function eventCard(e,cls='week-event'){return `<div class="${cls}" onclick="openEvent('${e.id}')"><div><b>${esc(e.time||'时间未定')}</b> ${esc(e.title)}</div><div class="muted">${esc(e.type||'日程')}${e.clientId?' · '+esc(cn(e.clientId)):''}${e.mode?' · '+esc(e.mode):''}</div>${eventRecordAction(e)}</div>`}
+function renderCalendar(){
+ const today=dateStr(new Date());
+ ['month','week','list'].forEach(v=>{const b=document.getElementById('cal'+v[0].toUpperCase()+v.slice(1)+'Btn');if(b)b.classList.toggle('active',calendarView===v)});
+ calendarMonthView.style.display=calendarView==='month'?'block':'none';calendarWeekView.style.display=calendarView==='week'?'block':'none';calendarListView.style.display=calendarView==='list'?'block':'none';
+ if(calendarView==='month'){
+  const y=calDate.getFullYear(),m=calDate.getMonth();calendarTitle.textContent=`${y}年 ${m+1}月`;calPrevBtn.title='上个月';calNextBtn.title='下个月';
+  const first=new Date(y,m,1),offset=(first.getDay()+6)%7,start=new Date(y,m,1-offset);let h='';
+  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=dateStr(d),es=db.events.filter(e=>e.date===ds).sort((a,b)=>(a.time||'').localeCompare(b.time||''));h+=`<div class="day ${d.getMonth()!==m?'other':''} ${ds===today?'today':''}" onclick="openEvent('','', '${ds}')"><div class="daynum">${d.getDate()}</div>${es.slice(0,4).map(e=>`<div class="event" onclick="event.stopPropagation();openEvent('${e.id}')">${esc(e.time||'')} ${esc(e.title)}</div>`).join('')}${es.length>4?`<div class="muted">+${es.length-4}</div>`:''}</div>`}calendarGrid.innerHTML=h;
+ }else if(calendarView==='week'){
+  const start=mondayOf(calDate),end=new Date(start);end.setDate(start.getDate()+6);calendarTitle.textContent=`${start.getMonth()+1}月${start.getDate()}日 — ${end.getMonth()+1}月${end.getDate()}日`;calPrevBtn.title='上一周';calNextBtn.title='下一周';
+  const names=['周一','周二','周三','周四','周五','周六','周日'];let h='';
+  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=dateStr(d),es=db.events.filter(e=>e.date===ds).sort((a,b)=>(a.time||'').localeCompare(b.time||''));h+=`<div class="week-day ${ds===today?'today':''}" ondblclick="openEvent('','', '${ds}')"><div class="week-date">${names[i]} · ${d.getMonth()+1}/${d.getDate()}</div>${es.length?es.map(e=>eventCard(e)).join(''):`<div class="muted" style="padding:12px 2px">暂无安排</div>`}</div>`}weekGrid.innerHTML=h;
+ }else{
+  calPrevBtn.title='向前 14 天';calNextBtn.title='向后 14 天';const includePast=showPastEvents.checked,start=includePast?new Date(calDate):new Date(Math.max(new Date(calDate).setHours(0,0,0,0),new Date().setHours(0,0,0,0))),end=new Date(start);end.setDate(start.getDate()+13);calendarTitle.textContent=`${start.getMonth()+1}月${start.getDate()}日 — ${end.getMonth()+1}月${end.getDate()}日`;
+  const events=db.events.filter(e=>e.date>=dateStr(start)&&e.date<=dateStr(end)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));if(!events.length){calendarList.innerHTML=emptyState('◷','这段时间没有日程','可以新建咨询、督导、行政或个人安排。','新建日程',"openEvent()");return}
+  let last='';calendarList.innerHTML=events.map(e=>{let head='';if(e.date!==last){last=e.date;const d=new Date(e.date+'T00:00:00'),names=['日','一','二','三','四','五','六'];head=`<div class="list-date">${d.getMonth()+1}月${d.getDate()}日 · 周${names[d.getDay()]}</div>`}return head+`<div class="list-event" onclick="openEvent('${e.id}')"><div class="list-time">${esc(e.time||'—')}</div><div><b>${esc(e.title)}</b><div class="muted">${e.clientId?esc(cn(e.clientId))+' · ':''}${esc(e.notes||'')}</div></div><span><span class="pill">${esc(e.type||'日程')}</span>${eventRecordAction(e)?'<br>'+eventRecordAction(e):''}</span></div>`}).join('');
+ }
+}
+function openQuick(qid=''){let q=db.quickNotes.find(x=>x.id===qid)||{id:'',clientId:'',title:'',body:'',tags:[],pinned:false};const d=draftGet('quick',qid||'new');if(d&&!qid)q={...q,...d,tags:String(d.tags||'').split(/[,，]/).map(x=>x.trim()).filter(Boolean)};qId.value=q.id||'';qClient.value=q.clientId||'';qTitle.value=q.title||'';qBody.value=q.body||'';qTags.value=Array.isArray(q.tags)?q.tags.join(', '):(q.tags||'');qPinned.checked=!!q.pinned;quickDraftStatus.textContent=d&&!qid?'已恢复自动保存的草稿':'尚未自动保存';quickDialog.showModal()}
+function saveQuick(){if(!qBody.value.trim())return alert('请填写内容。');const x={id:qId.value||uid(),clientId:qClient.value,title:qTitle.value.trim()||'随手记',body:qBody.value,tags:qTags.value.split(/[,，]/).map(x=>x.trim()).filter(Boolean),pinned:qPinned.checked,updatedAt:new Date().toISOString()};const i=db.quickNotes.findIndex(q=>q.id===x.id);i>=0?db.quickNotes[i]={...db.quickNotes[i],...x}:db.quickNotes.unshift({...x,createdAt:new Date().toISOString()});draftClear('quick',qId.value||'new');quickDialog.close();renderQuick();save();renderQuick();toast('随手记已保存')}
+function renderPrivacyNotice(){const s=db.settings||{};privacyNoticeTemplate.innerHTML=`<div style="line-height:2"><p><b>${esc(s.practiceName||'（机构 / 工作室名称）')}</b>（咨询师：${esc(s.counselorName||'（姓名）')}，以下简称"处理者"）在为你提供心理咨询服务的过程中，将处理你的以下个人信息：姓名 / 称呼、出生年月日、联系方式、咨询诉求与背景信息、每次咨询的记录、收费记录，以及紧急联系人信息。其中，心理健康相关信息属于<b>敏感个人信息</b>。</p><p><b>处理目的与方式：</b>仅用于建立咨询档案、安排与开展咨询、记录咨询过程、收费结算与依法履行专业义务。处理方式为在咨询师本人电脑上以加密数据库形式储存与查阅，<b>不向任何第三方提供，不上传云端，不用于营销或其他目的</b>。</p><p><b>保存期限：</b>咨询关系存续期间及结束后依专业伦理与相关规范要求的期限保存；超期或应你的合法请求予以删除。</p><p><b>你的权利：</b>你有权查阅、复制、更正你的个人信息，有权撤回同意（撤回不影响撤回前已进行处理的效力），并可在法定情形下请求删除。你可通过咨询时约定的联系方式行使上述权利。</p><p><b>安全保护：</b>处理者采取数据库加密、账户密码、自动锁定、操作审计与加密备份等措施保护你的信息。如发生信息安全事件，处理者将依法及时告知你。</p><p>本人已阅读并理解上述内容，同意处理者按上述目的与方式处理本人的个人信息（包括敏感个人信息）。如本人不满 14 周岁，本告知须由监护人签署。</p><p style="margin-top:26px">来访者（或监护人）签名：＿＿＿＿＿＿＿＿　　日期：＿＿＿＿年＿＿月＿＿日</p></div>`}
+function renderReferrals(){const q=(typeof referralFilter!=='undefined'?(referralFilter.value||''):'').trim().toLowerCase();const list=[...(db.referrals||[])].filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).sort((a,b)=>(b.favorite?1:0)-(a.favorite?1:0)||String(a.name||'').localeCompare(String(b.name||''),'zh-CN'));referralsTable.innerHTML=list.length?`<table><tr><th>名称</th><th>类型</th><th>擅长领域</th><th>地区</th><th>联系方式</th><th></th></tr>${list.map(r=>`<tr><td><b>${r.favorite?'常用 · ':''}${esc(r.name)}</b>${r.fee?`<br><span class="muted">${esc(r.fee)}</span>`:''}</td><td>${esc(r.type||'')}</td><td>${(r.specialty||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join('')}</td><td>${esc(r.location||'—')}</td><td>${esc([r.phone,r.contact].filter(Boolean).join(' · ')||'—')}</td><td><a class="action" onclick="toggleReferralFavorite('${r.id}')">${r.favorite?'取消常用':'设为常用'}</a> · <a class="action" onclick="openReferral('${r.id}')">编辑</a> · <a class="action" onclick="del('referrals','${r.id}')">删除</a></td></tr>`).join('')}</table>`:emptyState('⇄',q?'没有匹配的转介资源':'还没有转介资源','把信任的同行、精神科医生和机构保存在这里，转介时不用再临时查找。','新增转介资源',"openReferral()")}
+function openReferral(rid=''){const r=(db.referrals||[]).find(x=>x.id===rid)||{id:'',name:'',type:'心理咨询师',specialty:[],location:'',phone:'',contact:'',fee:'',notes:'',favorite:false};rfId.value=r.id;rfName.value=r.name||'';rfType.value=r.type||'心理咨询师';rfSpecialty.value=(r.specialty||[]).join(', ');rfLocation.value=r.location||'';rfPhone.value=r.phone||'';rfContact.value=r.contact||'';rfFee.value=r.fee||'';rfNotes.value=r.notes||'';rfFavorite.checked=!!r.favorite;referralDialog.showModal()}
+function saveReferral(){if(!rfName.value.trim())return alert('请填写姓名或机构名称。');const x={id:rfId.value||uid(),name:rfName.value.trim(),type:rfType.value,specialty:rfSpecialty.value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),location:rfLocation.value.trim(),phone:rfPhone.value.trim(),contact:rfContact.value.trim(),fee:rfFee.value.trim(),notes:rfNotes.value,favorite:rfFavorite.checked,updatedAt:new Date().toISOString()};db.referrals=db.referrals||[];const i=db.referrals.findIndex(r=>r.id===x.id);i>=0?db.referrals[i]={...db.referrals[i],...x}:db.referrals.push({...x,createdAt:new Date().toISOString()});referralDialog.close();renderReferrals();save();renderReferrals();toast('转介资源已保存')}
+function toggleReferralFavorite(id){const r=(db.referrals||[]).find(x=>x.id===id);if(!r)return;r.favorite=!r.favorite;r.updatedAt=new Date().toISOString();renderReferrals();save();renderReferrals()}
+function renderQuick(){const q=(typeof quickFilter!=='undefined'?(quickFilter.value||''):'').trim().toLowerCase();const list=[...db.quickNotes].filter(n=>!q||JSON.stringify(n).toLowerCase().includes(q)).sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));quickList.innerHTML=list.length?list.map(n=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div class="between row"><b>${n.pinned?'置顶 · ':''}${esc(n.title)}</b><span><a class="action" onclick="toggleQuickPin('${n.id}')">${n.pinned?'取消置顶':'置顶'}</a> · <a class="action" onclick="openQuick('${n.id}')">编辑</a> · <a class="action" onclick="del('quickNotes','${n.id}')">删除</a></span></div><div class="muted">${n.clientId?esc(cn(n.clientId))+' · ':''}${new Date(n.updatedAt).toLocaleString('zh-CN')}</div><p>${nl(n.body)}</p>${(n.tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join('')}</div>`).join(''):emptyState('✎',q?'没有匹配的随手记':'还没有随手记','记录临时想法、提醒或工作备忘；也可以选择关联到某位来访者。','新建随手记',"openQuick()")}
+function toggleQuickPin(id){const n=db.quickNotes.find(x=>x.id===id);if(!n)return;n.pinned=!n.pinned;n.updatedAt=new Date().toISOString();renderQuick();save();renderQuick()}
+function openTask(tid='',cid=''){options();const t=db.tasks.find(x=>x.id===tid)||{id:'',title:'',status:'待处理',clientId:cid,priority:'中',due:'',tags:[],details:'',category:'',repeat:'',subtasks:[]};tId.value=t.id;tTitle.value=t.title;tStatus.value=t.status;tClient.value=t.clientId||'';tPriority.value=t.priority;tDue.value=t.due;tTags.value=(t.tags||[]).join(', ');tDetails.value=t.details;tCategory.value=t.category||'';tRepeat.value=t.repeat||'';editingSubtasks=(t.subtasks||[]).map(s=>({title:s.title,done:!!s.done}));renderSubtaskEditor();taskDialog.showModal()}
+function saveTask(){tDue.value=normalizeDateValue(tDue.value);if(tDue.value&&!requireDate(tDue.value,'日期'))return;if(!tTitle.value.trim())return alert('请填写任务标题。');const prev=db.tasks.find(x=>x.id===tId.value);const x={id:tId.value||uid(),title:tTitle.value.trim(),status:tStatus.value,clientId:tClient.value,priority:tPriority.value,due:tDue.value,tags:tTags.value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),details:tDetails.value,category:tCategory.value,repeat:tRepeat.value,subtasks:editingSubtasks.filter(s=>s.title.trim()).map(s=>({title:s.title.trim(),done:!!s.done})),archived:prev?!!prev.archived:false,archivedAt:prev?prev.archivedAt||'':'',completedAt:prev?prev.completedAt||'':'',repeatSpawned:prev?!!prev.repeatSpawned:false,updatedAt:new Date().toISOString()};if(!x.category)x.category=autoCategory(x);if(x.status==='已完成'&&!x.completedAt)x.completedAt=new Date().toISOString();if(x.status!=='已完成'){x.completedAt='';x.repeatSpawned=false}const i=db.tasks.findIndex(e=>e.id===x.id);i>=0?db.tasks[i]={...db.tasks[i],...x}:db.tasks.push({...x,createdAt:new Date().toISOString()});if(x.status==='已完成')spawnRecurrence(x);taskDialog.close();renderTasks();save();renderTasks();toast('任务已保存')}
+let editingSubtasks=[];
+const TASK_CATEGORY_RULES=[['咨询记录',/记录|小结|个案|评估报告|量表/],['来访者跟进',/回访|跟进|预约|提醒|联系来访者|微信回复/],['财务收费',/收费|发票|付款|对账|报销|缴费|收款/],['督导学习',/督导|培训|课程|读书|学习|案例讨论|文献/],['行政事务',/行政|合同|执照|注册|续约|采购|系统|资料整理|备案/]];
+function autoCategory(tk){const hay=[tk.title||'',tk.details||'',(tk.tags||[]).join(' ')].join(' ');for(const [cat,re] of TASK_CATEGORY_RULES)if(re.test(hay))return cat;return '其他'}
+function renderSubtaskEditor(){tSubtasks.innerHTML=editingSubtasks.length?editingSubtasks.map((s,i)=>`<div class="subtask-row"><input type="checkbox" style="width:auto" ${s.done?'checked':''} onchange="editingSubtasks[${i}].done=this.checked"><input type="text" value="${esc(s.title)}" oninput="editingSubtasks[${i}].title=this.value"><button type="button" class="secondary" style="padding:4px 8px" onclick="editingSubtasks.splice(${i},1);renderSubtaskEditor()">删除</button></div>`).join(''):'<div class="muted">暂无子任务</div>'}
+function addSubtask(){const v=tSubtaskNew.value.trim();if(!v)return;if(editingSubtasks.length>=50)return alert('子任务最多 50 项。');editingSubtasks.push({title:v,done:false});tSubtaskNew.value='';renderSubtaskEditor()}
+function toggleSubtask(tid,idx,checked){const tk=db.tasks.find(x=>x.id===tid);if(!tk||!tk.subtasks||!tk.subtasks[idx])return;tk.subtasks[idx].done=!!checked;tk.updatedAt=new Date().toISOString();renderTasks();save();renderTasks()}
+function dueBadge(tk){if(!tk.due||tk.status==='已完成')return tk.due?`<span>截止 ${esc(tk.due)}</span>`:'';const today=todayLocal();if(tk.due<today){const days=Math.round((new Date(today+'T00:00:00')-new Date(tk.due+'T00:00:00'))/86400000);return `<span class="due-overdue">已逾期 ${days} 天 · ${esc(tk.due)}</span>`}if(tk.due===today)return `<span class="due-today">今天到期</span>`;return `<span>截止 ${esc(tk.due)}</span>`}
+function repeatLabel(r){return r==='weekly'?'每周重复':r==='biweekly'?'每两周重复':r==='monthly'?'每月重复':''}
+function nextDueDate(due,repeat){const base=due&&validDate(due)?new Date(due+'T00:00:00'):new Date();if(repeat==='weekly')base.setDate(base.getDate()+7);else if(repeat==='biweekly')base.setDate(base.getDate()+14);else if(repeat==='monthly')base.setMonth(base.getMonth()+1);return dateStr(base)}
+function spawnRecurrence(tk){if(!tk.repeat||tk.repeatSpawned)return;tk.repeatSpawned=true;db.tasks.push({id:uid(),title:tk.title,status:'待处理',clientId:tk.clientId,priority:tk.priority,due:nextDueDate(tk.due,tk.repeat),tags:[...(tk.tags||[])],details:tk.details,category:tk.category||autoCategory(tk),repeat:tk.repeat,subtasks:(tk.subtasks||[]).map(s=>({title:s.title,done:false})),archived:false,archivedAt:'',completedAt:'',repeatSpawned:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()})}
+function sweepTaskArchive(){const cutoff=Date.now()-14*86400000;let changed=false;(db.tasks||[]).forEach(tk=>{if(tk.status==='已完成'&&!tk.archived&&tk.completedAt&&new Date(tk.completedAt).getTime()<cutoff){tk.archived=true;tk.archivedAt=new Date().toISOString();changed=true}});if(changed)persistWorkspace('任务自动归档')}
+function pclass(p){return p==='高'?'priority-high':p==='低'?'priority-low':'priority-medium'}
+function renderTasks(){const sts=['待处理','进行中','等待中','已完成'];let a=(db.tasks||[]).filter(x=>!x.archived);const f=taskFilter.value||'all',cf=taskClientFilter.value||'',cat=typeof taskCategoryFilter!=='undefined'?taskCategoryFilter.value||'':'',sq=typeof taskSearch!=='undefined'?(taskSearch.value||'').trim().toLowerCase():'';const today=todayLocal(),weekEnd=(()=>{const d=new Date();d.setDate(d.getDate()+7);return dateStr(d)})();
+if(f==='client')a=a.filter(x=>x.clientId);if(f==='general')a=a.filter(x=>!x.clientId);if(cf)a=a.filter(x=>x.clientId===cf);if(cat)a=a.filter(x=>(x.category||autoCategory(x))===cat);if(sq)a=a.filter(x=>JSON.stringify(x).toLowerCase().includes(sq));
+if(taskQuick==='overdue')a=a.filter(x=>x.due&&x.due<today&&x.status!=='已完成');else if(taskQuick==='today')a=a.filter(x=>x.due===today);else if(taskQuick==='week')a=a.filter(x=>x.due&&x.due>=today&&x.due<=weekEnd&&x.status!=='已完成');
+const sortCol=(x,y)=>{const dx=x.due||'9999-99-99',dy=y.due||'9999-99-99';if(dx!==dy)return dx.localeCompare(dy);return String(y.updatedAt||'').localeCompare(String(x.updatedAt||''))};
+kanban.innerHTML=sts.map(st=>{const col=a.filter(x=>x.status===st).sort(st==='已完成'?(x,y)=>String(y.completedAt||'').localeCompare(String(x.completedAt||'')):sortCol);return `<div class="kanban-col" data-task-status="${st}"><h3>${st} <span class="pill">${col.length}</span></h3>${col.map(x=>{const subs=x.subtasks||[],doneN=subs.filter(s=>s.done).length;return `<div class="task-card ${pclass(x.priority)} ${st==='已完成'?'task-done':''}" draggable="true" data-task-id="${x.id}"><div class="between row"><div class="task-title">${esc(x.title)}</div><a class="action task-edit" data-task-id="${x.id}">编辑</a></div><div>${x.clientId?`<span class="tag">${esc(cn(x.clientId))}</span>`:'<span class="tag">一般任务</span>'}<span class="tag">${esc(x.category||autoCategory(x))}</span>${x.repeat?`<span class="tag">${repeatLabel(x.repeat)}</span>`:''}</div><div class="task-meta">优先级：${esc(x.priority)}${x.due?' · '+dueBadge(x):''}</div>${x.details?`<p style="font-size:12px">${esc(x.details).slice(0,110)}</p>`:''}${subs.length?`<div style="margin-top:8px">${subs.map((s,si)=>`<label style="display:flex;gap:7px;align-items:center;font-size:12px;margin:3px 0;color:var(--ink)"><input type="checkbox" style="width:auto" ${s.done?'checked':''} onchange="toggleSubtask('${x.id}',${si},this.checked)" onclick="event.stopPropagation()"><span ${s.done?'style="text-decoration:line-through;color:var(--muted)"':''}>${esc(s.title)}</span></label>`).join('')}<div class="sub-progress"><i style="width:${Math.round(doneN/subs.length*100)}%"></i></div><div class="muted" style="font-size:10px;margin-top:3px">子任务 ${doneN}/${subs.length}</div></div>`:''}${(x.tags||[]).map(g=>`<span class="tag">${esc(g)}</span>`).join('')}<div style="margin-top:9px"><select class="task-status-select" data-task-id="${x.id}" aria-label="修改任务状态">${sts.map(o=>`<option ${o===x.status?'selected':''}>${o}</option>`).join('')}</select></div><div class="row" style="margin-top:8px;gap:12px"><a class="action task-done-toggle" data-task-id="${x.id}">${st==='已完成'?'↩ 重新打开':'✓ 标记完成'}</a><a class="action task-archive" data-task-id="${x.id}">归档</a><a class="action task-delete" data-task-id="${x.id}">删除</a></div></div>`}).join('')}</div>`}).join('');bindTaskBoard()}
+let taskQuick='all';
+function setTaskQuick(q){taskQuick=q;document.querySelectorAll('#taskQuickToggle button').forEach(b=>b.classList.toggle('active',b.dataset.tq===q));renderTasks()}
+function bindTaskBoard(){kanban.querySelectorAll('.task-card').forEach(card=>{card.addEventListener('dragstart',e=>taskDragStart(e,card.dataset.taskId));card.addEventListener('dragend',()=>card.classList.remove('dragging'));card.addEventListener('pointerdown',()=>{draggingTaskId=card.dataset.taskId})});kanban.querySelectorAll('.kanban-col').forEach(col=>{col.addEventListener('dragenter',taskDragOver);col.addEventListener('dragover',taskDragOver);col.addEventListener('dragleave',()=>col.classList.remove('dragover'));col.addEventListener('drop',e=>taskDrop(e,col.dataset.taskStatus));col.addEventListener('pointerup',()=>{if(draggingTaskId){changeTaskStatus(draggingTaskId,col.dataset.taskStatus);draggingTaskId=''}})});kanban.querySelectorAll('.task-status-select').forEach(sel=>{sel.addEventListener('click',e=>e.stopPropagation());sel.addEventListener('change',()=>changeTaskStatus(sel.dataset.taskId,sel.value))});kanban.querySelectorAll('.task-edit').forEach(a=>a.addEventListener('click',()=>openTask(a.dataset.taskId)));kanban.querySelectorAll('.task-delete').forEach(a=>a.addEventListener('click',()=>deleteTask(a.dataset.taskId)));kanban.querySelectorAll('.task-done-toggle').forEach(a=>a.addEventListener('click',()=>changeTaskStatus(a.dataset.taskId,a.closest('.kanban-col')?.dataset.taskStatus==='已完成'?'待处理':'已完成')));kanban.querySelectorAll('.task-archive').forEach(a=>a.addEventListener('click',()=>archiveTask(a.dataset.taskId)))}
+let draggingTaskId='';
+function taskDragStart(e,id){draggingTaskId=id;e.currentTarget.classList.add('dragging');if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id)}}
+function taskDragOver(e){e.preventDefault();e.currentTarget.classList.add('dragover');if(e.dataTransfer)e.dataTransfer.dropEffect='move'}
+function changeTaskStatus(id,status){const tk=db.tasks.find(x=>x.id===id);if(!tk)return;tk.status=status;tk.updatedAt=new Date().toISOString();if(status==='已完成'){tk.completedAt=new Date().toISOString();spawnRecurrence(tk)}else{tk.completedAt='';tk.repeatSpawned=false}renderTasks();save();renderTasks();toast('任务状态已更新')}
+function taskDrop(e,status){e.preventDefault();e.currentTarget.classList.remove('dragover');const id=(e.dataTransfer&&e.dataTransfer.getData('text/plain'))||draggingTaskId;if(id)changeTaskStatus(id,status);draggingTaskId=''}
+function deleteTask(id){if(confirm('确认删除这个任务？')){db.tasks=db.tasks.filter(x=>x.id!==id);save()}}
+function archiveTask(id){const tk=db.tasks.find(x=>x.id===id);if(!tk)return;tk.archived=true;tk.archivedAt=new Date().toISOString();tk.updatedAt=new Date().toISOString();renderTasks();save();renderTasks();toast('任务已归档，可在「归档」中恢复')}
+function restoreTask(id){const tk=db.tasks.find(x=>x.id===id);if(!tk)return;tk.archived=false;tk.archivedAt='';tk.updatedAt=new Date().toISOString();renderArchive();save();renderArchive();toast('任务已恢复')}
+function money(n){return '¥'+Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function openFinance(fid='',cid=''){const f=db.finance.find(x=>x.id===fid)||{id:'',date:todayLocal(),type:'心理咨询',clientId:cid,amount:'',received:'',status:'已收款',method:'',description:'',notes:''};fId.value=f.id;fDate.value=f.date;fType.value=f.type;fClient.value=f.clientId||'';fAmount.value=f.amount;fReceived.value=f.received;fStatus.value=f.status;fMethod.value=f.method;fDescription.value=f.description;fNotes.value=f.notes;financeDialog.showModal()}
+function saveFinance(){const _rc=Number(fReceived.value||0),_am=Number(fAmount.value||0);if(_am>0&&_rc>=_am)fStatus.value='已收款';else if(_rc>0&&_rc<_am)fStatus.value='部分收款';fDate.value=normalizeDateValue(fDate.value);if(fDate.value&&!requireDate(fDate.value,'日期'))return;if(!fDate.value)return alert('请填写日期。');const x={id:fId.value||uid(),date:fDate.value,type:fType.value,clientId:fClient.value,amount:Number(fAmount.value||0),received:Number(fReceived.value||0),status:fStatus.value,method:fMethod.value,description:fDescription.value.trim(),notes:fNotes.value,updatedAt:new Date().toISOString()};const i=db.finance.findIndex(f=>f.id===x.id);i>=0?db.finance[i]={...db.finance[i],...x}:db.finance.push({...x,createdAt:new Date().toISOString()});financeDialog.close();save();toast('收费记录已保存')}
+function renderFinance(){let a=db.finance||[];const sf=finStatusFilter?.value||'',cf=finClientFilter?.value||'';if(sf)a=a.filter(f=>f.status===sf);if(cf)a=a.filter(f=>f.clientId===cf);a=[...a].sort((a,b)=>b.date.localeCompare(a.date));const paid=db.finance.reduce((n,f)=>n+Number(f.received||0),0),pending=db.finance.filter(f=>['待收款','部分收款'].includes(f.status)).reduce((n,f)=>n+Math.max(0,Number(f.amount||0)-Number(f.received||0)),0),month=todayLocal().slice(0,7),monthPaid=db.finance.filter(f=>f.date&&f.date.startsWith(month)).reduce((n,f)=>n+Number(f.received||0),0);finPaid.textContent=money(paid);finPending.textContent=money(pending);finMonth.textContent=money(monthPaid);financeTable.innerHTML=a.length?`<table><tr><th>日期</th><th>来访者 / 来源</th><th>项目</th><th>应收</th><th>实收</th><th>状态</th><th>方式</th><th></th></tr>${a.map(f=>`<tr><td>${esc(f.date)}</td><td>${f.clientId?esc(cn(f.clientId)):'—'}</td><td>${esc(f.description||f.type)}</td><td>${money(f.amount)}</td><td>${money(f.received)}</td><td><span class="pill">${esc(f.status)}</span></td><td>${esc(f.method||'—')}</td><td><a class="action" onclick="openFinance('${f.id}')">编辑</a> · <a class="action" onclick="deleteFinance('${f.id}')">删除</a></td></tr>`).join('')}</table>`:'<div class="empty">暂无收费 / 收入记录</div>'}
+function deleteFinance(id){if(confirm('确认删除这条收费记录？')){db.finance=db.finance.filter(f=>f.id!==id);save()}}
+function openGoal(gid=''){if(!db.clients.length)return alert('请先建立来访者档案。');const g=db.goals.find(x=>x.id===gid)||{id:'',clientId:'',type:'咨询目标',title:'',details:'',status:'待开始',due:''};gId.value=g.id;gClient.value=g.clientId;gType.value=g.type;gTitle.value=g.title;gDetails.value=g.details;gStatus.value=g.status;gDue.value=g.due;goalDialog.showModal()}
+function saveGoal(){gDue.value=normalizeDateValue(gDue.value);if(gDue.value&&!requireDate(gDue.value,'日期'))return;if(!gClient.value||!gTitle.value.trim())return alert('请选择来访者并填写标题。');const x={id:gId.value||uid(),clientId:gClient.value,type:gType.value,title:gTitle.value.trim(),details:gDetails.value,status:gStatus.value,due:gDue.value,updatedAt:new Date().toISOString()};const i=db.goals.findIndex(g=>g.id===x.id);i>=0?db.goals[i]={...db.goals[i],...x}:db.goals.push({...x,createdAt:new Date().toISOString()});goalDialog.close();renderGoals();save();renderGoals();toast('咨询目标 / 待办已保存')}
+function renderGoals(){goalsTable.innerHTML=db.goals.length?`<table><tr><th>来访者</th><th>类型</th><th>标题</th><th>状态</th><th>日期</th><th></th></tr>${db.goals.map(g=>`<tr><td>${esc(cn(g.clientId))}</td><td>${esc(g.type)}</td><td>${esc(g.title)}</td><td>${esc(g.status)}</td><td>${esc(g.due)}</td><td><a class="action" onclick="openGoal('${g.id}')">编辑</a> · <a class="action" onclick="del('goals','${g.id}')">删除</a></td></tr>`).join('')}</table>`:'<div class="empty">暂无目标或待办</div>'}
+function renderRecent(){recentList.innerHTML=db.recent.length?db.recent.map(r=>`<p class="between row"><span><b>${esc(r.name)}</b><br><span class="muted">${new Date(r.time).toLocaleString('zh-CN')}</span></span><a class="action" onclick="viewClient('${r.id}')">打开</a></p>`).join(''):emptyState('◷','还没有最近查看','打开任一来访者档案后，会自动显示在这里。','查看来访者',"showView('clients')")}
+function renderSearch(){const q=(globalSearch.value||'').trim().toLowerCase();if(!q){searchResults.innerHTML='<div class="empty">请输入关键词</div>';return}let r=[];db.clients.forEach(c=>JSON.stringify(c).toLowerCase().includes(q)&&r.push(`<p><b>来访者：</b><a class="action" onclick="viewClient('${c.id}')">${esc(c.name)}</a></p>`));db.sessions.forEach(s=>JSON.stringify(s).toLowerCase().includes(q)&&r.push(`<p><b>咨询记录：</b>${esc(cn(s.clientId))} · ${esc(s.date)} · ${esc(s.focus).slice(0,90)}</p>`));db.quickNotes.forEach(n=>JSON.stringify(n).toLowerCase().includes(q)&&r.push(`<p><b>随手记：</b>${esc(n.title)} · ${esc(n.body).slice(0,90)}</p>`));db.events.forEach(e=>JSON.stringify(e).toLowerCase().includes(q)&&r.push(`<p><b>日程：</b>${esc(e.date)} ${esc(e.time||'')} · ${esc(e.title)}${e.clientId?' · '+esc(cn(e.clientId)):''}</p>`));db.goals.forEach(g=>JSON.stringify(g).toLowerCase().includes(q)&&r.push(`<p><b>${esc(g.type)}：</b>${esc(cn(g.clientId))} · ${esc(g.title)}</p>`));db.tasks.forEach(t=>JSON.stringify(t).toLowerCase().includes(q)&&r.push(`<p><b>任务：</b>${t.clientId?esc(cn(t.clientId))+' · ':''}${esc(t.title)} · ${esc(t.status)}</p>`));db.finance.forEach(f=>JSON.stringify(f).toLowerCase().includes(q)&&r.push(`<p><b>收费：</b>${esc(f.date)} · ${f.clientId?esc(cn(f.clientId))+' · ':''}${esc(f.description||f.type)} · ${money(f.received)}</p>`));db.templates.forEach(t=>JSON.stringify(t).toLowerCase().includes(q)&&r.push(`<p><b>记录模板：</b>${esc(t.name)}</p>`));(db.referrals||[]).forEach(rf=>JSON.stringify(rf).toLowerCase().includes(q)&&r.push(`<p><b>转介资源：</b>${esc(rf.name)}${rf.location?' · '+esc(rf.location):''}</p>`));searchResults.innerHTML=r.length?r.join(''):'<div class="empty">没有找到匹配内容</div>'}
+function del(k,id){if(confirm('确认删除？')){db[k]=db[k].filter(x=>x.id!==id);save()}}
+function renderSettings(){if(typeof autoLockMinutes!=='undefined')autoLockMinutes.value=String(window.desktopDB.getPref('autoLockMinutes')??15);toolName.value=db.settings.toolName;toolSubtitle.value=db.settings.subtitle;practiceName.value=db.settings.practiceName;counselorName.value=db.settings.counselorName;pdfFooter.value=db.settings.pdfFooter;theme.value=db.settings.theme||'light';themeColor.value=db.settings.themeColor||'#4a778b';customThemeColor.value=db.settings.themeColor||'#4a778b';markThemeChoice();applyAccentColor(db.settings.themeColor||'#4a778b')}
+function hexToRgb(hex){hex=(hex||'#4a778b').replace('#','');if(hex.length===3)hex=hex.split('').map(x=>x+x).join('');return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)]}
+function mixHex(hex,white=.84){const [r,g,b]=hexToRgb(hex),m=x=>Math.round(x+(255-x)*white).toString(16).padStart(2,'0');return '#'+m(r)+m(g)+m(b)}
+function applyAccentColor(color){color=color||'#4a778b';document.documentElement.style.setProperty('--accent',color);if(document.body.classList.contains('dark')){const [r,g,b]=hexToRgb(color);document.documentElement.style.setProperty('--accent2',`rgba(${Math.round(r*.55)},${Math.round(g*.55)},${Math.round(b*.55)},.28)`)}else{document.documentElement.style.setProperty('--accent2',mixHex(color,.84))}}
+function chooseTheme(color){themeColor.value=color;customThemeColor.value=color;applyAccentColor(color);markThemeChoice()}
+function previewAppearance(){document.body.classList.toggle('dark',theme.value==='dark');applyAccentColor(themeColor.value||db.settings.themeColor||'#4a778b')}
+function markThemeChoice(){document.querySelectorAll('.theme-swatch').forEach(b=>b.classList.toggle('selected',(b.dataset.color||'').toLowerCase()===(themeColor.value||'').toLowerCase()))}
+function saveSettings(){db.settings={toolName:toolName.value.trim()||'心理咨询师工作台',subtitle:toolSubtitle.value.trim()||'本地心理咨询记录与工作管理',practiceName:practiceName.value.trim(),counselorName:counselorName.value.trim(),pdfFooter:pdfFooter.value.trim(),themeColor:themeColor.value||'#4a778b',backupInterval:db.settings.backupInterval??14,lastBackup:db.settings.lastBackup||'',theme:theme.value};document.body.classList.toggle('dark',db.settings.theme==='dark');applyAccentColor(db.settings.themeColor);save();markThemeChoice();toast('设置已保存')}
+async function exportBackup(){if(!confirm('注意：JSON 导出文件是明文，不受数据库加密保护。请只保存到安全位置。\n\n继续导出？'))return;await window.desktopDB.auditEvent({action:'导出',objectType:'JSON备份',detail:'明文完整备份'});db.settings.lastBackup=new Date().toISOString();window.desktopDB&&window.desktopDB.setState(JSON.stringify(db));const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='心理咨询师工作台-完整备份-'+todayLocal()+'.json';a.click();URL.revokeObjectURL(a.href);renderBackupStatus();renderBackupReminder()}
+function importBackup(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.clients||!x.sessions)throw 0;if(confirm('恢复备份会替换当前数据，是否继续？')){window.desktopDB.auditEvent({action:'导入',objectType:'JSON备份',detail:f.name});x.tasks=x.tasks||[];x.finance=x.finance||[];x.templates=x.templates||[];x.referrals=x.referrals||[];db={...blank(),...x,settings:{...blank().settings,...(x.settings||{})}};save()}}catch(_){alert('备份文件格式无效。')}e.target.value=''};r.readAsText(f)}
+async function storage(){let info=null;try{info=window.desktopDB?await window.desktopDB.info():null}catch(_){info=null}if(info){storageInfo.textContent=`${info.encrypted?'已加密本地数据库':'本地数据库'}约 ${(info.size/1024).toFixed(1)} KB · 完整性检查：${info.integrity==='ok'?'正常':'需检查'}。`;const el=document.getElementById('desktopDbInfo');if(el)el.textContent=`${info.portableMode?'便携模式（程序同目录）':'标准应用数据模式'} ｜ 数据库：${info.dbPath} ｜ 备份目录：${info.backupDir}`;}else storageInfo.textContent='未检测到桌面数据库。'}
+async function clearAll(){if(confirm('确认删除本机数据库中的全部工作台数据？此操作不可撤销，且会删除来访者、咨询记录、任务、收费及设置。')&&confirm('请再次确认：是否已完成需要的备份？')){await window.desktopDB.auditEvent({action:'清空',objectType:'工作台数据',detail:'用户确认清空业务数据'});db=blank();save();showView('dashboard')}}
+async function desktopBackup(){if(!window.desktopDB)return alert('当前不是桌面版环境。');try{await window.desktopDB.backup();db.settings.lastBackup=new Date().toISOString();await persistWorkspace('手动备份后更新备份时间');renderBackupStatus();renderBackupReminder();toast('数据库备份已完成');storage()}catch(e){alert('数据库备份失败：'+e.message)}}
+async function openDataFolder(){if(window.desktopDB)await window.desktopDB.openDataFolder()}
+async function openBackupFolder(){if(window.desktopDB)await window.desktopDB.openBackupFolder()}
+async function initAuth(){unlockError.textContent='';if(!window.desktopDB){unlockError.textContent='桌面后端连接失败：Tauri API 未加载。请重新安装最新构建版本。';unlockError.style.color='#b42318';lockScreen.classList.add('show');return}let st;try{st=await window.desktopDB.startupStatus()}catch(e){console.error(e);unlockError.textContent='桌面后端启动失败：'+(e?.message||String(e));unlockError.style.color='#b42318';lockScreen.classList.add('show');return}if(st.authenticated&&st.user){currentAuthUser=st.user;return afterLogin()}if(st.needsSetup){lockTitle.textContent='首次使用：创建管理员账户';lockHelp.textContent='创建本工作台的第一个用户。登录密码至少 10 位。';setupFields.style.display='block';loginFields.style.display='none'}else{setupFields.style.display='none';loginFields.style.display='block';lockTitle.textContent='用户登录';lockHelp.textContent='请输入用户账户登录。'}lockScreen.classList.add('show');setupPasswordCapsHints()}
+async function setupFirstUser(){const btn=document.getElementById('setupAdminButton');unlockError.textContent='';unlockError.style.color='';if(!window.desktopDB){unlockError.textContent='桌面后端连接失败，无法创建账户。';return}const u=setupUsername.value.trim(),d=setupDisplayName.value.trim(),a=setupPassword.value,b=setupPassword2.value;if(a!==b){unlockError.textContent='两次输入的密码不一致。';return}if(!u){unlockError.textContent='请输入用户名。';return}if(a.length<10){unlockError.textContent='密码至少 10 位。';return}try{if(btn){btn.disabled=true;btn.textContent='正在创建…'}const r=await window.desktopDB.authSetup({username:u,displayName:d,password:a});if(!r||!r.ok){unlockError.textContent=(r&&r.error)||'创建账户失败。';return}currentAuthUser=r.user;await afterLogin()}catch(e){console.error(e);unlockError.textContent='创建账户失败：'+(e?.message||String(e))}finally{if(btn){btn.disabled=false;btn.textContent='创建管理员账户'}}}
+async function unlockWorkspace(){unlockError.textContent='';try{const r=await window.desktopDB.authLogin({username:loginUsername.value.trim(),password:unlockPassword.value});if(r.ok){currentAuthUser=r.user;await afterLogin()}else{unlockError.textContent=r.error||'登录失败。';unlockPassword.select()}}catch(e){console.error(e);unlockError.textContent='登录失败：'+(e?.message||String(e));unlockPassword.select()}}
+async function afterLogin(){lockScreen.classList.remove('show');setupDateInputs();unlockPassword.value='';unlockError.textContent='';db=load();sweepTaskArchive();renderAll();setupAutosave();lastActivity=Date.now();startAutoLock();if(currentUserInfo)currentUserInfo.textContent=`${currentAuthUser.displayName}（${currentAuthUser.username}） · ${currentAuthUser.role}`;renderUsers()}
+async function lockWorkspace(){if(!currentAuthUser)return initAuth();await window.desktopDB.authLock();currentAuthUser=null;db=blank();renderAll();lockTitle.textContent='工作台已锁定';lockHelp.textContent='为保护来访者资料，请重新登录。';setupFields.style.display='none';loginFields.style.display='block';unlockPassword.value='';unlockError.textContent='';lockScreen.classList.add('show');setTimeout(()=>loginUsername.focus(),50)}
+function saveAutoLockSetting(){const n=Number(autoLockMinutes.value||15);window.desktopDB.setPref('autoLockMinutes',String(n));startAutoLock();renderSecuritySummary();toast('自动锁定设置已保存')}
+function startAutoLock(){clearInterval(autoLockTimer);const n=Number(window.desktopDB.getPref('autoLockMinutes')??15);if(typeof autoLockMinutes!=='undefined')autoLockMinutes.value=String(n);if(n>0)autoLockTimer=setInterval(()=>{if(currentAuthUser&&Date.now()-lastActivity>=n*60000)lockWorkspace()},15000);renderSecuritySummary()}
+function renderSecuritySummary(){const n=Number(window.desktopDB.getPref('autoLockMinutes')??15);if(typeof autoLockSummary!=='undefined')autoLockSummary.textContent=n?`当前设置：连续 ${n} 分钟无操作后自动锁定。`:'当前已关闭自动锁定。'}
+['pointerdown','keydown','wheel','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{if(currentAuthUser)lastActivity=Date.now()},{passive:true}));
+async function changeUserPassword(){const a=currentUserPassword.value,b=newUserPassword.value,c=confirmUserPassword.value;if(b!==c)return alert('两次输入的新密码不一致。');const r=await window.desktopDB.changePassword({currentPassword:a,newPassword:b});if(!r.ok)return alert(r.error||'修改密码失败。');currentUserPassword.value=newUserPassword.value=confirmUserPassword.value='';toast('登录密码已修改')}
+async function renderAuditLog(){if(!currentAuthUser)return;currentUserInfo.textContent=`${currentAuthUser.displayName}（${currentAuthUser.username}） · ${currentAuthUser.role}`;auditTable.innerHTML='<div class="empty">正在读取审计日志…</div>';try{const rows=await window.desktopDB.auditList(300);auditTable.innerHTML=rows.length?`<table><tr><th>时间</th><th>用户</th><th>操作</th><th>对象</th><th>结果</th><th>说明</th></tr>${rows.map(r=>`<tr><td>${esc(new Date(r.ts).toLocaleString('zh-CN'))}</td><td>${esc(r.username)}</td><td>${esc(r.action)}</td><td>${esc([r.object_type,r.object_id].filter(Boolean).join(' · ')||'—')}</td><td>${esc(r.result)}</td><td>${esc(r.detail||'—')}</td></tr>`).join('')}</table>`:emptyState('✓','暂无审计日志','登录、锁定和数据操作会自动记录在这里。','','')}catch(e){auditTable.innerHTML=`<div class="empty">审计日志读取失败：${esc(e.message||'未知错误')}</div>`}renderSecuritySummary()}
+async function verifyAuditLog(){const r=await window.desktopDB.auditVerify();auditVerifyResult.textContent=r.ok?'完整性校验通过：未检测到审计日志链被修改。':'警告：检测到审计日志完整性异常，请停止使用并检查数据库。';renderAuditLog()}
+async function renderUsers(){if(!currentAuthUser)return;const card=document.getElementById('userManagementCard');if(currentAuthUser.role!=='管理员'){card.style.display='none';return}card.style.display='block';try{const rows=await window.desktopDB.usersList();usersTable.innerHTML=rows.length?`<table><tr><th>用户名</th><th>显示姓名</th><th>角色</th><th>状态</th><th></th></tr>${rows.map(u=>`<tr><td>${esc(u.username)}</td><td>${esc(u.display_name)}</td><td>${esc(u.role)}</td><td>${u.active?'启用':'停用'}</td><td>${u.id===currentAuthUser.id?'当前账户':`<a class=\"action\" onclick=\"setUserActive('${u.id}',${u.active?0:1})\">${u.active?'停用':'启用'}</a>`}</td></tr>`).join('')}</table>`:'<div class=\"empty\">暂无用户</div>'}catch(e){usersTable.innerHTML='<div class=\"empty\">无法读取用户列表</div>'}}
+async function createUserAccount(){const r=await window.desktopDB.usersCreate({username:newAccountUsername.value.trim(),displayName:newAccountDisplayName.value.trim(),role:newAccountRole.value,password:newAccountPassword.value});if(!r.ok)return alert(r.error||'创建用户失败。');newAccountUsername.value=newAccountDisplayName.value=newAccountPassword.value='';toast('用户已创建');renderUsers();renderAuditLog()}
+async function setUserActive(id,active){if(!confirm(active?'确认启用这个用户？':'确认停用这个用户？'))return;const r=await window.desktopDB.usersSetActive({id,active:!!active});if(!r.ok)return alert(r.error||'操作失败。');renderUsers();renderAuditLog()}
+
+function togglePassword(id,btn){const el=document.getElementById(id);if(!el)return;const show=el.type==='password';el.type=show?'text':'password';btn.textContent=show?'◉':'◉';btn.title=show?'隐藏密码':'显示密码';btn.setAttribute('aria-label',btn.title)}
+function setupPasswordCapsHints(){document.querySelectorAll('input[type=password],input[data-password-field]').forEach(el=>{if(el.dataset.capsReady)return;el.dataset.capsReady='1';const hint=document.getElementById(el.id+'Caps');el.addEventListener('keyup',e=>{if(hint)hint.style.display=e.getModifierState&&e.getModifierState('CapsLock')?'block':'none'});el.addEventListener('keydown',e=>{if(hint)hint.style.display=e.getModifierState&&e.getModifierState('CapsLock')?'block':'none'})})}
+
+applyAccentColor('#4a778b');setupPasswordCapsHints();
+const setupAdminButtonEl=document.getElementById('setupAdminButton');if(setupAdminButtonEl)setupAdminButtonEl.addEventListener('click',setupFirstUser);
+const loginButtonEl=document.getElementById('loginButton');if(loginButtonEl)loginButtonEl.addEventListener('click',unlockWorkspace);
+initAuth();
+</script>
+</body></html>
