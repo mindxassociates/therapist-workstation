@@ -322,6 +322,44 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   w.openFinance('', clientId);
   check('finance prefilled from client default fee', w.document.getElementById('fAmount').value === '600');
 
+
+  // ---- Templates: seeded builtins, kinds, custom CRUD, plan application, delete persistence ----
+  const seeded = savedState().templates;
+  check('builtin templates seeded (record + plan kinds)', seeded.length >= 6 && seeded.some((x) => x.name === '安全计划（危机干预）' && x.kind === '方案') && seeded.some((x) => x.name === 'SOAP 记录' && x.kind === '记录'));
+  w.openTemplate();
+  w.document.getElementById('rtName').value = '我的方案模板';
+  w.document.getElementById('rtKind').value = '方案';
+  w.document.getElementById('rtPGoals').value = '自定义目标X';
+  w.saveTemplate(); await flush();
+  check('custom plan template saved with kind', savedState().templates.some((x) => x.name === '我的方案模板' && x.kind === '方案' && x.pGoals === '自定义目标X'));
+  const safety = savedState().templates.find((x) => x.name === '安全计划（危机干预）');
+  w.openPlan(clientId);
+  check('plan picker offers plan templates', [...w.document.getElementById('pTemplatePick').options].some((o) => o.value === safety.id));
+  w.document.getElementById('pTemplatePick').value = safety.id;
+  w.applyPlanTemplate();
+  check('plan template applied (crisis resources filled)', w.document.getElementById('pApproach').value.includes('12356'));
+  w.eval('planDialog.close()');
+  await w.deleteTemplate(safety.id); await flush();
+  const afterDelete = savedState().templates.length;
+  w.seedBuiltinTemplates(); await flush();
+  check('deleted builtin is not resurrected by reseeding', savedState().templates.length === afterDelete && !savedState().templates.some((x) => x.id === safety.id));
+
+  // ---- Logo + client document (PDF) layout ----
+  w.setLogoData('data:image/png;base64,iVBORw0KGgo=');
+  await flush();
+  check('logo stored in settings', savedState().settings.logoData.startsWith('data:image/png'));
+  check('brand logo shown in header', w.document.getElementById('brandLogo').style.display === 'block');
+  w.showView('statement');
+  w.initStatement();
+  w.document.getElementById('stmtClient').value = clientId;
+  w.renderStatement();
+  check('statement uses branded letterhead with logo', w.document.getElementById('stmtBody').innerHTML.includes('data:image/png') && w.document.getElementById('stmtBody').innerHTML.includes('linear-gradient(125deg,#132228'));
+  w.eval("db.settings.docHeaderStyle='minimal';db.settings.pdfFooter='页脚测试文字'");
+  w.renderStatement();
+  check('minimal letterhead + footer text applied', !w.document.getElementById('stmtBody').innerHTML.includes('linear-gradient(125deg,#132228,#355564') && w.document.getElementById('stmtBody').innerHTML.includes('页脚测试文字'));
+  w.removeLogo(); await flush();
+  check('logo removed', !savedState().settings.logoData);
+
   // ---- Customization: font size / density / header style / home modules / landing page ----
   w.showView('settings');
   w.document.getElementById('fontSize').value = 'large';

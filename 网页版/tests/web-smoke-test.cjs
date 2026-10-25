@@ -108,6 +108,31 @@ const saveBtnId = (w, prefix) => {
   check('reset appearance restores brand defaults', S().settings.accent === '#4a778b' && S().settings.headerStyle === 'aurora' && S().settings.fontSize === 'normal');
 
 
+
+  // ---- Templates: builtins (record + plan), hide/restore, custom CRUD, plan application ----
+  check('web builtins = 5 (3 record + 2 plan)', w.eval('BUILTIN_TEMPLATES.length') === 5 && w.eval('visibleBuiltins().length') === 5);
+  check('web plan templates available', w.eval('planTemplates().length') === 2);
+  w.hideBuiltin('builtin-soap-cn');
+  check('web builtin hidden', w.eval('visibleBuiltins().length') === 4);
+  w.restoreBuiltins();
+  check('web builtins restored', w.eval('visibleBuiltins().length') === 5);
+  w.editTemplate();
+  w.document.getElementById('tName').value = '我的网页方案模板';
+  w.document.getElementById('tKind').value = '方案';
+  w.document.getElementById('tPlanGoals').value = '网页目标Y';
+  const tBtn = w.document.querySelector('[onclick^="saveTemplate"]');
+  const tplId = tBtn.getAttribute('onclick').match(/saveTemplate\('([^']+)'/)[1];
+  w.saveTemplate(tplId, '');
+  check('web custom plan template saved', S().templates.length === 1 && S().templates[0].kind === '方案' && S().templates[0].planGoals === '网页目标Y');
+  w.openClient(cid);
+  check('web plan picker lists plan templates', [...w.document.getElementById('planPick').options].some((o) => o.value === 'builtin-plan-cn'));
+  w.document.getElementById('planPick').value = 'builtin-plan-cn';
+  w.applyPlanTemplateW(cid);
+  check('web plan template applied to plan fields', w.document.getElementById('pGoals').value.includes('阶段目标'));
+  w.closeModal(true);
+  w.deleteTemplate(tplId);
+  check('web custom template deleted', S().templates.length === 0);
+
   // ---- Borrowed-from-EHR features: assessments / waitlist / event status / insights / statement / documents / default fee ----
   const savedParsed = () => JSON.parse(w.localStorage.getItem('mx_counselor_lite_v1'));
   w.openAssessment('', cid);
