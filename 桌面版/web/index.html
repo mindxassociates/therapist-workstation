@@ -117,7 +117,7 @@ dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);paddi
 <button data-view="settings">个性化设置</button>
 <button data-view="privacy">隐私与合规</button>
 </div></div>
-<div class="nav-developer"><div>程序开发</div><a onclick="openMindX()">Mind X社区 ↗</a><div class="nav-version">Desktop V3.1.8</div></div>
+<div class="nav-developer"><div>程序开发</div><a onclick="openMindX()">Mind X社区 ↗</a><div class="nav-version">Desktop V3.1.9</div></div>
 </nav>
 <main>
 <section id="dashboard" class="view active">
@@ -231,7 +231,7 @@ dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);paddi
 <label>文档联系方式</label><input id="docContact" placeholder="例如：电话 / 微信 / 邮箱（可空）">
 <label><input type="checkbox" id="docShowContact" style="width:auto"> 在文档页眉 / 页脚显示联系方式</label></div>
 <div class="card"><h3>账户与自动锁定</h3><p class="muted">工作台使用独立用户账户控制访问。锁定后必须重新输入当前用户密码。</p><label>无操作自动锁定</label><select id="autoLockMinutes" onchange="saveAutoLockSetting()"><option value="5">5 分钟</option><option value="10">10 分钟</option><option value="15">15 分钟（推荐）</option><option value="30">30 分钟</option><option value="60">60 分钟</option><option value="0">关闭自动锁定</option></select><div class="row" style="margin-top:12px"><button class="secondary" onclick="lockWorkspace()">立即锁定</button></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>修改登录密码</h3><label>当前密码</label><input id="currentUserPassword" type="password" autocomplete="current-password"><label>新密码</label><input id="newUserPassword" type="password" autocomplete="new-password" placeholder="至少 10 位"><label>再次输入新密码</label><input id="confirmUserPassword" type="password" autocomplete="new-password"><button class="primary" style="margin-top:12px" onclick="changeUserPassword()">修改密码</button></div></div>
-<div class="card"><h3>关于</h3><p><b>心理咨询师工作台</b></p><p class="muted">Desktop V3.1.8 · 本地加密数据存储</p><p>程序开发：<a class="action" onclick="openMindX()">Mind X社区 ↗</a></p></div>
+<div class="card"><h3>关于</h3><p><b>心理咨询师工作台</b></p><p class="muted">Desktop V3.1.9 · 本地加密数据存储</p><p>程序开发：<a class="action" onclick="openMindX()">Mind X社区 ↗</a></p></div>
 </div></section>
 
 <section id="security" class="view"><h2>安全与审计</h2><div class="two"><div class="card"><h3>当前用户</h3><p id="currentUserInfo" class="muted">—</p><p>审计日志用于记录登录、锁定以及工作台数据修改。普通界面不提供修改或删除审计日志的功能。</p><button class="secondary" onclick="verifyAuditLog()">校验审计日志完整性</button><p id="auditVerifyResult" class="muted"></p></div><div class="card"><h3>自动锁定</h3><p class="muted">达到设定的无操作时间后，工作台会遮蔽全部来访者资料并要求重新登录。</p><p id="autoLockSummary"></p><button class="secondary" onclick="lockWorkspace()">立即锁定</button></div></div><div class="card" id="userManagementCard"><div class="between row"><div><h3>用户与权限</h3><div class="muted">管理员可以创建或停用用户。咨询师账户可使用工作台，但不能管理其他用户。</div></div><button class="secondary" onclick="renderUsers()">刷新</button></div><div id="usersTable"></div><div class="two" style="margin-top:14px"><div><label>用户名</label><input id="newAccountUsername"></div><div><label>显示姓名</label><input id="newAccountDisplayName"></div><div><label>角色</label><select id="newAccountRole"><option>咨询师</option><option>管理员</option></select></div><div><label>初始密码</label><input id="newAccountPassword" type="password" placeholder="至少 10 位"></div></div><button class="primary" style="margin-top:12px" onclick="createUserAccount()">创建用户</button></div><div class="card"><div class="between row"><h3>审计日志</h3><button class="secondary" onclick="renderAuditLog()">刷新</button></div><div id="auditTable"><div class="empty">正在读取审计日志…</div></div></div></section>
@@ -630,7 +630,11 @@ const BUILTIN_TEMPLATES_D=[
 {name:'阶段小结 / 结案小结',kind:'通用',builtin:true,focus:'本阶段主要议题回顾：',updates:'主要变化与进展：',work:'有效的工作方式与干预：',response:'来访者反馈：',plan:'未完成议题与后续建议：',next:'后续安排（继续 / 暂停 / 结案 / 转介）：'},
 {name:'阶段性咨询方案',kind:'方案',builtin:true,pGoals:'阶段目标（具体、可观察）：',pApproach:'工作方式与主要取向：',pFrequency:'咨询频率与预计时长：',pStage:'当前阶段与进展标志：',pReview:'阶段评估与调整计划：'},
 {name:'安全计划（危机干预）',kind:'方案',builtin:true,pGoals:'安全目标：来访者在危机情境下优先保证自身安全。',pApproach:'识别预警信号：\n内部应对策略：\n可联系的社会支持：\n专业资源：全国心理援助热线 12356；紧急情况拨打 110 / 120。',pFrequency:'复核频率：每次咨询时复核，情况变化时随时更新。',pStage:'当前风险水平与变化：',pReview:'上次复核结论与本次调整：'}];
-function seedBuiltinTemplates(){if(db.settings.templatesSeededV)return;const have=new Set(db.templates.map(t=>t.name));let added=0;for(const b of BUILTIN_TEMPLATES_D){if(!have.has(b.name)){db.templates.push({id:uid(),createdAt:new Date().toISOString(),...b});added++}}db.settings.templatesSeededV='1';if(added)persistWorkspace('内置模板')}
+const BUILTIN_TEMPLATES_E=[
+{name:'DAP 记录',kind:'记录',builtin:true,focus:'D 数据（本次主题与核心事实）：',updates:'D 数据（来访者陈述、行为观察与相关事实）：',work:'咨询师工作 / 干预：',response:'A 分析评估（临床理解与变化评估）：',plan:'P 计划（后续方向与安排）：',next:'下次跟进事项：'},
+{name:'BIRP 记录',kind:'记录',builtin:true,focus:'B 行为与呈现（本次主题与目标行为）：',updates:'B 行为与呈现（具体行为、陈述与观察）：',work:'I 干预（咨询师工作）：',response:'R 来访者反应：',plan:'P 计划（后续方向与安排）：',next:'下次跟进事项：'}];
+function seedBuiltinTemplates(){if(!db.settings.templatesSeededV2){const have2=new Set(db.templates.map(t=>t.name));let added2=0;for(const b of BUILTIN_TEMPLATES_E){if(!have2.has(b.name)){db.templates.push({id:uid(),createdAt:new Date().toISOString(),...b});added2++}}db.settings.templatesSeededV2='1';if(added2)persistWorkspace('内置模板 DAP/BIRP')}
+if(db.settings.templatesSeededV)return;const have=new Set(db.templates.map(t=>t.name));let added=0;for(const b of BUILTIN_TEMPLATES_D){if(!have.has(b.name)){db.templates.push({id:uid(),createdAt:new Date().toISOString(),...b});added++}}db.settings.templatesSeededV='1';if(added)persistWorkspace('内置模板')}
 function renderTemplates(){const groups=[['记录','咨询记录模板'],['方案','咨询方案模板'],['通用','通用模板']];const row=t=>`<div style="padding:13px 0;border-bottom:1px solid var(--line)" class="between row"><div><b>${esc(t.name)}</b>${t.builtin?' <span class="pill">内置</span>':''}<div class="muted">${(t.kind==='方案'?[t.pGoals,t.pApproach,t.pFrequency,t.pStage,t.pReview]:[t.focus,t.updates,t.work,t.response,t.plan,t.next]).filter(Boolean).length} 个字段包含预设内容</div></div><span><a class="action" onclick="openTemplate('${t.id}')">编辑</a> · <a class="action" onclick="deleteTemplate('${t.id}')">删除</a></span></div>`;templatesList.innerHTML=db.templates.length?groups.map(([k,label])=>{const rows=db.templates.filter(t=>(t.kind||'记录')===k);return rows.length?`<h3 style="margin:14px 0 4px">${label}</h3>`+rows.map(row).join(''):''}).join(''):emptyState('▤','还没有模板','建立常用的记录或方案框架后，写记录、做方案时可以直接套用。','新建模板',"openTemplate()")}
 function deleteTemplate(id){if(confirm('确认删除这个记录模板？已有咨询记录不会受到影响。')){db.templates=db.templates.filter(t=>t.id!==id);save()}}
 function applyTemplate(id){const t=db.templates.find(x=>x.id===id);if(!t){templateHint.textContent='选择模板：套用固定的记录框架。';return}const pairs=[[sFocus,t.focus],[sUpdates,t.updates],[sWork,t.work],[sResponse,t.response],[sPlan,t.plan],[sNext,t.next]];let n=0;pairs.forEach(([el,val])=>{if(!el.value.trim()&&val){el.value=val;n++}});templateHint.textContent=`已应用“${t.name}”，填入 ${n} 个空白字段。已有内容不会被覆盖。`}
@@ -655,7 +659,7 @@ function openSession(sid='',cid='',date='',eventId=''){
 function saveSession(){
  if(!sClient.value)return alert('请选择来访者。');sDate.value=normalizeDateValue(sDate.value);if(!requireDate(sDate.value,'咨询日期'))return;
  const x={id:sId.value||uid(),eventId:sEventId.value||'',clientId:sClient.value,date:sDate.value,duration:sDuration.value,mode:sMode.value,recordMode:sRecordMode.value,focus:sFocus.value,updates:sUpdates.value,work:sWork.value,response:sResponse.value,plan:sPlan.value,next:sNext.value,simpleTheme:sSimpleTheme.value,simpleChanges:sSimpleChanges.value,simpleWork:sSimpleWork.value,simplePlan:sSimplePlan.value,keyFocus:sKeyFocus.value,keyRisk:sKeyRisk.value,keyNext:sKeyNext.value,updatedAt:new Date().toISOString()};
- const i=db.sessions.findIndex(s=>s.id===x.id);i>=0?db.sessions[i]={...db.sessions[i],...x}:db.sessions.push({...x,createdAt:new Date().toISOString()});draftClear('session',sId.value||sEventId.value||`${sClient.value||'new'}:${sDate.value||'new'}`);sessionDialog.close();renderSessions();save();showView('sessions');renderSessions();toast('咨询记录已保存并加入记录列表')
+ const i=db.sessions.findIndex(s=>s.id===x.id);i>=0?db.sessions[i]={...db.sessions[i],...x}:db.sessions.push({...x,createdAt:new Date().toISOString()});draftClear('session',sId.value||sEventId.value||`${sClient.value||'new'}:${sDate.value||'new'}`);sessionDialog.close();renderSessions();save();showView('sessions');renderSessions();if(typeof aiClearOnSave!=='undefined'&&aiClearOnSave){aiClearOnSave=false;aiTranscriptCache='';aiBriefCache='';toast('咨询记录已保存；已按设置清除智能记录页的转写稿与小结')}else toast('咨询记录已保存并加入记录列表')
 }
 let sessionTab='all';
 function missingConsultEvents(){const today=todayLocal();const nowMinutes=new Date().getHours()*60+new Date().getMinutes();return db.events.filter(e=>e.type==='心理咨询'&&e.clientId&&e.date<=today&&!sessionForEvent(e)&&(e.date<today||!e.time||Number(e.time.slice(0,2))*60+Number(e.time.slice(3,5))<=nowMinutes)).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')))}
@@ -778,12 +782,20 @@ function del(k,id){if(confirm('确认删除？')){db[k]=db[k].filter(x=>x.id!==i
 
 // ---------- 智能记录：离线录音转写（Whisper）+ 本地 AI 生成咨询记录草稿 ----------
 let aiStatusCache=null,aiAudioPath='',aiPollTimer=null,aiDlTimer=null,recState=null,recTick=null,aiTranscriptCache='',aiBriefCache='';
+let aiLangCache='zh',aiOutLangCache='follow',aiFormatCache='standard',aiOrientationCache='',aiDelTranscriptCache=false,aiClearOnSave=false,aiCustomTemplateCache='';
+const AI_TRANSCRIBE_LANGS=[['zh','中文（普通话）'],['yue','粤语'],['en','English 英语'],['auto','自动检测'],['es','Español 西班牙语'],['ja','日本語 日语'],['ko','한국어 韩语'],['fr','Français 法语'],['de','Deutsch 德语'],['pt','Português 葡萄牙语'],['ru','Русский 俄语'],['it','Italiano 意大利语'],['nl','Nederlands 荷兰语'],['ar','العربية 阿拉伯语'],['hi','हिन्दी 印地语'],['vi','Tiếng Việt 越南语'],['th','ไทย 泰语'],['id','Bahasa Indonesia 印尼语'],['uk','Українська 乌克兰语'],['pl','Polski 波兰语'],['tr','Türkçe 土耳其语'],['sv','Svenska 瑞典语']];
+const AI_OUTPUT_LANGS=[['follow','跟随输入语言'],['zh-Hans','简体中文'],['zh-Hant','繁體中文'],['en','English'],['es','Español'],['ja','日本語'],['ko','한국어'],['fr','Français'],['de','Deutsch'],['pt','Português'],['ru','Русский'],['ar','العربية']];
+const AI_OUTPUT_LANG_NAMES={follow:'','zh-Hans':'简体中文','zh-Hant':'繁體中文',en:'English（英语）',es:'Español（西班牙语）',ja:'日本語（日语）',ko:'한국어（韩语）',fr:'Français（法语）',de:'Deutsch（德语）',pt:'Português（葡萄牙语）',ru:'Русский（俄语）',ar:'العربية（阿拉伯语）'};
+const AI_FORMATS=[['standard','标准六字段'],['soap','SOAP'],['dap','DAP'],['birp','BIRP']];
+const AI_FORMAT_SPECS={standard:'字段含义：focus 本次主题/主诉；updates 重要内容与变化；work 咨询师的工作与干预；response 来访者反应与洞察；plan 目标进展与后续计划；next 下次关注。',soap:'按 SOAP 结构组织：focus = S 主观陈述（来访者自述与主诉）；updates = O 客观观察（情绪、行为、语调等可观察信息）；work = 咨询师干预；response = A 评估（个案理解、变化与风险评估）；plan = P 计划；next = 下次跟进事项。',dap:'按 DAP 结构组织：focus 与 updates = D 数据（focus 写本次主题与核心数据，updates 写来访者陈述、行为观察与相关事实）；work = 咨询师干预；response = A 分析评估（临床理解与变化评估）；plan 与 next = P 计划（plan 写后续计划，next 写具体跟进事项）。',birp:'按 BIRP 结构组织：focus 与 updates = B 行为与呈现（focus 写本次主题与目标行为，updates 写具体行为、陈述与观察）；work = I 干预；response = R 来访者反应；plan 与 next = P 计划（plan 写后续计划，next 写下次跟进事项）。'};
+const aiOpts=(list,sel)=>list.map(([v,l])=>`<option value="${v}"${v===sel?' selected':''}>${l}</option>`).join('');
 const aiEl=id=>document.getElementById(id);
 const aiFmtBytes=n=>{n=Number(n)||0;if(n>=1e9)return (n/1e9).toFixed(2)+' GB';if(n>=1e6)return (n/1e6).toFixed(1)+' MB';if(n>=1e3)return (n/1e3).toFixed(0)+' KB';return n+' B'};
 async function renderAi(){
   const body=aiEl('aiBody');if(!body)return;
   body.innerHTML='<h2>智能记录</h2><div class="muted">正在读取本机引擎与模型状态…</div>';
-  let s=null;try{s=await window.desktopDB.aiStatus();aiStatusCache=s}catch(e){body.innerHTML=`<h2>智能记录</h2><div class="card"><div class="empty">当前桌面版本尚未包含智能记录引擎支持。请使用最新构建的桌面版（V3.1.8 及以上）后重试。</div></div>`;return}
+  try{const pv=window.desktopDB.getPref('aiCustomTemplate');if(pv!=null)aiCustomTemplateCache=pv}catch(_){}
+  let s=null;try{s=await window.desktopDB.aiStatus();aiStatusCache=s}catch(e){body.innerHTML=`<h2>智能记录</h2><div class="card"><div class="empty">当前桌面版本尚未包含智能记录引擎支持。请使用最新构建的桌面版（V3.1.9 及以上）后重试。</div></div>`;return}
   const wm=s.models.filter(m=>m.kind==='whisper'),lm=s.models.filter(m=>m.kind==='llm');
   const modelRow=m=>`<div class="between row" style="padding:7px 0;border-bottom:1px solid var(--line)"><div><b>${esc(m.label)}</b><div class="muted">${esc(m.file)}${m.downloaded?' · 已下载 '+aiFmtBytes(m.bytes):''}</div></div>${m.downloaded?'<span class="pill">可使用</span>':`<button class="secondary" onclick="aiStartDownload('${m.kind==='whisper'?'whisper':'llm'}-${m.id}')">下载</button>`}</div>`;
   const dl=s.download&&!s.download.done?`<div style="margin-top:10px"><div class="muted" id="aiDlLabel">正在下载：${esc(s.download.label)}（${aiFmtBytes(s.download.received)}${s.download.total?' / '+aiFmtBytes(s.download.total):''}）</div><div style="height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0"><div id="aiDlBar" style="height:100%;background:var(--accent);width:${s.download.total?Math.min(100,Math.round(s.download.received/s.download.total*100)):5}%"></div></div><button class="secondary" onclick="aiCancelDownload()">取消下载</button></div>`:(s.download&&s.download.error?`<p class="muted" style="color:#a13b3b">上次下载未完成：${esc(s.download.error)}</p>`:'');
@@ -808,9 +820,15 @@ async function renderAi(){
     <div><label>咨询日期</label><input id="aiDate" type="date" class="date-cn" value="${todayLocal()}"></div>
     <div><label>笔记生成模型</label><select id="aiLlmModel">${lOpts||'<option value="">（请先下载模型）</option>'}</select></div>
     <div><label>参考记录模板（可选）</label><select id="aiTemplate"><option value="">（不使用模板）</option>${tplOpts}</select></div>
-  </div></div>
+    <div><label>输出语言</label><select id="aiOutLang" onchange="aiOutLangCache=this.value">${aiOpts(AI_OUTPUT_LANGS,aiOutLangCache)}</select></div>
+    <div><label>记录格式</label><select id="aiFormat" onchange="aiFormatCache=this.value">${aiOpts(AI_FORMATS,aiFormatCache)}</select></div>
+    <div><label>取向 / 风格（可选）</label><input id="aiOrientation" placeholder="如：CBT、人本主义、心理动力学" value="${esc(aiOrientationCache)}" oninput="aiOrientationCache=this.value"></div>
+  </div><p class="muted" style="margin-top:8px">输出语言决定生成记录的撰写语言，与转写语言相互独立：例如可用英文转写、生成中文记录，或反之。</p>
+  <div style="margin-top:10px"><label>自定义模板 / 指令（可输入或粘贴你自己的记录模板与写作要求；自动保存，生成时优先遵循）</label><textarea id="aiCustomTemplate" rows="4" placeholder="例如：请按以下结构整理：1）主诉（保留来访者原话并加引号）；2）情绪与认知变化；3）本次干预与布置的练习；4）风险评估；5）下次计划。语气简洁专业，使用短句。" oninput="aiCustomTemplateCache=this.value;try{window.desktopDB.setPref('aiCustomTemplate',this.value)}catch(_){}">${esc(aiCustomTemplateCache)}</textarea></div>
+  <label><input type="checkbox" id="aiDelTranscript" ${aiDelTranscriptCache?'checked':''} onchange="aiDelTranscriptCache=this.checked" style="width:auto"> 生成的记录保存后，自动清除本页的转写稿与小结（已保存的记录不受影响）</label></div>
   <div class="card"><h3>模式一 · 咨询录音转写</h3>
     <label><input type="checkbox" id="aiConsent" style="width:auto"> 我已告知来访者并取得其录音同意（录音与转写仅在本机进行）</label>
+    <div style="margin-top:6px"><button class="secondary" onclick="printAiConsent()">打印录音知情同意书（中英双语）</button></div>
     <div class="row" style="margin:10px 0">
       <button class="primary" id="aiRecBtn" onclick="startRecording()">开始录音</button>
       <button class="secondary" id="aiRecStopBtn" onclick="stopRecording()" disabled>停止录音</button>
@@ -822,12 +840,13 @@ async function renderAi(){
     </div>
     <div class="row">
       <div><label>转写模型</label><select id="aiWhisperModel">${wOpts||'<option value="">（请先下载模型）</option>'}</select></div>
-      <div><label>语言</label><select id="aiLang"><option value="zh">中文（普通话）</option><option value="yue">粤语</option><option value="en">英文</option><option value="auto">自动检测</option></select></div>
+      <div><label>转写语言</label><select id="aiLang" onchange="aiLangCache=this.value">${aiOpts(AI_TRANSCRIBE_LANGS,aiLangCache)}</select></div>
       <button class="primary" onclick="startTranscribe()">开始转写</button>
       <button class="secondary" onclick="aiCancelProc()">取消</button>
       <label><input type="checkbox" id="aiDelAudio" checked style="width:auto"> 转写后删除录音文件</label>
     </div>
     <div id="aiProcWrap" style="display:none;margin-top:10px"><div class="muted" id="aiProcLabel">处理中…</div><div style="height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0"><div id="aiProcBar" style="height:100%;background:var(--accent);width:5%"></div></div></div>
+    <div class="row" style="margin-top:10px"><span class="muted">说话人标记：</span><button class="secondary" onclick="aiInsertSpeaker('咨询师')">插入「咨询师：」</button><button class="secondary" onclick="aiInsertSpeaker('来访者')">插入「来访者：」</button></div>
     <label>转写稿（可编辑）</label>
     <textarea id="aiTranscript" rows="9" placeholder="转写完成后，文字会显示在这里。也可以直接粘贴其他工具转写好的文字。" oninput="aiTranscriptCache=this.value">${esc(aiTranscriptCache)}</textarea>
     <div class="row" style="margin-top:8px"><button class="primary" onclick="generateNote('transcript')">根据转写稿生成记录草稿</button></div>
@@ -912,13 +931,23 @@ async function aiCancelProc(){try{await window.desktopDB.aiProcCancel()}catch(_)
 function buildNotePrompt(source){
   const tpl=db.templates.find(x=>x.id===(aiEl('aiTemplate')?aiEl('aiTemplate').value:''));
   const frame=tpl?`\n参考记录框架（模板「${tpl.name}」）：\n本次主题参考：${tpl.focus||'（空）'}\n重要内容参考：${tpl.updates||'（空）'}\n咨询师工作参考：${tpl.work||'（空）'}\n来访者反应参考：${tpl.response||'（空）'}\n计划参考：${tpl.plan||'（空）'}\n下次关注参考：${tpl.next||'（空）'}\n`:'';
-  return `<|im_start|>system\n你是一名心理咨询记录整理助手。根据咨询师提供的内容，整理成规范的心理咨询记录草稿。要求：只使用提供内容中的信息，不得编造未提及的事实、诊断、数值或人名；使用第三人称、专业、简洁的书面语言；涉及自伤/自杀等风险信息时如实保留。只输出一个 JSON 对象，不要输出其他文字。JSON 字段：focus（本次主题/主诉）、updates（重要内容与变化）、work（咨询师的工作与干预）、response（来访者反应与洞察）、plan（目标进展与后续计划）、next（下次关注）。没有信息的字段填空字符串。<|im_end|>\n<|im_start|>user\n${frame}\n需要整理的内容如下：\n${source}<|im_end|>\n<|im_start|>assistant\n`;
+  const fmt=aiEl('aiFormat')?aiEl('aiFormat').value:(aiFormatCache||'standard');aiFormatCache=fmt;
+  const outLang=aiEl('aiOutLang')?aiEl('aiOutLang').value:(aiOutLangCache||'follow');aiOutLangCache=outLang;
+  const orient=((aiEl('aiOrientation')?aiEl('aiOrientation').value:aiOrientationCache)||'').trim();aiOrientationCache=orient;
+  const langRule=outLang==='follow'?'JSON 各字段的内容使用与输入内容相同的语言撰写。':`JSON 各字段的内容必须全部使用${AI_OUTPUT_LANG_NAMES[outLang]||outLang}撰写；即使输入是其他语言，也要准确翻译整理为该语言后再填入字段。`;
+  const customTpl=((aiEl('aiCustomTemplate')?aiEl('aiCustomTemplate').value:aiCustomTemplateCache)||'').trim();aiCustomTemplateCache=customTpl;
+  const customFrame=customTpl?`\n用户自定义模板/指令（优先遵循；与记录格式冲突时以本段为准）：\n${customTpl}\n`:'';
+  const orientRule=orient?`咨询师取向/风格：${orient}。请在 work 与 response 字段的表述中体现该取向的专业术语与视角，但不得编造未实际发生的干预或内容。`:'';
+  return `<|im_start|>system\n你是一名心理咨询记录整理助手。根据咨询师提供的内容，整理成规范的心理咨询记录草稿。要求：只使用提供内容中的信息，不得编造未提及的事实、诊断、数值或人名；使用第三人称、专业、简洁的书面语言；涉及自伤/自杀等风险信息时如实保留。${langRule}${orientRule} 记录结构：${AI_FORMAT_SPECS[fmt]||AI_FORMAT_SPECS.standard} 只输出一个 JSON 对象，不要输出其他文字。JSON 字段：focus、updates、work、response、plan、next。没有信息的字段填空字符串。<|im_end|>\n<|im_start|>user\n${frame}${customFrame}\n需要整理的内容如下：\n${source}<|im_end|>\n<|im_start|>assistant\n`;
 }
+function aiInsertSpeaker(who){const ta=aiEl('aiTranscript');if(!ta)return;const mark=who+'：';const s=ta.selectionStart||0,e=ta.selectionEnd||0;const prefix=(s>0&&ta.value[s-1]!=='\n')?'\n':'';ta.value=ta.value.slice(0,s)+prefix+mark+ta.value.slice(e);const pos=s+prefix.length+mark.length;ta.focus();ta.setSelectionRange(pos,pos);aiTranscriptCache=ta.value}
+function printAiConsent(){const st=db.settings||{};const w=window.open('','_blank','width=900,height=800');if(!w)return alert('无法打开打印窗口，请检查弹窗设置。');const practice=esc(st.practiceName||''),counselor=esc(st.counselorName||'');w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>录音与 AI 辅助记录知情同意书</title><style>body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:#222;max-width:820px;margin:40px auto;padding:0 28px;line-height:1.8}h1{font-size:22px}h2{font-size:16px;margin-top:26px}.sig{margin-top:34px;line-height:2.6}.muted{color:#777;font-size:12px;text-align:center;margin-top:40px;border-top:1px solid #ddd;padding-top:10px}@media print{body{margin:0 auto}}</style></head><body><h1>录音与 AI 辅助记录知情同意书</h1><p class="muted" style="text-align:left;border:0;margin:0">${practice}${counselor?' · '+counselor:''}</p><p>为提高咨询记录的准确性与完整性，咨询师可能在征得您同意后，对咨询过程进行录音，并使用在本机运行的软件将录音转写为文字、整理为咨询记录草稿。</p><p><b>本地处理：</b>录音、转写与记录整理全部在咨询师的电脑本地完成，不上传互联网、不使用云端服务器、不用您的任何信息训练 AI 模型，软件提供方无法接触您的信息。</p><p><b>资料删除：</b>原始录音在转写后按咨询师的设置删除；转写文字在记录定稿后可按设置清除。最终记录由咨询师逐项核对、修改后保存，AI 不做任何临床判断。</p><p><b>您的权利：</b>您可以随时拒绝或撤回本同意（口头或书面均可），不影响您继续接受咨询服务。您有权查阅与您的记录相关的信息。</p><h2>Informed Consent for Audio Recording and AI-Assisted Notes</h2><p>With your consent, your therapist may record your sessions and use software that runs entirely on the therapist's own computer to transcribe the recording and draft a session note.</p><p><b>Local processing:</b> Recording, transcription, and note drafting happen locally on the therapist's computer. Nothing is uploaded to the internet or to cloud servers, your information is never used to train AI models, and the software provider has no access to your information.</p><p><b>Deletion:</b> The original audio is deleted after transcription according to the therapist's settings, and transcript text can be cleared once the note is finalized. Every note is reviewed and edited by your therapist before it is saved; the AI makes no clinical decisions.</p><p><b>Your rights:</b> You may decline or withdraw this consent at any time, verbally or in writing, without any effect on your care.</p><div class="sig">来访者签名 Client signature：＿＿＿＿＿＿＿＿＿＿　日期 Date：＿＿＿＿＿＿＿＿<br>咨询师签名 Therapist signature：＿＿＿＿＿＿＿＿＿＿　日期 Date：＿＿＿＿＿＿＿＿</div><div class="muted">本同意书由心理咨询师工作台生成 · Generated locally</div><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close()}
 async function generateNote(from){
   const source=(from==='transcript'?aiEl('aiTranscript').value:aiEl('aiBrief').value).trim();
   if(!source)return alert(from==='transcript'?'转写稿为空，请先完成转写或粘贴文字。':'请先填写咨询小结。');
   if(!aiEl('aiClient').value)return alert('请先建立来访者档案并选择来访者。');
   const model=aiEl('aiLlmModel').value;if(!model)return alert('请先下载笔记生成模型。');
+  aiDelTranscriptCache=aiEl('aiDelTranscript')?aiEl('aiDelTranscript').checked:aiDelTranscriptCache;aiClearOnSave=!!aiDelTranscriptCache;
   try{await window.desktopDB.generateStart(model,buildNotePrompt(source));aiShowProc('正在生成记录草稿（本机离线进行）…');aiStartProcPoll();toast('正在生成草稿，完成后会自动打开记录编辑框')}catch(e){alert(String(e))}}
 function applyGeneratedNote(raw){
   const w=aiEl('aiProcWrap');if(w)w.style.display='none';

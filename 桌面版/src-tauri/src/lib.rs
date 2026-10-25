@@ -170,10 +170,11 @@ struct DownloadShared { label: String, received: u64, total: u64, done: bool, ca
 #[derive(Default)]
 struct ProcShared { kind: String, progress: i32, output: String, stderr_tail: String, done: bool, error: Option<String>, child: Option<std::process::Child> }
 
-const WHISPER_MODELS: [(&str, &str, &str); 3] = [
+const WHISPER_MODELS: [(&str, &str, &str); 4] = [
     ("base", "基础 base（较快，普通话一般）", "ggml-base.bin"),
     ("small", "均衡 small（推荐，普通话较好）", "ggml-small.bin"),
     ("medium", "精准 medium（较慢，普通话更好）", "ggml-medium.bin"),
+    ("turbo", "大型 large-v3-turbo（多语言最佳，约 1.6 GB）", "ggml-large-v3-turbo.bin"),
 ];
 const LLM_MODELS: [(&str, &str, &str, &str); 2] = [
     ("qwen15", "Qwen2.5 1.5B（快速）", "qwen2.5-1.5b-instruct-q4_k_m.gguf", "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"),

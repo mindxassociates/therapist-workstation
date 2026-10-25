@@ -410,6 +410,29 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('brief-summary generation fills the dialog too', w.document.getElementById('sFocus').value === '工作压力与失眠');
   w.eval('sessionDialog.close()');
 
+  // ---- V3.1.9: output language / format / orientation / custom template / speaker marks / clear-on-save ----
+  check('output language + format selectors exist', !!w.document.getElementById('aiOutLang') && !!w.document.getElementById('aiFormat'));
+  check('transcribe language list is multilingual (es/ja present)', [...w.document.getElementById('aiLang').options].some(o => o.value === 'es') && [...w.document.getElementById('aiLang').options].some(o => o.value === 'ja'));
+  check('output language list includes English + Spanish', [...w.document.getElementById('aiOutLang').options].some(o => o.value === 'en') && [...w.document.getElementById('aiOutLang').options].some(o => o.value === 'es'));
+  check('DAP + BIRP builtin templates seeded', savedState().templates.some(x => x.name === 'DAP 记录') && savedState().templates.some(x => x.name === 'BIRP 记录'));
+  w.document.getElementById('aiTranscript').value = '最近睡不好。';
+  w.aiInsertSpeaker('咨询师');
+  check('speaker marker inserted into transcript', w.document.getElementById('aiTranscript').value.includes('咨询师：'));
+  w.document.getElementById('aiOutLang').value = 'en';
+  w.document.getElementById('aiFormat').value = 'soap';
+  w.document.getElementById('aiOrientation').value = 'CBT';
+  w.document.getElementById('aiCustomTemplate').value = 'CUSTOM-TPL: always end with a risk line.';
+  w.document.getElementById('aiCustomTemplate').dispatchEvent(new w.Event('input'));
+  w.document.getElementById('aiDelTranscript').checked = true;
+  await w.generateNote('brief');
+  check('prompt carries output language + format + orientation + custom template', lastPrompt.includes('English') && lastPrompt.includes('SOAP') && lastPrompt.includes('CBT') && lastPrompt.includes('CUSTOM-TPL: always end with a risk line.'));
+  await w.aiPollOnce();
+  await w.aiPollOnce();
+  check('generated draft opens session dialog (v319 flow)', w.document.getElementById('sFocus').value === '工作压力与失眠');
+  await w.saveSession(); await flush();
+  check('clear-on-save emptied transcript + brief caches', w.eval('aiTranscriptCache') === '' && w.eval('aiBriefCache') === '');
+  check('custom template persisted to prefs', w.eval("window.desktopDB.getPref('aiCustomTemplate')") === 'CUSTOM-TPL: always end with a risk line.');
+
   // ---- Customization: font size / density / header style / home modules / landing page ----
   w.showView('settings');
   w.document.getElementById('fontSize').value = 'large';
