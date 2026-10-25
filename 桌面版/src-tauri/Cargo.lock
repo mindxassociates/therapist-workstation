@@ -4219,7 +4219,7 @@ dependencies = [
 
 [[package]]
 name = "therapist-workstation"
-version = "3.1.12"
+version = "3.1.13"
 dependencies = [
  "aes-gcm",
  "base64 0.22.1",

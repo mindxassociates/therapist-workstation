@@ -369,6 +369,40 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   w.seedBuiltinTemplates(); await flush();
   check('deleted builtin is not resurrected by reseeding', savedState().templates.length === afterDelete && !savedState().templates.some((x) => x.id === safety.id));
 
+  // ---- V3.1.13: builtin template pack V3 (seeded once, kinds, picker) + 常用句式 panel ----
+  const v3kinds = { '电话 / 线上简短沟通记录': '记录', '危机干预记录': '记录', '个案概念化': '记录', '伴侣 / 家庭咨询记录': '记录', '团体咨询记录': '记录', '督导记录': '记录', '转介记录': '通用' };
+  const v3now = savedState().templates;
+  check('V3 template pack seeded with expected kinds', Object.entries(v3kinds).every(([n, k]) => v3now.some((x) => x.name === n && x.kind === k)));
+  check('V3 templates seeded exactly once and flag persisted', Object.keys(v3kinds).every((n) => v3now.filter((x) => x.name === n).length === 1) && savedState().settings.templatesSeededV3 === '1');
+  w.options();
+  check('session template picker lists all V3 templates', Object.keys(v3kinds).every((n) => [...w.document.getElementById('sTemplate').options].some((o) => o.textContent === n)));
+  const crisis = savedState().templates.find((x) => x.name === '危机干预记录');
+  await w.deleteTemplate(crisis.id); await flush();
+  const afterV3Delete = savedState().templates.length;
+  w.seedBuiltinTemplates(); await flush();
+  check('deleted V3 builtin is not resurrected by reseeding', savedState().templates.length === afterV3Delete && !savedState().templates.some((x) => x.name === '危机干预记录'));
+
+  // 常用句式 panel: renders corpus groups, inserts at cursor of focused field, selects 〔〕 slot
+  w.openSession('', clientId);
+  w.document.getElementById('sRecordMode').value = 'detailed'; w.updateSessionMode();
+  w.togglePhrasePanel();
+  const panelHtml = w.document.getElementById('phrasePanel').innerHTML;
+  check('phrase panel renders corpus groups incl. modality groups', panelHtml.includes('呈现') && panelHtml.includes('干预 · CBT／认知行为') && panelHtml.includes('苏格拉底式提问') && panelHtml.includes('计划'));
+  const workEl = w.document.getElementById('sWork');
+  workEl.value = '前文。';
+  workEl.focus();
+  workEl.setSelectionRange(3, 3);
+  workEl.dispatchEvent(new w.Event('focusin', { bubbles: true }));
+  const slotChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('识别与〔问题〕相关的触发因素'));
+  slotChip.click(); await tick();
+  check('phrase inserted at cursor of focused field', workEl.value.startsWith('前文。咨询师协助来访者识别与〔问题〕相关的触发因素。'));
+  check('first 〔〕 slot selected after insert', workEl.selectionStart === 3 + '咨询师协助来访者识别与'.length && workEl.value.slice(workEl.selectionStart, workEl.selectionEnd) === '〔问题〕');
+  w.eval('sessionFocusField=null');
+  const fbChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('积极倾听、反映与肯定'));
+  fbChip.click(); await tick();
+  check('phrase insert falls back to interventions field when nothing focused', workEl.value.includes('咨询师运用积极倾听、反映与肯定'));
+  w.eval('sessionDialog.close()');
+
   // ---- Logo + client document (PDF) layout ----
   w.setLogoData('data:image/png;base64,iVBORw0KGgo=');
   await flush();
@@ -498,6 +532,14 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('full edition keeps the AI nav entry', !!w.document.querySelector('nav button[data-view="ai"]'));
   w.applyEdition('lite');
   check('lite edition removes AI nav and labels itself', !w.document.querySelector('nav button[data-view="ai"]') && w.document.querySelector('.nav-version').textContent.includes('精简版'));
+  w.options();
+  check('lite edition keeps V3 templates in session picker', [...w.document.getElementById('sTemplate').options].some((o) => o.textContent === '督导记录'));
+  w.renderPhrasePanel();
+  const liteWork = w.document.getElementById('sWork'); liteWork.value = '';
+  w.eval('sessionFocusField=null');
+  const liteChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('无条件积极关注'));
+  liteChip.click(); await tick();
+  check('lite edition: phrase panel renders and inserts without AI', liteWork.value.includes('咨询师以无条件积极关注与温暖接纳建立咨询关系与信任。'));
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
