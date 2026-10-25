@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>心理咨询师工作台 V1.14.0 · Therapist Workstation</title>
+<title>心理咨询师工作台 V1.15.0 · Therapist Workstation</title>
 <style>
 :root{--accent:#4a778b;--accent2:#355564;--bg:#f4f3ef;--panel:#fff;--text:#20252a;--muted:#6c747a;--line:#deded8;--soft:#eef3f3;--danger:#a13b3b;--shadow:0 10px 30px rgba(20,30,35,.08)}
 *{box-sizing:border-box}body{margin:0;font:14px/1.55 system-ui,-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--text)}
@@ -89,8 +89,104 @@ const BUILTIN_TEMPLATES=[
  {id:'builtin-progress-cn',name:'参考｜结构化咨询记录',kind:'记录',content:`<h3>来访者主观报告 / 本次重点</h3><p><br></p><h3>咨询师观察</h3><p><br></p><h3>评估与个案理解</h3><p><br></p><h3>本次咨询方法 / 干预</h3><p><br></p><h3>来访者反应与咨询进展</h3><p><br></p><h3>风险与安全评估（如适用）</h3><p><br></p><h3>后续计划</h3><p><br></p>`},
  {id:'builtin-soap-cn',name:'参考｜SOAP 记录',kind:'记录',content:`<h3>S 主观陈述（来访者自述）</h3><p><br></p><h3>O 客观观察（情绪、行为、着装、语调等）</h3><p><br></p><h3>A 评估（个案理解与变化评估）</h3><p><br></p><h3>P 计划（后续方向与安排）</h3><p><br></p>`},
  {id:'builtin-plan-cn',name:'参考｜阶段性咨询方案',kind:'方案',planGoals:'阶段目标（具体、可观察）：',planFocus:'工作重点：\n工作方式与主要取向：\n咨询频率与预计时长：\n阶段评估与调整计划：',content:`<h3>阶段目标</h3><p>阶段目标（具体、可观察）：</p><h3>工作重点</h3><p>工作方式与主要取向：</p><h3>频率与评估</h3><p>咨询频率与预计时长：</p><p>阶段评估与调整计划：</p>`},
- {id:'builtin-safety-cn',name:'参考｜安全计划（危机干预）',kind:'方案',planGoals:'安全目标：来访者在危机情境下优先保证自身安全。',planFocus:'识别预警信号：\n内部应对策略：\n可联系的社会支持：\n专业资源：全国心理援助热线 12356；紧急情况拨打 110 / 120。\n复核频率：每次咨询时复核，情况变化时随时更新。',content:`<h3>安全目标</h3><p>来访者在危机情境下优先保证自身安全。</p><h3>预警信号与应对</h3><p>识别预警信号：</p><p>内部应对策略：</p><p>可联系的社会支持：</p><h3>专业资源</h3><p>全国心理援助热线 12356；紧急情况拨打 110 / 120。</p>`}
+ {id:'builtin-safety-cn',name:'参考｜安全计划（危机干预）',kind:'方案',planGoals:'安全目标：来访者在危机情境下优先保证自身安全。',planFocus:'识别预警信号：\n内部应对策略：\n可联系的社会支持：\n专业资源：全国心理援助热线 12356；紧急情况拨打 110 / 120。\n复核频率：每次咨询时复核，情况变化时随时更新。',content:`<h3>安全目标</h3><p>来访者在危机情境下优先保证自身安全。</p><h3>预警信号与应对</h3><p>识别预警信号：</p><p>内部应对策略：</p><p>可联系的社会支持：</p><h3>专业资源</h3><p>全国心理援助热线 12356；紧急情况拨打 110 / 120。</p>`},
+ {id:'builtin-contact-log-cn',name:'参考｜电话 / 线上简短沟通记录',kind:'记录',content:`<h3>沟通时间与方式</h3><p>【日期与时间，电话 / 视频 / 语音，约 __ 分钟】</p><h3>沟通缘由</h3><p>【来访者主动联系 / 咨询师回访 / 预约调整 / 其他】</p><h3>沟通要点</h3><p>【来访者报告的主要情况、变化与诉求】</p><h3>咨询师回应与处理</h3><p>【提供的信息、支持、建议或安排】</p><h3>来访者回应</h3><p>【对沟通内容的理解与态度】</p><h3>达成的约定</h3><p>【双方确认的事项，如预约调整、课后安排等】</p><h3>后续跟进</h3><p>【下次咨询时间 / 需继续关注的事项】</p>`},
+ {id:'builtin-crisis-cn',name:'参考｜危机干预记录',kind:'记录',content:`<h3>危机事件</h3><p>【触发情境与事件经过】</p><h3>风险评估</h3><p>自杀意念：【无 / 被动意念 / 主动意念】；自杀计划：【无 / 有，具体为】；实施手段可及性：【】</p><p>伤害他人风险：【】</p><p>保护因素：【家庭支持 / 求助意愿 / 未来计划 / 其他】</p><h3>已采取的干预</h3><p>【稳定化处理、情绪支持、联系紧急联系人、建议医疗评估等】</p><h3>来访者当前状态与回应</h3><p>【情绪、认知与合作程度】</p><h3>安全约定</h3><p>【与来访者确认的安全计划要点；紧急资源：全国心理援助热线 12356，紧急情况拨打 110 / 120】</p><h3>后续跟进安排</h3><p>【复访与风险复核时间、转介安排】</p>`},
+ {id:'builtin-concept-cn',name:'参考｜个案概念化',kind:'记录',content:`<h3>主要困扰的形成</h3><p>【核心困扰、发展背景与关键经历】</p><h3>维持因素</h3><p>【当前使困扰持续的认知、行为、情绪与环境因素】</p><h3>资源与优势</h3><p>【来访者的应对资源、支持系统与既往有效策略】</p><h3>工作假设</h3><p>【对困扰形成与维持机制的初步理解】</p><h3>干预方向</h3><p>【基于上述理解的工作重点与取向选择】</p><h3>待验证与补充的信息</h3><p>【后续咨询中需进一步了解的内容】</p>`},
+ {id:'builtin-family-cn',name:'参考｜伴侣 / 家庭咨询记录',kind:'记录',content:`<h3>出席人员与本次议题</h3><p>出席：【】</p><p>本次希望讨论：【】</p><h3>观察到的互动模式</h3><p>【沟通方式、冲突循环、联盟与界限等】</p><h3>咨询师干预</h3><p>【促进对话、重构、沟通练习等】</p><h3>成员反应与互动变化</h3><p>【】</p><h3>达成的共识 / 约定</h3><p>【】</p><h3>课后练习与下次议题</h3><p>【】</p>`},
+ {id:'builtin-group-cn',name:'参考｜团体咨询记录',kind:'记录',content:`<h3>团体主题与出席情况</h3><p>主题：【本次团体主题】</p><p>出席：【出席 __ 人；缺席：】</p><h3>团体过程与成员互动</h3><p>【分享、回应、冲突与凝聚等过程记录】</p><h3>带领者干预</h3><p>【促进互动、处理冲突、总结提炼等】</p><h3>成员反应与团体氛围</h3><p>【】</p><h3>本次小结</h3><p>【团体工作的收获与未处理议题】</p><h3>下次团体安排</h3><p>【主题与需特别关注的成员】</p>`},
+ {id:'builtin-supervision-cn',name:'参考｜督导记录',kind:'记录',content:`<h3>汇报个案概况</h3><p>【个案基本情况与咨询进程，请隐去可识别信息】</p><h3>督导问题</h3><p>【本次希望督导协助厘清的问题】</p><h3>督导师意见与建议</h3><p>【理论理解、技术建议与伦理提醒】</p><h3>受督者理解与回应</h3><p>【对督导意见的理解、认同与疑问】</p><h3>行动事项</h3><p>【会后将落实的调整与练习】</p><h3>下次督导跟进</h3><p>【需回报的进展与新问题】</p>`},
+ {id:'builtin-referral-note-cn',name:'参考｜转介记录',kind:'通用',content:`<h3>转介原因</h3><p>【超出执业范围 / 需要医疗评估 / 来访者需求变化 / 其他】</p><h3>转介方向</h3><p>【精神科 / 综合医院相关科室 / 其他取向咨询师 / 其他机构，及选择标准】</p><h3>与来访者的讨论</h3><p>【如何说明转介原因、提供的信息与注意事项】</p><h3>来访者回应与决定</h3><p>【】</p><h3>后续责任与安排</h3><p>【由谁联系、材料交接、时间节点】</p><h3>跟进确认</h3><p>【确认转介完成与来访者反馈的时间】</p>`}
 ];
+const CORPUS_ZH={
+register:'第三人称、正式临床书面语，多使用“协助、探讨、促进、处理、强化、肯定、正常化、提供心理教育”等临床书面表达；句式中的〔〕为槽位，须按转写稿/小结的实际内容填写，不得照抄槽位文字。',
+warning:'重要限制：仅在与咨询内容相符时优先采用下列句式；不得添加转写稿/小结中没有依据的干预、症状、风险判断或进展。语料库列出的干预或进展不表示它在本次咨询中实际发生过。',
+presentation:[
+'来访者本次咨询主要报告了〔问题/症状〕，情绪状态表现为〔情感〕。',
+'来访者谈到〔生活事件/压力源〕及其对日常功能的影响。',
+'来访者自述自上次咨询以来，在〔方面〕仍感到困难。',
+'来访者神情〔紧张/落泪/防备/投入〕，能够较为开放地谈论〔主题〕。'
+],
+assessmentProgress:[
+'来访者对自身反应模式的觉察有所提升，能够识别引发情绪反应的触发因素。',
+'来访者在〔情绪调节/冲突处理/自我理解〕方面持续取得进展。',
+'来访者能够将在咨询中学到的技巧运用到日常生活中。',
+'来访者对人际互动模式及其对当前功能的影响形成了新的领悟。',
+'来访者的症状与整体困扰程度有所减轻。',
+'来访者在〔方面〕仍存在困难，改变尚未稳定。'
+],
+interventionsGeneral:[
+'咨询师运用积极倾听、反映与肯定，支持来访者表达感受。',
+'咨询师协助来访者识别与〔问题〕相关的触发因素。',
+'咨询师与来访者探讨了〔早年经历/家庭模式〕对当前感受与行为的影响。',
+'咨询师就〔主题〕提供了心理教育，并联系来访者的症状表现加以说明。',
+'咨询师协助来访者制定具体的行动计划与下一步安排。',
+'咨询师将来访者的〔情绪〕感受正常化，并肯定其应对努力。',
+'咨询师强化来访者对〔应对技巧/积极自我对话〕的运用。',
+'咨询师与来访者一起检验了其对〔主题〕的负面想法及其证据。',
+'咨询师通过角色扮演与来访者练习〔沟通/设立界限〕技巧。',
+'咨询师在咨询中教授并练习了〔放松/稳定化/问题解决〕技巧。'
+],
+interventionsByModality:{
+dbt:{label:'DBT／辩证行为',keys:['dbt','dialectical','辩证'],frames:[
+'咨询师回顾并强化来访者对 DBT 技巧（痛苦耐受、情绪调节、人际效能）的运用。',
+'咨询师指导来访者在咨询之外练习正念与自我安抚技巧。'
+]},
+mi:{label:'动机式访谈',keys:['motivational','动机'],frames:[
+'咨询师运用开放式提问与反映性倾听，引出来访者自身的改变动机。',
+'咨询师与来访者探讨〔行为〕的利弊权衡，来访者识别出自己想要改变的理由。',
+'咨询师评估了来访者的改变阶段，并支持其向行动阶段推进。'
+]},
+psychodynamic:{label:'心理动力学',keys:['psychodynamic','psychoanalytic','dynamic','动力'],frames:[
+'咨询师探讨了早年经历与原生家庭模式如何塑造来访者当下的感受与行为。',
+'咨询师协助来访者领悟其在关系中重复出现的模式，包括在本次咨询中呈现的模式。',
+'咨询师处理了咨询关系中出现的移情议题。'
+]},
+trauma:{label:'创伤知情',keys:['trauma','ptsd','创伤'],frames:[
+'咨询师优先关注关系、思维、行为与情绪层面的安全感，遵循创伤知情照护原则。',
+'咨询师教授并练习稳定化（着陆）技巧，帮助来访者在创伤症状出现时保持当下感。',
+'咨询师将症状理解为来访者应对创伤的适应方式，并识别其自身的优势与资源。'
+]},
+addiction:{label:'成瘾／物质使用',keys:['addiction','substance','relapse','成瘾','物质'],frames:[
+'咨询师协助来访者识别内在与外在触发因素及早期康复技巧。',
+'咨询师回顾了复发预防技巧与来访者应对高危情境的计划。'
+]},
+cbt:{label:'CBT／认知行为',keys:['cbt','cognitive','认知'],frames:[
+'咨询师协助来访者识别自动思维及其背后的核心信念。',
+'咨询师运用苏格拉底式提问，协助来访者检验自动思维的真实性。',
+'咨询师引入思维记录表，帮助来访者监测并重构认知扭曲。',
+'咨询师与来访者制定活动安排，增加积极强化活动。'
+]},
+behavioral:{label:'行为取向',keys:['behavioral','behavior','行为'],frames:[
+'咨询师与来访者进行行为链分析，识别触发因素、易感因素与行为后果。',
+'咨询师协助来访者强化适应性行为，减少对不良模式的强化。'
+]},
+family:{label:'家庭／系统',keys:['family','system','couple','家庭','系统'],frames:[
+'咨询师促进家庭成员之间更健康的沟通，并澄清家庭中的角色与界限。',
+'咨询师探讨了家庭沟通模式如何在当前关系中重现。'
+]},
+supportive:{label:'支持性／人本',keys:['person-centered','humanistic','supportive','人本'],frames:[
+'咨询师以无条件积极关注与温暖接纳建立咨询关系与信任。',
+'咨询师运用支持性心理治疗技术，包括共情倾听与肯定，为来访者提供安全的表达空间。'
+]}
+},
+modalityOrder:['dbt','mi','psychodynamic','trauma','addiction','cbt','behavioral','family','supportive'],
+response:[
+'来访者对〔模式〕的领悟有所增加。',
+'来访者对反馈持开放态度，积极参与干预过程。',
+'来访者在治疗目标上取得部分进展，〔方面〕仍是后续工作的重点。',
+'随着来访者练习〔技巧〕，其自述〔症状〕有所减轻。',
+'来访者在〔方面〕仍有困难，咨询师提供了示例与额外支持。',
+'来访者表示理解了〔概念〕，并同意在下次咨询前练习〔技巧〕。'
+],
+plan:[
+'来访者将在下次咨询前继续练习〔技巧/作业〕，并记录〔症状/行为〕的变化。',
+'下次咨询将继续围绕〔目标〕开展工作。',
+'咨询师布置了〔思维记录/活动安排/书写练习〕作为课后作业。',
+'维持当前咨询计划，下次咨询时评估目标进展。',
+'若症状加重，来访者同意使用〔应对/安全步骤〕。'
+]
+};
 function normalizeV17(){
  const arrays=['clients','sessions','sessionDrafts','events','tasks','goals','quickNotes','noteDrafts','templates','finances','recentViews','referrals','referralLinks','snippets'];
  arrays.forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});
@@ -176,7 +272,7 @@ function restoreClient(id){client(id).status='进行中';save();render()}
 function openMissingSessions(){sessionView='missing';go('sessions')}
 function renderSessions(){let arr=[...S.sessions].sort((a,b)=>(b.date||'').localeCompare(a.date||'')),missing=getMissingConsultEvents();let pending=sessionView==='missing';document.getElementById('sessions').innerHTML=head('咨询记录',pending?'以下为已经发生但尚未有完成咨询记录的心理咨询。':'默认自由书写；需要时可套用自定义记录模板。','<button class="btn primary" onclick="editSession()">+ 新建咨询记录</button>')+`<div class="tabs"><button class="${!pending?'active':''}" onclick="sessionView='all';renderSessions()">全部记录</button><button class="${pending?'active':''}" onclick="sessionView='missing';renderSessions()">待补记录 ${missing.length}</button></div><div class="card">${pending?(missing.length?missing.map(e=>`<div class="item"><div><div class="item-title">${esc(cname(e.clientId))}</div><div class="meta">${esc(e.date||'')} ${esc(e.time||'')} · ${esc(e.mode||'')} · ${esc(e.title||'心理咨询')}</div></div><button class="btn primary" onclick="editSession('', '${e.id}')">${S.sessionDrafts.some(d=>d.eventId===e.id)?'继续草稿':'补写记录'}</button></div>`).join(''):emptyAction('目前没有待补咨询记录。','查看全部记录',"sessionView='all';renderSessions()")):(arr.length?arr.map(s=>`<div class="item"><div><div class="item-title">${esc(cname(s.clientId))}</div><div class="meta">${esc(s.date||'')} · ${esc(s.mode||'')} ${s.duration?'· '+esc(s.duration)+' 分钟':''} · ${esc(s.recordStatus||'已完成')}</div></div><button class="btn" onclick="editSession('${s.id}')">查看 / 编辑</button></div>`).join(''):emptyAction('还没有咨询记录。','＋ 创建第一条咨询记录',"editSession()"))}</div>`}
 
-function editSession(id='',eventId='',clientId='',forceEdit=false){let s=id?S.sessions.find(x=>x.id===id):null,e=eventId?S.events.find(x=>x.id===eventId):null,d=!id?S.sessionDrafts.find(x=>(eventId&&x.eventId===eventId)||(!eventId&&clientId&&x.clientId===clientId)):null;let x=s||d||{id:uid(),clientId:clientId||e?.clientId||'',eventId:eventId||'',date:e?.date||dateToday(),mode:e?.mode||'视频',duration:'50',content:'',recordStatus:'草稿'},locked=!!(s&&(s.locked||s.recordStatus==='已锁定')&&!forceEdit);modal(`${locked?'<div class="notice">此记录已锁定，当前为只读。点击「重新编辑」后才能修改。</div>':''}<h2>${id?'咨询记录':'新建咨询记录'}</h2><div class="formgrid"><div class="field"><label>来访者</label><select id="sClient" onchange="sessionDraft()">${opts(x.clientId,false)}</select></div><div class="field"><label>咨询日期</label><input id="sDate" type="date" value="${esc(x.date||'')}" oninput="sessionDraft()"></div><div class="field"><label>咨询形式</label><select id="sMode" onchange="sessionDraft()">${['视频','面询','电话','其他'].map(v=>`<option ${x.mode===v?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>咨询时长（分钟）</label><input id="sDuration" value="${esc(x.duration||'')}" oninput="sessionDraft()"></div><div class="field"><label>记录状态</label><select id="sRecordStatus" onchange="sessionDraft()">${['草稿','已完成','已锁定'].map(v=>`<option ${x.recordStatus===v?'selected':''}>${v}</option>`).join('')}</select></div><div class="field full"><div class="row" style="justify-content:space-between"><label>咨询笔记</label><div class="row"><select id="templatePick"><option value="">自由书写（默认）</option><optgroup label="内置参考模板">${visibleBuiltins().filter(t=>t.kind!=='方案').map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</optgroup>${S.templates.filter(t=>t.kind!=='方案').length?`<optgroup label="我的模板">${S.templates.filter(t=>t.kind!=='方案').map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</optgroup>`:''}</select><button class="btn" onclick="applyTemplate()">套用</button><button class="btn" onclick="copyPrevious()">从前次咨询记录复制</button><button class="btn" onclick="toggleSnippetPanel()">插入常用文字</button></div></div><div id="snippetPanel" class="card" style="display:none;margin:10px 0;padding:12px"><div class="row" style="justify-content:space-between"><b>常用记录用语</b><span class="meta">仅在符合实际咨询与评估情况时使用</span></div><div class="formgrid" style="margin-top:10px"><div class="field"><label>类别</label><select id="snippetCat" onchange="renderSnippetChoices()">${BUILTIN_SNIPPETS.map(x=>`<option>${esc(x.cat)}</option>`).join('')}<option>我的常用文字</option></select></div><div class="field"><label>选择文字</label><select id="snippetChoice"></select></div></div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="insertSelectedSnippet()">插入到记录</button><button class="btn" onclick="document.getElementById('snippetPanel').style.display='none'">收起</button></div></div><div class="toolbar"><button onclick="fmt('bold')"><b>B</b></button><button onclick="fmt('italic')"><i>I</i></button><button onclick="fmt('underline')"><u>U</u></button><button onclick="fmt('insertUnorderedList')">• 列表</button><button onclick="fmt('insertOrderedList')">1. 列表</button><button onclick="fmt('formatBlock','h3')">标题</button><button onclick="fmt('formatBlock','blockquote')">引用</button><button onclick="fmt('undo')">↶</button><button onclick="fmt('redo')">↷</button></div><div id="sessionEditor" class="editor" contenteditable="${locked?'false':'true'}" ${locked?'':'oninput="sessionDraft()"'}>${x.content||''}</div><div class="save-status" id="sessionStatus">${d?'已恢复未完成草稿':''}</div></div></div><div class="modalfoot"><button class="btn" onclick="printCurrentSession()">打印 / 保存为 PDF</button><button class="btn" onclick="closeModal()">取消</button>${locked?`<button class="btn primary" onclick="editSession('${x.id}','','',true)">重新编辑</button>`:`<button class="btn" onclick="saveSessionDraftRecord('${x.id}','${id||''}')">保存为草稿</button><button class="btn primary" onclick="completeSession('${x.id}','${id||''}')">保存记录</button>`}</div>`);window._sessionEvent=x.eventId||''}
+function editSession(id='',eventId='',clientId='',forceEdit=false){let s=id?S.sessions.find(x=>x.id===id):null,e=eventId?S.events.find(x=>x.id===eventId):null,d=!id?S.sessionDrafts.find(x=>(eventId&&x.eventId===eventId)||(!eventId&&clientId&&x.clientId===clientId)):null;let x=s||d||{id:uid(),clientId:clientId||e?.clientId||'',eventId:eventId||'',date:e?.date||dateToday(),mode:e?.mode||'视频',duration:'50',content:'',recordStatus:'草稿'},locked=!!(s&&(s.locked||s.recordStatus==='已锁定')&&!forceEdit);modal(`${locked?'<div class="notice">此记录已锁定，当前为只读。点击「重新编辑」后才能修改。</div>':''}<h2>${id?'咨询记录':'新建咨询记录'}</h2><div class="formgrid"><div class="field"><label>来访者</label><select id="sClient" onchange="sessionDraft()">${opts(x.clientId,false)}</select></div><div class="field"><label>咨询日期</label><input id="sDate" type="date" value="${esc(x.date||'')}" oninput="sessionDraft()"></div><div class="field"><label>咨询形式</label><select id="sMode" onchange="sessionDraft()">${['视频','面询','电话','其他'].map(v=>`<option ${x.mode===v?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>咨询时长（分钟）</label><input id="sDuration" value="${esc(x.duration||'')}" oninput="sessionDraft()"></div><div class="field"><label>记录状态</label><select id="sRecordStatus" onchange="sessionDraft()">${['草稿','已完成','已锁定'].map(v=>`<option ${x.recordStatus===v?'selected':''}>${v}</option>`).join('')}</select></div><div class="field full"><div class="row" style="justify-content:space-between"><label>咨询笔记</label><div class="row"><select id="templatePick"><option value="">自由书写（默认）</option><optgroup label="内置参考模板">${visibleBuiltins().filter(t=>t.kind!=='方案').map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</optgroup>${S.templates.filter(t=>t.kind!=='方案').length?`<optgroup label="我的模板">${S.templates.filter(t=>t.kind!=='方案').map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</optgroup>`:''}</select><button class="btn" onclick="applyTemplate()">套用</button><button class="btn" onclick="copyPrevious()">从前次咨询记录复制</button><button class="btn" onclick="toggleSnippetPanel()">插入常用文字</button><button class="btn" onclick="togglePhrasePanel()">常用句式</button></div></div><div id="snippetPanel" class="card" style="display:none;margin:10px 0;padding:12px"><div class="row" style="justify-content:space-between"><b>常用记录用语</b><span class="meta">仅在符合实际咨询与评估情况时使用</span></div><div class="formgrid" style="margin-top:10px"><div class="field"><label>类别</label><select id="snippetCat" onchange="renderSnippetChoices()">${BUILTIN_SNIPPETS.map(x=>`<option>${esc(x.cat)}</option>`).join('')}<option>我的常用文字</option></select></div><div class="field"><label>选择文字</label><select id="snippetChoice"></select></div></div><div class="row" style="margin-top:10px"><button class="btn primary" onclick="insertSelectedSnippet()">插入到记录</button><button class="btn" onclick="document.getElementById('snippetPanel').style.display='none'">收起</button></div></div><div id="phrasePanel" class="card" style="display:none;margin:10px 0;padding:12px"><div class="row" style="justify-content:space-between"><b>常用句式（临床语料）</b><span class="meta">点击句式插入到光标处；仅在符合实际咨询情况时套用，〔〕处按实际内容填写</span></div><div id="phraseGroups"></div><div class="row" style="margin-top:10px"><button class="btn" onclick="togglePhrasePanel(true)">收起</button></div></div><div class="toolbar"><button onclick="fmt('bold')"><b>B</b></button><button onclick="fmt('italic')"><i>I</i></button><button onclick="fmt('underline')"><u>U</u></button><button onclick="fmt('insertUnorderedList')">• 列表</button><button onclick="fmt('insertOrderedList')">1. 列表</button><button onclick="fmt('formatBlock','h3')">标题</button><button onclick="fmt('formatBlock','blockquote')">引用</button><button onclick="fmt('undo')">↶</button><button onclick="fmt('redo')">↷</button></div><div id="sessionEditor" class="editor" contenteditable="${locked?'false':'true'}" ${locked?'':'oninput="sessionDraft()"'}>${x.content||''}</div><div class="save-status" id="sessionStatus">${d?'已恢复未完成草稿':''}</div></div></div><div class="modalfoot"><button class="btn" onclick="printCurrentSession()">打印 / 保存为 PDF</button><button class="btn" onclick="closeModal()">取消</button>${locked?`<button class="btn primary" onclick="editSession('${x.id}','','',true)">重新编辑</button>`:`<button class="btn" onclick="saveSessionDraftRecord('${x.id}','${id||''}')">保存为草稿</button><button class="btn primary" onclick="completeSession('${x.id}','${id||''}')">保存记录</button>`}</div>`);window._sessionEvent=x.eventId||''}
 function fmt(cmd,val=null){document.execCommand(cmd,false,val);sessionEditor.focus();sessionDraft()}
 function printCurrentSession(){let w=window.open('','_blank','width=900,height=700');let name=cname(sClient.value),date=normDate(sDate.value),mode=sMode.value,dur=sDuration.value,tool=esc(S.settings.toolName||'心理咨询师工作台'),org=esc(S.settings.practiceName||'');w.document.write(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>咨询记录 - ${esc(name)} - ${esc(date)}</title><style>@page{margin:18mm 18mm 22mm}body{font-family:system-ui,-apple-system,"Microsoft YaHei",sans-serif;max-width:820px;margin:40px auto;color:#222;line-height:1.7}h1{font-size:22px}.tool{font-size:12px;color:#777;margin-bottom:4px}.meta{color:#666;border-bottom:1px solid #ddd;padding-bottom:14px;margin-bottom:22px}.footer{position:fixed;bottom:4mm;left:18mm;right:18mm;text-align:center;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:5px}@media print{body{margin:0;max-width:none}}</style></head><body><div class="tool">${tool}</div><h1>咨询记录</h1><div class="meta">来访者：${esc(name)}　日期：${esc(date)}　形式：${esc(mode)}${dur?'　时长：'+esc(dur)+' 分钟':''}</div><div>${sessionEditor.innerHTML}</div>${org?`<div class="footer">${org}</div>`:''}<script>setTimeout(()=>window.print(),250)<\/script></body></html>`);w.document.close()}
 function sessionDraft(){clearTimeout(autosaveTimer);let st=document.getElementById('sessionStatus');if(st)st.textContent='正在保存草稿…';autosaveTimer=setTimeout(()=>{let x={id:'draft-'+(window._sessionEvent||sClient.value),eventId:window._sessionEvent||'',clientId:sClient.value,date:normDate(sDate.value),mode:sMode.value,duration:sDuration.value,content:sessionEditor.innerHTML,recordStatus:(document.getElementById('sRecordStatus')?.value||'草稿'),updatedAt:Date.now()};S.sessionDrafts=S.sessionDrafts.filter(d=>d.id!==x.id);S.sessionDrafts.unshift(x);save();if(st)st.textContent='已自动保存 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})},900)}
@@ -186,7 +282,7 @@ function applyTemplate(){let id=templatePick.value;if(!id)return;let t=BUILTIN_T
 function copyPrevious(){let cid=sClient.value,cur=normDate(sDate.value);let prev=S.sessions.filter(x=>x.clientId===cid&&x.date<=cur).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];if(!prev)return alert('没有找到该来访者的前次咨询记录。');sessionEditor.innerHTML=prev.content||'';sessionDraft()}
 function visibleBuiltins(){return BUILTIN_TEMPLATES.filter(t=>!(S.hiddenBuiltins||[]).includes(t.id))}
 function planTemplates(){return [...visibleBuiltins(),...S.templates].filter(t=>(t.kind==='方案'||t.kind==='通用')&&(t.planGoals||t.planFocus))}
-function renderTemplates(){document.getElementById('templates').innerHTML=head('模板','咨询记录与咨询方案模板都可以自定义：内置模板可隐藏，我的模板可新增、编辑与删除。','<button class="btn primary" onclick="editTemplate()">+ 新建模板</button>')+`<div class="card"><h3 class="section-title">内置参考模板</h3>${visibleBuiltins().map(t=>`<div class="item"><div><b>${esc(t.name)}</b><div class="meta">${t.kind==='方案'?'咨询方案模板':'咨询记录模板'} · 仅供结构参考</div></div><button class="btn" onclick="hideBuiltin('${t.id}')">隐藏</button></div>`).join('')||'<div class="meta">内置模板已全部隐藏。</div>'}${(S.hiddenBuiltins||[]).length?`<div class="row" style="margin-top:8px"><button class="btn" onclick="restoreBuiltins()">恢复全部内置模板</button></div>`:''}</div><div class="card"><h3 class="section-title">我的模板</h3>${S.templates.length?S.templates.map(t=>`<div class="item"><div><b>${esc(t.name)}</b><div class="meta">${t.kind==='方案'?'咨询方案模板':t.kind==='通用'?'通用模板':'咨询记录模板'}</div></div><div class="row"><button class="btn" onclick="editTemplate('${t.id}')">编辑</button><button class="btn danger" onclick="deleteTemplate('${t.id}')">删除</button></div></div>`).join(''):empty('还没有自定义模板。点击右上角「+ 新建模板」，把你常用的记录框架或方案框架存下来。')}</div>`}
+function renderTemplates(){document.getElementById('templates').innerHTML=head('模板','咨询记录与咨询方案模板都可以自定义：内置模板可隐藏，我的模板可新增、编辑与删除。','<button class="btn primary" onclick="editTemplate()">+ 新建模板</button>')+`<div class="card"><h3 class="section-title">内置参考模板</h3>${visibleBuiltins().map(t=>`<div class="item"><div><b>${esc(t.name)}</b><div class="meta">${t.kind==='方案'?'咨询方案模板':t.kind==='通用'?'通用模板':'咨询记录模板'} · 仅供结构参考</div></div><button class="btn" onclick="hideBuiltin('${t.id}')">隐藏</button></div>`).join('')||'<div class="meta">内置模板已全部隐藏。</div>'}${(S.hiddenBuiltins||[]).length?`<div class="row" style="margin-top:8px"><button class="btn" onclick="restoreBuiltins()">恢复全部内置模板</button></div>`:''}</div><div class="card"><h3 class="section-title">我的模板</h3>${S.templates.length?S.templates.map(t=>`<div class="item"><div><b>${esc(t.name)}</b><div class="meta">${t.kind==='方案'?'咨询方案模板':t.kind==='通用'?'通用模板':'咨询记录模板'}</div></div><div class="row"><button class="btn" onclick="editTemplate('${t.id}')">编辑</button><button class="btn danger" onclick="deleteTemplate('${t.id}')">删除</button></div></div>`).join(''):empty('还没有自定义模板。点击右上角「+ 新建模板」，把你常用的记录框架或方案框架存下来。')}</div>`}
 function deleteTemplate(id){if(!confirm('确定删除这个模板？已保存的记录与方案不会受到影响。'))return;S.templates=S.templates.filter(t=>t.id!==id);save();render();toast('模板已删除')}
 function hideBuiltin(id){S.hiddenBuiltins=S.hiddenBuiltins||[];S.hiddenBuiltins.push(id);save();render();toast('已隐藏该内置模板，可随时恢复')}
 function restoreBuiltins(){S.hiddenBuiltins=[];save();render();toast('内置模板已恢复')}
@@ -297,6 +393,14 @@ function finishClient(cid){let c=client(cid);c.endInfo={date:endDate.value,reaso
 function toggleSnippetPanel(){let p=document.getElementById('snippetPanel');if(!p)return;p.style.display=p.style.display==='none'?'block':'none';if(p.style.display==='block')renderSnippetChoices()}
 function renderSnippetChoices(){let c=document.getElementById('snippetCat'),q=document.getElementById('snippetChoice');if(!c||!q)return;let vals=c.value==='我的常用文字'?S.snippets.map(x=>({v:'custom:'+x.id,n:x.name})):((BUILTIN_SNIPPETS.find(x=>x.cat===c.value)?.items||[]).map((x,i)=>({v:'builtin:'+i,n:x})));q.innerHTML=vals.length?vals.map(x=>`<option value="${esc(x.v)}">${esc(x.n)}</option>`).join(''):'<option value="">暂无内容</option>'}
 function insertSelectedSnippet(){let c=document.getElementById('snippetCat'),q=document.getElementById('snippetChoice');if(!c||!q||!q.value)return;let text='';if(q.value.startsWith('custom:')){let x=S.snippets.find(z=>z.id===q.value.slice(7));if(x){sessionEditor.focus();document.execCommand('insertHTML',false,x.content);sessionDraft();return}}let g=BUILTIN_SNIPPETS.find(x=>x.cat===c.value),i=Number(q.value.split(':')[1]);text=g?.items?.[i]||'';if(text){sessionEditor.focus();document.execCommand('insertText',false,text);sessionDraft()}}
+let lastEditorRange=null;
+function trackEditorSelection(){let ed=document.getElementById('sessionEditor');if(!ed)return;let sel=window.getSelection();if(sel&&sel.rangeCount){let r=sel.getRangeAt(0);if(ed.contains(r.commonAncestorContainer))lastEditorRange=r.cloneRange()}}
+document.addEventListener('selectionchange',trackEditorSelection);
+function corpusPhraseGroups(){return [['呈现',CORPUS_ZH.presentation],['评估与进展',CORPUS_ZH.assessmentProgress],['干预 · 通用',CORPUS_ZH.interventionsGeneral],...CORPUS_ZH.modalityOrder.map(id=>['干预 · '+CORPUS_ZH.interventionsByModality[id].label,CORPUS_ZH.interventionsByModality[id].frames]),['反应',CORPUS_ZH.response],['计划',CORPUS_ZH.plan]]}
+function togglePhrasePanel(forceHide){let p=document.getElementById('phrasePanel');if(!p)return;let show=forceHide?false:p.style.display==='none';p.style.display=show?'block':'none';if(show)renderPhrasePanel()}
+function renderPhrasePanel(){let host=document.getElementById('phraseGroups');if(!host)return;let groups=corpusPhraseGroups();host.innerHTML=groups.map(([label,items])=>`<div style="margin:10px 0 2px"><div class="meta" style="font-weight:600;margin-bottom:6px">${esc(label)}</div><div class="row" style="flex-wrap:wrap;gap:6px">${items.map(t=>`<button type="button" class="btn phrase-chip" style="padding:5px 10px;font-size:12px">${esc(t)}</button>`).join('')}</div></div>`).join('');let flat=groups.flatMap(([,items])=>items);host.querySelectorAll('.phrase-chip').forEach((b,i)=>b.addEventListener('click',()=>insertCorpusPhrase(flat[i])))}
+function selectSlotInNode(node,text){if(!node||node.nodeType!==3)return false;let m=text.match(/〔[^〕]*〕/);if(!m)return false;let idx=node.data.indexOf(m[0]);if(idx<0)return false;let r=document.createRange();r.setStart(node,idx);r.setEnd(node,idx+m[0].length);let sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);lastEditorRange=r.cloneRange();return true}
+function insertCorpusPhrase(text){let ed=document.getElementById('sessionEditor');if(!ed||!text)return;ed.focus();let sel=window.getSelection();if(lastEditorRange&&ed.contains(lastEditorRange.commonAncestorContainer)){sel.removeAllRanges();sel.addRange(lastEditorRange)}let ok=false;if(typeof document.execCommand==='function'){try{ok=document.execCommand('insertText',false,text)}catch(e){ok=false}}if(ok){let r=sel.rangeCount?sel.getRangeAt(0):null;if(r)selectSlotInNode(r.endContainer,text)}else{let range=sel.rangeCount?sel.getRangeAt(0):null;if(!range||!ed.contains(range.commonAncestorContainer)){range=document.createRange();range.selectNodeContents(ed);range.collapse(false);sel.removeAllRanges();sel.addRange(range)}range.deleteContents();let node=document.createTextNode(text);range.insertNode(node);range.setStartAfter(node);range.collapse(true);sel.removeAllRanges();sel.addRange(range);selectSlotInNode(node,text)}if(lastEditorRange&&ed.contains(lastEditorRange.commonAncestorContainer)){}else if(sel.rangeCount)lastEditorRange=sel.getRangeAt(0).cloneRange();sessionDraft()}
 function manageSnippets(){modal(`<h2>常用文字</h2>${S.snippets.map(x=>`<div class="item"><div class="item-main"><b>${esc(x.name)}</b><div class="meta">${esc(strip(x.content).slice(0,100))}</div></div><button class="btn danger" onclick="deleteSnippet('${x.id}')">删除</button></div>`).join('')}<hr><div class="field"><label>名称</label><input id="snName"></div><div class="field"><label>内容</label><textarea id="snContent"></textarea></div>${foot("saveSnippet()","添加")}`)}
 function saveSnippet(){let n=snName.value.trim(),c=snContent.value.trim();if(!n||!c)return alert('请填写名称和内容。');S.snippets.push({id:uid(),name:n,content:esc(c).replace(/\n/g,'<br>')});save();manageSnippets()}
 function deleteSnippet(id){let i=S.snippets.findIndex(x=>x.id===id);if(i<0)return;let old=S.snippets[i];S.snippets.splice(i,1);save();manageSnippets();toast('常用文字已删除',()=>{S.snippets.splice(i,0,old);save();manageSnippets()})}

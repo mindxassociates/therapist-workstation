@@ -110,12 +110,12 @@ const saveBtnId = (w, prefix) => {
 
 
   // ---- Templates: builtins (record + plan), hide/restore, custom CRUD, plan application ----
-  check('web builtins = 5 (3 record + 2 plan)', w.eval('BUILTIN_TEMPLATES.length') === 5 && w.eval('visibleBuiltins().length') === 5);
+  check('web builtins = 12 (9 record + 1 general + 2 plan)', w.eval('BUILTIN_TEMPLATES.length') === 12 && w.eval('visibleBuiltins().length') === 12);
   check('web plan templates available', w.eval('planTemplates().length') === 2);
   w.hideBuiltin('builtin-soap-cn');
-  check('web builtin hidden', w.eval('visibleBuiltins().length') === 4);
+  check('web builtin hidden', w.eval('visibleBuiltins().length') === 11);
   w.restoreBuiltins();
-  check('web builtins restored', w.eval('visibleBuiltins().length') === 5);
+  check('web builtins restored', w.eval('visibleBuiltins().length') === 12);
   w.editTemplate();
   w.document.getElementById('tName').value = '我的网页方案模板';
   w.document.getElementById('tKind').value = '方案';
@@ -132,6 +132,25 @@ const saveBtnId = (w, prefix) => {
   w.closeModal(true);
   w.deleteTemplate(tplId);
   check('web custom template deleted', S().templates.length === 0);
+
+  // ---- V1.15.0: easy template pack (kinds) + hide/restore a new builtin + corpus phrase panel ----
+  check('web new builtin kinds correct', w.eval(`(()=>{const m=Object.fromEntries(BUILTIN_TEMPLATES.map(t=>[t.id,t.kind]));return m['builtin-contact-log-cn']==='记录'&&m['builtin-crisis-cn']==='记录'&&m['builtin-concept-cn']==='记录'&&m['builtin-family-cn']==='记录'&&m['builtin-group-cn']==='记录'&&m['builtin-supervision-cn']==='记录'&&m['builtin-referral-note-cn']==='通用'})()`));
+  check('web new builtins carry sections + slots', w.eval(`['builtin-contact-log-cn','builtin-crisis-cn','builtin-concept-cn','builtin-family-cn','builtin-group-cn','builtin-supervision-cn','builtin-referral-note-cn'].every(id=>{const t=BUILTIN_TEMPLATES.find(x=>x.id===id);return t&&t.content.includes('<h3>')&&t.content.includes('【')})`));
+  w.hideBuiltin('builtin-crisis-cn');
+  check('web new builtin hidden', w.eval('visibleBuiltins().length') === 11 && w.eval(`visibleBuiltins().some(t=>t.id==='builtin-crisis-cn')`) === false);
+  w.restoreBuiltins();
+  check('web new builtin restored', w.eval('visibleBuiltins().length') === 12);
+  w.editSession();
+  w.togglePhrasePanel();
+  check('web phrase panel renders corpus groups', w.document.getElementById('phraseGroups').innerHTML.includes('评估与进展') && w.document.getElementById('phraseGroups').innerHTML.includes('干预 · CBT／认知行为') && w.document.getElementById('phraseGroups').innerHTML.includes('苏格拉底式提问'));
+  const ed = w.document.getElementById('sessionEditor');
+  ed.focus();
+  w.insertCorpusPhrase('咨询师运用苏格拉底式提问，协助来访者检验自动思维的真实性。');
+  check('web phrase inserted into focused editor', ed.textContent.includes('苏格拉底式提问'));
+  const chip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('无条件积极关注'));
+  chip.click();
+  check('web phrase chip click inserts', ed.textContent.includes('无条件积极关注'));
+  w.closeModal(true);
 
   // ---- Borrowed-from-EHR features: assessments / waitlist / event status / insights / statement / documents / default fee ----
   const savedParsed = () => JSON.parse(w.localStorage.getItem('mx_counselor_lite_v1'));
