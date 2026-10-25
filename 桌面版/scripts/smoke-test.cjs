@@ -433,6 +433,26 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('clear-on-save emptied transcript + brief caches', w.eval('aiTranscriptCache') === '' && w.eval('aiBriefCache') === '');
   check('custom template persisted to prefs', w.eval("window.desktopDB.getPref('aiCustomTemplate')") === 'CUSTOM-TPL: always end with a risk line.');
 
+  // ---- V3.1.11: recording source (in-person mic / telehealth mic + system audio) + input device picker ----
+  check('recording source selector exists and defaults to mic', !!w.document.getElementById('aiRecSource') && w.document.getElementById('aiRecSource').value === 'mic');
+  check('recording hint explains mic mode', (w.document.getElementById('aiRecHint') || {}).textContent.includes('线下面对面'));
+  await w.refreshAudioDevices(false);
+  check('device picker keeps default option when mediaDevices is absent', !!w.document.getElementById('aiAudioDevice') && w.document.getElementById('aiAudioDevice').options.length >= 1 && w.document.getElementById('aiAudioDevice').options[0].textContent.includes('系统默认'));
+  w.document.getElementById('aiRecSource').value = 'tele';
+  w.onRecSourceChange();
+  check('telehealth source persists to prefs', w.eval("window.desktopDB.getPref('aiRecSource')") === 'tele');
+  check('telehealth hint mentions entire-screen sharing', w.document.getElementById('aiRecHint').textContent.includes('整个屏幕'));
+  const capturedAlerts = [];
+  w.alert = (m) => capturedAlerts.push(String(m));
+  w.document.getElementById('aiConsent').checked = true;
+  await w.startRecording();
+  check('telehealth start without getDisplayMedia alerts loopback workaround and does not record',
+    capturedAlerts.some((m) => m.includes('无法直接捕获系统音频')) && w.eval('recState') === null && !w.document.getElementById('aiRecBtn').disabled);
+  w.alert = () => {};
+  w.document.getElementById('aiRecSource').value = 'mic';
+  w.onRecSourceChange();
+  check('source restored to mic + persisted', w.eval("window.desktopDB.getPref('aiRecSource')") === 'mic');
+
   // ---- Customization: font size / density / header style / home modules / landing page ----
   w.showView('settings');
   w.document.getElementById('fontSize').value = 'large';
