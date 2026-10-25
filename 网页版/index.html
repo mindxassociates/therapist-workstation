@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>心理咨询师工作台 V1.15.0 · Therapist Workstation</title>
+<title>心理咨询师工作台 V1.16.0 · Therapist Workstation</title>
 <style>
 :root{--accent:#4a778b;--accent2:#355564;--bg:#f4f3ef;--panel:#fff;--text:#20252a;--muted:#6c747a;--line:#deded8;--soft:#eef3f3;--danger:#a13b3b;--shadow:0 10px 30px rgba(20,30,35,.08)}
 *{box-sizing:border-box}body{margin:0;font:14px/1.55 system-ui,-apple-system,"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--text)}
@@ -81,9 +81,9 @@ const BUILTIN_SNIPPETS=[
  {cat:'后续计划',items:['继续探索相关议题','继续练习本次讨论的应对方式','观察情绪变化及相关触发因素','记录相关想法、情绪或行为模式','继续评估近期变化与咨询进展','下次咨询继续讨论相关内容','根据进展调整咨询目标']},
  {cat:'风险记录（仅在实际评估后使用）',items:['来访者否认当前自伤想法','来访者否认当前自杀想法','来访者否认当前伤害他人的想法','来访者报告存在被动死亡想法','来访者报告存在自伤想法','来访者报告存在自杀想法','已进一步评估相关风险因素与保护因素','已讨论安全计划及可利用支持资源','建议进行进一步风险评估或寻求更高等级支持']}
 ];
-const emptyState=()=>({version:'1.9.1',clients:[],sessions:[],sessionDrafts:[],events:[],tasks:[],goals:[],quickNotes:[],noteDrafts:[],templates:[],finances:[],recentViews:[],plans:{},referrals:[],referralLinks:[],assessments:[],waitlist:[],hiddenBuiltins:[],snippets:[],settings:{ownerName:'',practiceName:'',workstationIcon:'✦',accent:'#4a778b',dark:false,autoLock:15,timezone:'Asia/Shanghai'},backupMeta:{}});
+const emptyState=()=>({version:'1.9.1',clients:[],sessions:[],sessionDrafts:[],events:[],tasks:[],goals:[],quickNotes:[],noteDrafts:[],templates:[],finances:[],recentViews:[],plans:{},referrals:[],referralLinks:[],assessments:[],waitlist:[],hiddenBuiltins:[],corpusFavorites:[],corpusCustomPhrases:[],snippets:[],settings:{ownerName:'',practiceName:'',workstationIcon:'✦',accent:'#4a778b',dark:false,autoLock:15,timezone:'Asia/Shanghai'},backupMeta:{}});
 let S=load(), current='today', calView='month', calDate=new Date(), autosaveTimer=null, idleTimer=null, sessionView='all';
-(function(){let st=S.settings||{};if(st.accent==='#315f6b')st.accent='#4a778b';if('workbenchIcon' in st){if(!st.workstationIcon)st.workstationIcon=st.workbenchIcon;delete st.workbenchIcon}S.assessments=S.assessments||[];S.waitlist=S.waitlist||[];S.hiddenBuiltins=S.hiddenBuiltins||[]})();
+(function(){let st=S.settings||{};if(st.accent==='#315f6b')st.accent='#4a778b';if('workbenchIcon' in st){if(!st.workstationIcon)st.workstationIcon=st.workbenchIcon;delete st.workbenchIcon}S.assessments=S.assessments||[];S.waitlist=S.waitlist||[];S.hiddenBuiltins=S.hiddenBuiltins||[];S.corpusFavorites=Array.isArray(S.corpusFavorites)?S.corpusFavorites:[];S.corpusCustomPhrases=Array.isArray(S.corpusCustomPhrases)?S.corpusCustomPhrases:[]})();
 const BUILTIN_TEMPLATES=[
  {id:'builtin-intake-cn',name:'参考｜首次咨询 / 初始评估',kind:'记录',content:`<h3>主要困扰 / 咨询期待</h3><p><br></p><h3>当前状况与重要背景</h3><p><br></p><h3>既往心理咨询 / 精神心理服务经历</h3><p><br></p><h3>家庭、关系与社会支持</h3><p><br></p><h3>重要成长经历 / 重大生活事件</h3><p><br></p><h3>咨询师观察与初步个案理解</h3><p><br></p><h3>风险与安全评估（如适用）</h3><p><br></p><h3>来访者优势与资源</h3><p><br></p><h3>初步咨询目标与后续计划</h3><p><br></p>`},
  {id:'builtin-progress-cn',name:'参考｜结构化咨询记录',kind:'记录',content:`<h3>来访者主观报告 / 本次重点</h3><p><br></p><h3>咨询师观察</h3><p><br></p><h3>评估与个案理解</h3><p><br></p><h3>本次咨询方法 / 干预</h3><p><br></p><h3>来访者反应与咨询进展</h3><p><br></p><h3>风险与安全评估（如适用）</h3><p><br></p><h3>后续计划</h3><p><br></p>`},
@@ -185,10 +185,79 @@ plan:[
 '咨询师布置了〔思维记录/活动安排/书写练习〕作为课后作业。',
 '维持当前咨询计划，下次咨询时评估目标进展。',
 '若症状加重，来访者同意使用〔应对/安全步骤〕。'
-]
+],
+byProblem:{
+anxiety:{label:'焦虑',frames:[
+'咨询师协助来访者识别维持其焦虑的认知扭曲与灾难化预期。',
+'咨询师教授来访者放松与呼吸技巧，以降低焦虑升级时的生理唤起。',
+'来访者自述焦虑发作的频率与强度较上次咨询有所下降。',
+'来访者仍持续过度担忧，已影响日常功能与睡眠。'
+]},
+depression:{label:'抑郁',frames:[
+'咨询师与来访者开展行为激活，制定愉悦与成就类活动安排以对抗退缩。',
+'咨询师探讨了来访者的负面自我对话及其在维持抑郁情绪中的作用。',
+'来访者自述情绪、精力与对日常活动的兴趣有轻度改善。',
+'来访者仍报告兴趣减退、精力不足，完成日常事务困难。'
+]},
+anger:{label:'愤怒管理',frames:[
+'咨询师协助来访者识别愤怒的触发因素与升级的早期信号。',
+'咨询师教授来访者暂停与自我安抚策略，以控制冲动行为。',
+'来访者表现出在愤怒反应前停顿并运用应对技巧的能力有所提升。',
+'来访者在感到被批评或拒绝时，仍难以控制愤怒爆发。'
+]},
+grief:{label:'哀伤与丧失',frames:[
+'咨询师为来访者提供安全的空间，处理与〔逝者〕相关的哀伤与丧失感受。',
+'咨询师将来访者的哀伤反应正常化，并探讨丧失对其的意义。',
+'来访者能够开放地表达悲伤与思念，并自述开始适应丧失后的生活。',
+'来访者仍经历强烈的哀伤波动，影响注意力与日常安排。'
+]},
+ocd:{label:'强迫',frames:[
+'咨询师协助来访者识别强迫思维及其用以抵消焦虑的强迫行为。',
+'咨询师介绍了暴露与反应预防的原则，并与来访者制定循序渐进的暴露等级。',
+'来访者自述用于仪式行为的时间减少，抵抗强迫行为的能力提升。',
+'来访者仍反复进行仪式行为，耗时明显并造成困扰。'
+]},
+relationship:{label:'关系冲突',frames:[
+'咨询师促进双方讨论冲突模式，并指导减少升级的沟通方式。',
+'咨询师协助来访者识别自己在反复关系冲突中的角色与替代回应。',
+'来访者自述与伴侣的沟通有所改善，激烈争吵减少。',
+'来访者在关系中仍反复出现冲突，难以表达自身需要。'
+]},
+selfEsteem:{label:'自尊与自我价值',frames:[
+'咨询师挑战来访者整体性的负面自我评价，并识别其能力与价值的证据。',
+'咨询师强化来访者的优势以及在自我肯定方面取得的积极进展。',
+'来访者表现出自信提升，对自我的看法更为平衡。',
+'来访者仍持续负面自我评价，并害怕他人的不认可。'
+]},
+family:{label:'家庭冲突',frames:[
+'咨询师探讨了家庭内部的冲突模式及每位成员在其中的参与方式。',
+'咨询师促进更健康的家庭沟通，并澄清彼此的期待与界限。',
+'来访者自述家庭紧张有所缓解，对家庭冲突的回应更为建设性。',
+'来访者仍频繁经历家庭冲突，难以与家庭成员设立界限。'
+]},
+parenting:{label:'亲职与育儿',frames:[
+'咨询师就儿童发展与一致、正向的管教策略提供了心理教育。',
+'咨询师协助来访者制定以平静、一致的方式回应孩子行为的计划。',
+'来访者自述育儿信心提升，孩子的配合度有所改善。',
+'来访者仍感到育儿压力沉重，执行规则时难以保持一致。'
+]},
+panic:{label:'惊恐与恐惧',frames:[
+'咨询师就惊恐发作的循环及对身体感觉的灾难化解释提供了心理教育。',
+'咨询师教授来访者控制呼吸与应对惊恐发作的内感受应对技巧。',
+'来访者自述惊恐发作减少，对恐惧情境的回避有所下降。',
+'来访者仍回避与惊恐相关的情境，日常活动因此受限。'
+]},
+substance:{label:'物质使用',frames:[
+'咨询师协助来访者识别高危情境与渴求应对策略。',
+'咨询师回顾了来访者在戒断目标上的进展，并强化支持康复的日常安排。',
+'来访者自述一段时间内保持戒断，并增加了对康复支持的使用。',
+'来访者仍难以保持戒断，自述上次咨询后出现反复，本次咨询中以不评判的方式进行了处理。'
+]}
+},
+problemOrder:['anxiety','depression','anger','grief','ocd','relationship','selfEsteem','family','parenting','panic','substance']
 };
 function normalizeV17(){
- const arrays=['clients','sessions','sessionDrafts','events','tasks','goals','quickNotes','noteDrafts','templates','finances','recentViews','referrals','referralLinks','snippets'];
+ const arrays=['clients','sessions','sessionDrafts','events','tasks','goals','quickNotes','noteDrafts','templates','finances','recentViews','referrals','referralLinks','snippets','corpusFavorites','corpusCustomPhrases'];
  arrays.forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});
  if(!S.plans||typeof S.plans!=='object')S.plans={};
  if(!S.settings||typeof S.settings!=='object')S.settings={};
@@ -396,9 +465,15 @@ function insertSelectedSnippet(){let c=document.getElementById('snippetCat'),q=d
 let lastEditorRange=null;
 function trackEditorSelection(){let ed=document.getElementById('sessionEditor');if(!ed)return;let sel=window.getSelection();if(sel&&sel.rangeCount){let r=sel.getRangeAt(0);if(ed.contains(r.commonAncestorContainer))lastEditorRange=r.cloneRange()}}
 document.addEventListener('selectionchange',trackEditorSelection);
-function corpusPhraseGroups(){return [['呈现',CORPUS_ZH.presentation],['评估与进展',CORPUS_ZH.assessmentProgress],['干预 · 通用',CORPUS_ZH.interventionsGeneral],...CORPUS_ZH.modalityOrder.map(id=>['干预 · '+CORPUS_ZH.interventionsByModality[id].label,CORPUS_ZH.interventionsByModality[id].frames]),['反应',CORPUS_ZH.response],['计划',CORPUS_ZH.plan]]}
+function corpusPhraseGroups(){return [['呈现',CORPUS_ZH.presentation],['评估与进展',CORPUS_ZH.assessmentProgress],['干预 · 通用',CORPUS_ZH.interventionsGeneral],...CORPUS_ZH.modalityOrder.map(id=>['干预 · '+CORPUS_ZH.interventionsByModality[id].label,CORPUS_ZH.interventionsByModality[id].frames]),['反应',CORPUS_ZH.response],['计划',CORPUS_ZH.plan],...CORPUS_ZH.problemOrder.map(id=>['问题｜'+CORPUS_ZH.byProblem[id].label,CORPUS_ZH.byProblem[id].frames])]}
 function togglePhrasePanel(forceHide){let p=document.getElementById('phrasePanel');if(!p)return;let show=forceHide?false:p.style.display==='none';p.style.display=show?'block':'none';if(show)renderPhrasePanel()}
-function renderPhrasePanel(){let host=document.getElementById('phraseGroups');if(!host)return;let groups=corpusPhraseGroups();host.innerHTML=groups.map(([label,items])=>`<div style="margin:10px 0 2px"><div class="meta" style="font-weight:600;margin-bottom:6px">${esc(label)}</div><div class="row" style="flex-wrap:wrap;gap:6px">${items.map(t=>`<button type="button" class="btn phrase-chip" style="padding:5px 10px;font-size:12px">${esc(t)}</button>`).join('')}</div></div>`).join('');let flat=groups.flatMap(([,items])=>items);host.querySelectorAll('.phrase-chip').forEach((b,i)=>b.addEventListener('click',()=>insertCorpusPhrase(flat[i])))}
+function corpusFavorites(){return Array.isArray(S.corpusFavorites)?S.corpusFavorites:[]}
+function corpusCustomPhrases(){return Array.isArray(S.corpusCustomPhrases)?S.corpusCustomPhrases:[]}
+function corpusIsFav(t){return corpusFavorites().includes(t)}
+function toggleCorpusFavorite(t){S.corpusFavorites=corpusFavorites().slice();let i=S.corpusFavorites.indexOf(t);if(i>=0)S.corpusFavorites.splice(i,1);else S.corpusFavorites.push(t);save();renderPhrasePanel()}
+function addCorpusCustom(){let inp=document.getElementById('customPhraseInput');if(!inp)return;let v=inp.value.trim();if(!v)return;S.corpusCustomPhrases=corpusCustomPhrases().slice();if(!S.corpusCustomPhrases.includes(v))S.corpusCustomPhrases.push(v);save();renderPhrasePanel();toast('已添加到「★ 我的常用」')}
+function deleteCorpusCustom(t){S.corpusCustomPhrases=corpusCustomPhrases().filter(x=>x!==t);save();renderPhrasePanel()}
+function renderPhrasePanel(){let host=document.getElementById('phraseGroups');if(!host)return;let texts=[];const unit=(t,mode)=>{let i=texts.length;texts.push(t);let extra=mode==='custom'?`<button type="button" class="btn phrase-del" data-del="${i}" style="padding:5px 7px;font-size:12px" title="删除这条自定义句式">×</button>`:`<button type="button" class="btn phrase-star" data-star="${i}" style="padding:5px 7px;font-size:12px" title="${corpusIsFav(t)?'取消收藏':'收藏到我的常用'}">${corpusIsFav(t)?'★':'☆'}</button>`;return `<span style="display:inline-flex;gap:2px;align-items:center"><button type="button" class="btn phrase-chip" data-ins="${i}" style="padding:5px 10px;font-size:12px">${esc(t)}</button>${extra}</span>`};const row=inner=>`<div class="row" style="flex-wrap:wrap;gap:6px">${inner}</div>`;let mine=corpusFavorites().map(t=>unit(t,'fav')).concat(corpusCustomPhrases().map(t=>unit(t,'custom'))).join('');let groups=corpusPhraseGroups();host.innerHTML=`<div style="margin:2px 0 2px"><div class="meta" style="font-weight:600;margin-bottom:6px">★ 我的常用</div>${mine?row(mine):'<div class="meta">还没有收藏的句式。点击任意句式旁的 ☆ 即可收藏到这里，方便下次快速套用。</div>'}<div class="row" style="margin-top:8px;gap:6px"><input id="customPhraseInput" type="text" placeholder="输入自己的常用句式，点「添加」保存到我的常用" style="flex:1;min-width:220px"><button type="button" class="btn" id="addCustomPhraseBtn">添加</button></div></div>`+groups.map(([label,items])=>`<div style="margin:10px 0 2px"><div class="meta" style="font-weight:600;margin-bottom:6px">${esc(label)}</div>${row(items.map(t=>unit(t,'corpus')).join(''))}</div>`).join('');host.querySelectorAll('[data-ins]').forEach(b=>b.addEventListener('click',()=>insertCorpusPhrase(texts[+b.dataset.ins])));host.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click',()=>toggleCorpusFavorite(texts[+b.dataset.star])));host.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>deleteCorpusCustom(texts[+b.dataset.del])));let addBtn=document.getElementById('addCustomPhraseBtn');if(addBtn)addBtn.addEventListener('click',addCorpusCustom);let inp=document.getElementById('customPhraseInput');if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCorpusCustom()}})}
 function selectSlotInNode(node,text){if(!node||node.nodeType!==3)return false;let m=text.match(/〔[^〕]*〕/);if(!m)return false;let idx=node.data.indexOf(m[0]);if(idx<0)return false;let r=document.createRange();r.setStart(node,idx);r.setEnd(node,idx+m[0].length);let sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);lastEditorRange=r.cloneRange();return true}
 function insertCorpusPhrase(text){let ed=document.getElementById('sessionEditor');if(!ed||!text)return;ed.focus();let sel=window.getSelection();if(lastEditorRange&&ed.contains(lastEditorRange.commonAncestorContainer)){sel.removeAllRanges();sel.addRange(lastEditorRange)}let ok=false;if(typeof document.execCommand==='function'){try{ok=document.execCommand('insertText',false,text)}catch(e){ok=false}}if(ok){let r=sel.rangeCount?sel.getRangeAt(0):null;if(r)selectSlotInNode(r.endContainer,text)}else{let range=sel.rangeCount?sel.getRangeAt(0):null;if(!range||!ed.contains(range.commonAncestorContainer)){range=document.createRange();range.selectNodeContents(ed);range.collapse(false);sel.removeAllRanges();sel.addRange(range)}range.deleteContents();let node=document.createTextNode(text);range.insertNode(node);range.setStartAfter(node);range.collapse(true);sel.removeAllRanges();sel.addRange(range);selectSlotInNode(node,text)}if(lastEditorRange&&ed.contains(lastEditorRange.commonAncestorContainer)){}else if(sel.rangeCount)lastEditorRange=sel.getRangeAt(0).cloneRange();sessionDraft()}
 function manageSnippets(){modal(`<h2>常用文字</h2>${S.snippets.map(x=>`<div class="item"><div class="item-main"><b>${esc(x.name)}</b><div class="meta">${esc(strip(x.content).slice(0,100))}</div></div><button class="btn danger" onclick="deleteSnippet('${x.id}')">删除</button></div>`).join('')}<hr><div class="field"><label>名称</label><input id="snName"></div><div class="field"><label>内容</label><textarea id="snContent"></textarea></div>${foot("saveSnippet()","添加")}`)}

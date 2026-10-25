@@ -152,6 +152,39 @@ const saveBtnId = (w, prefix) => {
   check('web phrase chip click inserts', ed.textContent.includes('无条件积极关注'));
   w.closeModal(true);
 
+  // ---- V1.16.0: problem phrase groups + My Phrases (favorites + custom phrases) ----
+  check('web problem groups complete (11)', w.eval(`corpusPhraseGroups().filter(([l])=>l.startsWith('问题｜')).length`) === 11);
+  w.editSession();
+  w.togglePhrasePanel();
+  const pg = () => w.document.getElementById('phraseGroups').innerHTML;
+  check('web problem groups render', pg().includes('问题｜焦虑') && pg().includes('问题｜抑郁') && pg().includes('问题｜物质使用') && pg().includes('灾难化预期') && pg().includes('内感受应对'));
+  check('web my-phrases section pinned at top', pg().includes('★ 我的常用') && pg().indexOf('★ 我的常用') < pg().indexOf('>呈现<'));
+  const ed2 = w.document.getElementById('sessionEditor');
+  ed2.focus();
+  const probChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('行为激活'));
+  probChip.click();
+  check('web problem chip inserts frame', ed2.textContent.includes('行为激活'));
+  const anxChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('灾难化预期'));
+  anxChip.parentElement.querySelector('.phrase-star').click();
+  check('web phrase starred into favorites', S().corpusFavorites.includes('咨询师协助来访者识别维持其焦虑的认知扭曲与灾难化预期。'));
+  check('web favorites persisted to storage', JSON.parse(w.localStorage.getItem('mx_counselor_lite_v1')).corpusFavorites.length === 1);
+  w.document.getElementById('customPhraseInput').value = '我的测试句式：先稳定情绪，再讨论下一步计划。';
+  w.document.getElementById('addCustomPhraseBtn').click();
+  check('web custom phrase added + persisted', S().corpusCustomPhrases.includes('我的测试句式：先稳定情绪，再讨论下一步计划。') && JSON.parse(w.localStorage.getItem('mx_counselor_lite_v1')).corpusCustomPhrases.length === 1);
+  check('web my section shows favorite + custom', pg().includes('我的测试句式') && pg().indexOf('灾难化预期') < pg().indexOf('问题｜焦虑'));
+  w.closeModal(true);
+  const dom2 = await boot(JSON.parse(w.localStorage.getItem('mx_counselor_lite_v1')));
+  const w2 = dom2.window;
+  check('web favorites + custom survive reload', w2.eval('S.corpusFavorites.length') === 1 && w2.eval('S.corpusCustomPhrases.length') === 1);
+  w2.editSession();
+  w2.togglePhrasePanel();
+  const pg2 = w2.document.getElementById('phraseGroups').innerHTML;
+  check('web my section renders after reload', pg2.includes('★ 我的常用') && pg2.includes('灾难化预期') && pg2.includes('我的测试句式'));
+  [...w2.document.querySelectorAll('.phrase-del')][0].click();
+  check('web custom phrase deleted + persisted', w2.eval('S.corpusCustomPhrases.length') === 0 && JSON.parse(w2.localStorage.getItem('mx_counselor_lite_v1')).corpusCustomPhrases.length === 0);
+  w2.closeModal(true);
+  dom2.window.close();
+
   // ---- Borrowed-from-EHR features: assessments / waitlist / event status / insights / statement / documents / default fee ----
   const savedParsed = () => JSON.parse(w.localStorage.getItem('mx_counselor_lite_v1'));
   w.openAssessment('', cid);
