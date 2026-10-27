@@ -32,13 +32,22 @@ if errorlevel 1 (
 
 rem ---------- MSVC build tools (needed by SQLCipher native build) ----------
 where link >nul 2>nul
-if errorlevel 1 (
-  echo [SETUP] MSVC linker not found. Installing Visual Studio 2022 Build Tools - this is a large one-time download...
-  where winget >nul 2>nul
-  if errorlevel 1 ( echo [FAIL] Install "Visual Studio 2022 Build Tools" with the C++ workload, then re-run. & pause & exit /b 1 )
-  winget install --id Microsoft.VisualStudio.2022.BuildTools -e --accept-source-agreements --accept-package-agreements --override "--quiet --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended" || ( echo [FAIL] Build Tools install failed. & pause & exit /b 1 )
-  echo [SETUP] Build Tools installed. If the build below still cannot find the linker, restart this script once.
-)
+if not errorlevel 1 goto :msvc_ok
+echo [SETUP] MSVC linker not found. Installing Visual Studio 2022 Build Tools - this is a large one-time download...
+where winget >nul 2>nul
+if errorlevel 1 ( echo [FAIL] Install "Visual Studio 2022 Build Tools" with the C++ workload, then re-run. & pause & exit /b 1 )
+set "MSVC_TRIES=0"
+:msvc_retry
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e --accept-source-agreements --accept-package-agreements --override "--quiet --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+if not errorlevel 1 goto :msvc_done
+set /a MSVC_TRIES+=1
+if %MSVC_TRIES% GEQ 3 ( echo [FAIL] Build Tools install failed. & pause & exit /b 1 )
+echo [SETUP] Another installation seems to be in progress - error 1618 is common right after the Node.js install. Waiting 30 seconds, then retrying...
+timeout /t 30 /nobreak >nul
+goto :msvc_retry
+:msvc_done
+echo [SETUP] Build Tools installed. If the build below still cannot find the linker, restart this script once.
+:msvc_ok
 
 rem ---------- Version consistency ----------
 node -e "const fs=require('fs');const a=require('./package.json').version;const b=require('./src-tauri/tauri.conf.json').version;const c=fs.readFileSync('src-tauri/Cargo.toml','utf8').match(/^version\s*=\s*"([^"]+)"/m)[1];if(a!==b||a!==c){console.error('[FAIL] Version mismatch: package.json='+a+' tauri.conf.json='+b+' Cargo.toml='+c);process.exit(1)}console.log('[OK] Version '+a)"
