@@ -5,7 +5,6 @@
 //! process through a JSON-lines protocol. Portable copies never expose AI.
 
 use super::*;
-use std::io::Read as _;
 
 pub struct CompState(pub Mutex<CompRuntime>);
 #[derive(Default)]

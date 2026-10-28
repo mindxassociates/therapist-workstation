@@ -1,6 +1,6 @@
 {
   "name": "therapist-workstation-tauri",
-  "version": "3.1.16",
+  "version": "3.1.17",
   "private": true,
   "description": "心理咨询师工作台 - Tauri 2 + Web UI + SQLCipher + 本地多账户",
   "scripts": {

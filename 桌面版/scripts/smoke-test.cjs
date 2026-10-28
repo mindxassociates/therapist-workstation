@@ -38,7 +38,7 @@ const fakeInvoke = async (cmd, args = {}) => {
     case 'users_set_active': return { ok: true };
     case 'change_password': return { ok: true };
     case 'open_path': return true;
-    case 'ai_comp_status': return { portable: compState.portable, installed: compState.installed, version: '3.1.16', os: 'windows' };
+    case 'ai_comp_status': return { portable: compState.portable, installed: compState.installed, version: '3.1.17', os: 'windows' };
     case 'ai_comp_install': compState.installed = true; return true;
     case 'ai_comp_poll': return { active: false, received: 100, total: 100, done: true, error: null };
     case 'ai_comp_remove': compState.installed = false; return true;
@@ -487,7 +487,7 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('corpus: modality match order puts trauma before CBT', corpusPromptOrder.includes('干预·按取向（创伤知情）') && corpusPromptOrder.includes('稳定化（着陆）技巧') && !corpusPromptOrder.includes('苏格拉底式提问'));
   w.document.getElementById('aiOrientation').value = '';
 
-  // ---- V3.1.16: problem-focused corpus （问题聚焦） + My Phrases （我的句式） ----
+  // ---- V3.1.17: problem-focused corpus （问题聚焦） + My Phrases （我的句式） ----
   const probPrompt = w.eval("buildNotePrompt('来访者近来总是担心工作表现，感到很焦虑，夜里紧张不安；同时情绪低落，对什么都提不起兴趣，有抑郁的感觉。')");
   check('problem corpus: anxiety + depression matched from source keywords', probPrompt.includes('问题聚焦 · 焦虑') && probPrompt.includes('灾难化预期') && probPrompt.includes('问题聚焦 · 抑郁') && probPrompt.includes('行为激活'));
   check('problem corpus: unmatched problems stay out (no OCD frames)', !probPrompt.includes('问题聚焦 · 强迫') && !probPrompt.includes('暴露与反应预防'));
