@@ -50,7 +50,7 @@ echo [SETUP] Build Tools installed. If the build below still cannot find the lin
 :msvc_ok
 
 rem ---------- Version consistency ----------
-node -e "const fs=require('fs');const a=require('./package.json').version;const b=require('./src-tauri/tauri.conf.json').version;const c=fs.readFileSync('src-tauri/Cargo.toml','utf8').match(/^version\s*=\s*\x22([^\x22]+)\x22/m)[1];if(a!==b||a!==c){console.error('[FAIL] Version mismatch: package.json='+a+' tauri.conf.json='+b+' Cargo.toml='+c);process.exit(1)}console.log('[OK] Version '+a)"
+node scripts\check-version.cjs
 if errorlevel 1 ( pause & exit /b 1 )
 for /f %%v in ('node -p "require('./package.json').version"') do set "VER=%%v"
 
