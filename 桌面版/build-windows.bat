@@ -49,6 +49,16 @@ goto :msvc_retry
 echo [SETUP] Build Tools installed. If the build below still cannot find the linker, restart this script once.
 :msvc_ok
 
+rem ---------- Perl (needed to build the bundled encryption library) ----------
+where perl >nul 2>nul
+if errorlevel 1 (
+  echo [SETUP] Perl not found. Installing Strawberry Perl via winget...
+  where winget >nul 2>nul
+  if errorlevel 1 ( echo [FAIL] winget not available. Install Strawberry Perl from https://strawberryperl.com then re-run. & pause & exit /b 1 )
+  winget install --id StrawberryPerl.StrawberryPerl -e --accept-source-agreements --accept-package-agreements || ( echo [FAIL] Perl install failed. & pause & exit /b 1 )
+  set "PATH=C:\Strawberry\perl\bin;C:\Strawberry\c\bin;%PATH%"
+)
+
 rem ---------- Version consistency ----------
 node scripts\check-version.cjs
 if errorlevel 1 ( pause & exit /b 1 )
