@@ -468,6 +468,77 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   portChip.click(); await tick();
   check('problem phrase insert still works', portWork.value.includes('灾难化预期'));
 
+  const liveClient = savedState().clients[0].id;
+  // ---- V3.2.0: scale pack (SDS / SCL-90 / PSQI scoring) ----
+  const sdsAns = Array(20).fill(1); sdsAns[0] = 4;
+  const sds = w.eval(`scoreAssessment('SDS', ${JSON.stringify(sdsAns)})`);
+  check('SDS reverse scoring + standard score (66, 中度抑郁)', sds.total === 66 && sds.severity === '中度抑郁' && sds.detail.includes('标准分 66'));
+  const sas = w.eval(`scoreAssessment('SAS', Array(20).fill(2))`);
+  check('SAS uniform answers score sanely', sas.total === 56 && sas.severity === '轻度焦虑');
+  const sclAns = Array(90).fill(1); sclAns[14] = 3;
+  const scl = w.eval(`scoreAssessment('SCL-90', ${JSON.stringify(sclAns)})`);
+  check('SCL-90 total/factors/suicide-item flag', scl.total === 92 && scl.flag === true && scl.detail.includes('阳性项目 1 项'));
+  const psqi = w.eval(`scoreAssessment('PSQI', {bed:'23:00',wake:'07:00',latency:45,hours:6,fa:2,fb:1,fc:0,fd:0,fe:0,ff:0,fg:0,fh:1,fi:0,fj:0,quality:1,meds:0,sleepy:1,energy:1})`);
+  check('PSQI seven-component total = 7 （一般）', psqi.total === 7 && psqi.severity === '睡眠质量一般' && psqi.detail.includes('睡眠效率 1'));
+  w.openAssessment('', liveClient); await tick();
+  w.document.getElementById('aScale').value = 'SDS'; w.renderAssessmentItems();
+  check('SDS items render (20 items, zung options)', w.document.querySelectorAll('#aItems input[type=radio]').length === 80 && w.document.getElementById('aItems').textContent.includes('没有或很少时间'));
+  w.eval('assessmentDialog.close()');
+
+  // ---- V3.2.0: structured risk assessment + watchlist ----
+  w.openCrisis('', liveClient); await tick();
+  w.document.getElementById('crLevel').value = '高';
+  w.document.getElementById('crRiskFactors').value = '有自伤意念，无具体计划';
+  w.document.getElementById('crActions').value = '已共同制定安全计划，约定危机时拨打 12356';
+  w.document.getElementById('crFollowUp').value = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  await w.saveCrisis(); await flush();
+  check('risk assessment persisted', savedState().riskAssessments.length === 1 && savedState().riskAssessments[0].level === '高');
+  w.showView('assessments'); await tick();
+  check('risk watchlist flags overdue follow-up', w.document.getElementById('riskWatch').innerHTML.includes('已逾期'));
+  check('risk list renders the record', w.document.getElementById('riskList').innerHTML.includes('高风险'));
+  w.openRisk(liveClient); await tick();
+  check('original 风险与转介 dialog intact (no id collision)', !!w.document.getElementById('rSelfHarm') && w.document.getElementById('rLevel').innerHTML.includes('高风险'));
+  w.eval('riskDialog.close()');
+
+  // ---- V3.2.0: case members （伴侣/家庭） + session attendees + invoice fields ----
+  const member = savedState().clients[0];
+  w.openClient(member.id); await tick();
+  w.document.getElementById('cCaseType').value = '伴侣咨询';
+  w.document.getElementById('cInvoiceTitle').value = '某某科技有限公司';
+  w.document.getElementById('cInvoiceTaxId').value = '91310000TEST000001';
+  const mbox = w.document.querySelector('.c-member-choice');
+  check('member choices render for case linking', !!mbox || w.document.querySelectorAll('.c-member-choice').length === 0);
+  w.saveClient(); await flush();
+  const savedMember = savedState().clients.find((c) => c.id === member.id);
+  check('case type + invoice fields persisted', savedMember.caseType === '伴侣咨询' && savedMember.invoiceTitle === '某某科技有限公司' && savedMember.invoiceTaxId === '91310000TEST000001');
+
+  // ---- V3.2.0: WeChat scripts ----
+  w.openWx({ name: '测试', amount: '300.00' }); await tick();
+  const wxOpts = [...w.document.getElementById('wxKind').options].map((o) => o.value);
+  check('wx templates include payment when amount present', wxOpts.includes('payment') && wxOpts.includes('confirm'));
+  w.document.getElementById('wxKind').value = 'payment'; w.renderWxText();
+  check('wx payment text fills amount', w.document.getElementById('wxText').value.includes('¥300.00'));
+  w.eval('wxDialog.close()');
+
+  // ---- V3.2.0: therapy groups (create, log, attendance fees) ----
+  w.openGroup(); await tick();
+  w.document.getElementById('gName').value = '焦虑管理团体';
+  w.document.getElementById('gFee').value = '150';
+  const gcheck = w.document.querySelector('.g-member-choice');
+  if (gcheck) gcheck.checked = true;
+  await w.saveGroup(); await flush();
+  check('group persisted with member', savedState().groups.length === 1 && savedState().groups[0].memberIds.length >= 1);
+  w.showView('groups'); await tick();
+  const att = w.document.querySelector('.gl-attendee');
+  if (att) att.checked = true;
+  w.document.getElementById('glTopic').value = '认识焦虑';
+  await w.saveGroupLog(); await flush();
+  check('group session log saved', savedState().groups[0].logs.length === 1);
+  const logId = savedState().groups[0].logs[0].id;
+  await w.genGroupFees(logId); await flush();
+  check('attendance fees generated as 待收款 finance rows', savedState().finance.some((f) => f.type === '团体咨询' && f.status === '待收款' && Number(f.amount) === 150));
+  check('log marked feeGenerated (no duplicates)', savedState().groups[0].logs[0].feeGenerated === true);
+
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
   process.exit(failed.length ? 1 : 0);
