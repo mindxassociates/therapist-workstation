@@ -11,8 +11,6 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'u
 
 // ---- Fake Tauri backend (mirrors src-tauri/src/lib.rs command semantics) ----
 let workspaceJson = null;
-const compState = { portable: false, installed: true };
-let aiProc = null, aiDiscarded = '', lastPrompt = '';
 const prefs = new Map();
 let user = null;
 const fakeInvoke = async (cmd, args = {}) => {
@@ -38,34 +36,6 @@ const fakeInvoke = async (cmd, args = {}) => {
     case 'users_set_active': return { ok: true };
     case 'change_password': return { ok: true };
     case 'open_path': return true;
-    case 'ai_comp_status': return { portable: compState.portable, installed: compState.installed, version: '3.1.17', os: 'windows' };
-    case 'ai_comp_install': compState.installed = true; return true;
-    case 'ai_comp_poll': return { active: false, received: 100, total: 100, done: true, error: null };
-    case 'ai_comp_remove': compState.installed = false; return true;
-    case 'ai_status': return { whisper: { found: true, path: '/fake/whisper-cli' }, llama: { found: true, path: '/fake/llama-cli' }, models: [
-      { id: 'base', kind: 'whisper', label: '基础 base', file: 'ggml-base.bin', downloaded: false, bytes: 0 },
-      { id: 'small', kind: 'whisper', label: '均衡 small', file: 'ggml-small.bin', downloaded: true, bytes: 487601967 },
-      { id: 'qwen15', kind: 'llm', label: 'Qwen2.5 1.5B', file: 'qwen2.5-1.5b-instruct-q4_k_m.gguf', downloaded: false, bytes: 0 },
-      { id: 'qwen3', kind: 'llm', label: 'Qwen2.5 3B', file: 'qwen2.5-3b-instruct-q4_k_m.gguf', downloaded: true, bytes: 2104049000 } ],
-      modelsDir: '/fake/ai-models', enginesDir: '/fake/ai-engines', os: 'windows', download: null, proc: null };
-    case 'ai_download': return true;
-    case 'ai_download_cancel': return true;
-    case 'ai_set_engine_path': return true;
-    case 'ai_import_model': return 'imported.gguf';
-    case 'audio_begin': return { id: 'a1', path: '/fake/ai-audio/a1.wav' };
-    case 'audio_append': return true;
-    case 'audio_finish': return { path: '/fake/ai-audio/a1.wav', bytes: 1234 };
-    case 'audio_discard': aiDiscarded = args.path; return true;
-    case 'transcribe_start': aiProc = { kind: 'transcribe', n: 0 }; return true;
-    case 'generate_start': lastPrompt = args.prompt; aiProc = { kind: 'generate', n: 0 }; return true;
-    case 'ai_proc_poll': { if (!aiProc) return { active: false, kind: '', done: true, output: '', progress: -1 };
-      aiProc.n++; if (aiProc.n < 2) return { active: true, kind: aiProc.kind, done: false, progress: 50, output: '' };
-      const kind = aiProc.kind; aiProc = null;
-      const output = kind === 'transcribe'
-        ? '来访者：最近睡眠不好，工作压力很大。\n咨询师：我们先看看睡眠的情况。'
-        : '前置噪音<|im_start|>assistant\n{"focus":"工作压力与失眠","updates":"来访者报告连续两周入睡困难","work":"讨论睡眠卫生与放松练习","response":"来访者表示愿意尝试","plan":"执行睡前放松练习","next":"跟进睡眠改善情况"}<|im_end|>\nllama_print_timings: total';
-      return { active: false, kind, done: true, progress: 100, output }; }
-    case 'ai_proc_cancel': aiProc = null; return true;
     case 'open_external': return true;
     default: throw new Error('unknown command ' + cmd);
   }
@@ -425,76 +395,9 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('logo removed', !savedState().settings.logoData);
 
 
-  // ---- Offline AI: engine status, transcription flow, note generation ----
-  w.showView('ai'); await flush(); await tick(); await tick();
-  check('ai view renders, downloaded whisper model selected', w.document.getElementById('aiBody').innerHTML.includes('录音转写引擎') && w.document.getElementById('aiWhisperModel').value === 'small');
-  w.eval("aiAudioPath='/fake/ai-audio/a1.wav'");
-  w.document.getElementById('aiClient').value = clientId;
-  await w.startTranscribe();
-  await w.aiPollOnce();
-  await w.aiPollOnce();
-  check('transcript filled from engine output', w.document.getElementById('aiTranscript').value.includes('睡眠不好'));
-  check('recording discarded after transcription (default on)', aiDiscarded === '/fake/ai-audio/a1.wav');
-  w.document.getElementById('aiLlmModel').value = 'qwen3';
-  await w.generateNote('transcript');
-  check('generation prompt is ChatML + JSON-only instruction', lastPrompt.includes('<|im_start|>system') && lastPrompt.includes('JSON'));
-  await w.aiPollOnce();
-  await w.aiPollOnce();
-  check('generated JSON parsed into session fields', w.document.getElementById('sFocus').value === '工作压力与失眠' && w.document.getElementById('sPlan').value.includes('放松练习') && w.document.getElementById('sNext').value.includes('睡眠'));
-  w.eval('sessionDialog.close()');
-  w.document.getElementById('aiBrief').value = '来访者诉工作压力大，失眠两周。';
-  await w.generateNote('brief');
-  await w.aiPollOnce();
-  await w.aiPollOnce();
-  check('brief-summary generation fills the dialog too', w.document.getElementById('sFocus').value === '工作压力与失眠');
-  w.eval('sessionDialog.close()');
-
-  // ---- V3.1.9: output language / format / orientation / custom template / speaker marks / clear-on-save ----
-  check('output language + format selectors exist', !!w.document.getElementById('aiOutLang') && !!w.document.getElementById('aiFormat'));
-  check('transcribe language list is multilingual (es/ja present)', [...w.document.getElementById('aiLang').options].some(o => o.value === 'es') && [...w.document.getElementById('aiLang').options].some(o => o.value === 'ja'));
-  check('output language list includes English + Spanish', [...w.document.getElementById('aiOutLang').options].some(o => o.value === 'en') && [...w.document.getElementById('aiOutLang').options].some(o => o.value === 'es'));
   check('DAP + BIRP builtin templates seeded', savedState().templates.some(x => x.name === 'DAP 记录') && savedState().templates.some(x => x.name === 'BIRP 记录'));
-  w.document.getElementById('aiTranscript').value = '最近睡不好。';
-  w.aiInsertSpeaker('咨询师');
-  check('speaker marker inserted into transcript', w.document.getElementById('aiTranscript').value.includes('咨询师：'));
-  w.document.getElementById('aiOutLang').value = 'en';
-  w.document.getElementById('aiFormat').value = 'soap';
-  w.document.getElementById('aiOrientation').value = 'CBT';
-  w.document.getElementById('aiCustomTemplate').value = 'CUSTOM-TPL: always end with a risk line.';
-  w.document.getElementById('aiCustomTemplate').dispatchEvent(new w.Event('input'));
-  w.document.getElementById('aiDelTranscript').checked = true;
-  await w.generateNote('brief');
-  check('prompt carries output language + format + orientation + custom template', lastPrompt.includes('English') && lastPrompt.includes('SOAP') && lastPrompt.includes('CBT') && lastPrompt.includes('CUSTOM-TPL: always end with a risk line.'));
-  await w.aiPollOnce();
-  await w.aiPollOnce();
-  check('generated draft opens session dialog (v319 flow)', w.document.getElementById('sFocus').value === '工作压力与失眠');
-  await w.saveSession(); await flush();
-  check('clear-on-save emptied transcript + brief caches', w.eval('aiTranscriptCache') === '' && w.eval('aiBriefCache') === '');
-  check('custom template persisted to prefs', w.eval("window.desktopDB.getPref('aiCustomTemplate')") === 'CUSTOM-TPL: always end with a risk line.');
 
-  // ---- V3.1.12: clinical-language corpus (zh) guidance in the generation prompt ----
-  w.document.getElementById('aiOrientation').value = '认知行为 CBT';
-  const corpusPromptCbt = w.eval("buildNotePrompt('来访者谈到工作压力与睡眠困难。')");
-  check('corpus: CBT orientation matches CBT frames (苏格拉底式提问)', corpusPromptCbt.includes('苏格拉底式提问') && corpusPromptCbt.includes('干预·按取向（CBT／认知行为）'));
-  check('corpus: prompt carries never-add-unsupported-content warning', corpusPromptCbt.includes('不得添加转写稿/小结中没有依据的干预、症状、风险判断或进展'));
-  check('corpus: prompt carries presentation + general intervention frames', corpusPromptCbt.includes('来访者本次咨询主要报告了') && corpusPromptCbt.includes('咨询师运用积极倾听、反映与肯定'));
-  check('corpus: block sits after orientation line and before custom template (custom stays highest priority)', corpusPromptCbt.indexOf('咨询师取向/风格') < corpusPromptCbt.indexOf('【临床语言语料库（中文）】') && corpusPromptCbt.indexOf('【临床语言语料库（中文）】') < corpusPromptCbt.indexOf('用户自定义模板/指令'));
-  w.document.getElementById('aiOrientation').value = '';
-  const corpusPromptDefault = w.eval("buildNotePrompt('来访者谈到工作压力与睡眠困难。')");
-  check('corpus: no orientation falls back to supportive/humanistic frames', corpusPromptDefault.includes('无条件积极关注') && corpusPromptDefault.includes('干预·按取向（支持性／人本）') && !corpusPromptDefault.includes('苏格拉底式提问'));
-  w.document.getElementById('aiOrientation').value = '创伤知情与 CBT';
-  const corpusPromptOrder = w.eval("buildNotePrompt('来访者谈到工作压力与睡眠困难。')");
-  check('corpus: modality match order puts trauma before CBT', corpusPromptOrder.includes('干预·按取向（创伤知情）') && corpusPromptOrder.includes('稳定化（着陆）技巧') && !corpusPromptOrder.includes('苏格拉底式提问'));
-  w.document.getElementById('aiOrientation').value = '';
-
-  // ---- V3.1.17: problem-focused corpus （问题聚焦） + My Phrases （我的句式） ----
-  const probPrompt = w.eval("buildNotePrompt('来访者近来总是担心工作表现，感到很焦虑，夜里紧张不安；同时情绪低落，对什么都提不起兴趣，有抑郁的感觉。')");
-  check('problem corpus: anxiety + depression matched from source keywords', probPrompt.includes('问题聚焦 · 焦虑') && probPrompt.includes('灾难化预期') && probPrompt.includes('问题聚焦 · 抑郁') && probPrompt.includes('行为激活'));
-  check('problem corpus: unmatched problems stay out (no OCD frames)', !probPrompt.includes('问题聚焦 · 强迫') && !probPrompt.includes('暴露与反应预防'));
-  check('problem corpus: subsection sits after modality frames', probPrompt.indexOf('干预·按取向') < probPrompt.indexOf('问题聚焦') && probPrompt.indexOf('问题聚焦') < probPrompt.indexOf('用户自定义模板/指令'));
-  const probNone = w.eval("buildNotePrompt('来访者谈到最近的生活安排与日常作息，希望保持规律。')");
-  check('problem corpus: keyword-free source adds no problem subsection', !probNone.includes('问题聚焦'));
-
+  // ---- Problem phrase groups （问题句式） + My Phrases （我的句式） ----
   // Phrase panel: problem groups + My Phrases (star / custom / delete)
   w.openSession('', clientId);
   w.document.getElementById('sRecordMode').value = 'detailed'; w.updateSessionMode();
@@ -514,33 +417,9 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   w.document.getElementById('myPhraseAdd').click(); await tick();
   check('custom phrase persists to prefs', JSON.parse(w.eval("window.desktopDB.getPref('aiCustomPhrases')") || '[]').includes(customText));
   check('custom phrase renders in pinned section', w.document.getElementById('phrasePanel').innerHTML.includes(customText));
-  const minePrompt = w.eval("buildNotePrompt('来访者近来感到很焦虑，总是担心工作表现，夜里紧张不安。')");
-  check('prompt appends preferred-phrasing subsection (favorites + custom, after problem focus, before custom template)',
-    minePrompt.includes('咨询师个人常用句式') && minePrompt.indexOf(customText) > minePrompt.indexOf('咨询师个人常用句式') &&
-    minePrompt.indexOf('问题聚焦') < minePrompt.indexOf('咨询师个人常用句式') && minePrompt.indexOf('咨询师个人常用句式') < minePrompt.indexOf('用户自定义模板/指令'));
   w.document.querySelectorAll('.phrase-del')[0].click(); await tick();
   check('custom phrase deletable and removed from prefs', !JSON.parse(w.eval("window.desktopDB.getPref('aiCustomPhrases')") || '[]').includes(customText));
   w.eval('sessionDialog.close()');
-
-  // ---- V3.1.11: recording source (in-person mic / telehealth mic + system audio) + input device picker ----
-  check('recording source selector exists and defaults to mic', !!w.document.getElementById('aiRecSource') && w.document.getElementById('aiRecSource').value === 'mic');
-  check('recording hint explains mic mode', (w.document.getElementById('aiRecHint') || {}).textContent.includes('线下面对面'));
-  await w.refreshAudioDevices(false);
-  check('device picker keeps default option when mediaDevices is absent', !!w.document.getElementById('aiAudioDevice') && w.document.getElementById('aiAudioDevice').options.length >= 1 && w.document.getElementById('aiAudioDevice').options[0].textContent.includes('系统默认'));
-  w.document.getElementById('aiRecSource').value = 'tele';
-  w.onRecSourceChange();
-  check('telehealth source persists to prefs', w.eval("window.desktopDB.getPref('aiRecSource')") === 'tele');
-  check('telehealth hint mentions entire-screen sharing', w.document.getElementById('aiRecHint').textContent.includes('整个屏幕'));
-  const capturedAlerts = [];
-  w.alert = (m) => capturedAlerts.push(String(m));
-  w.document.getElementById('aiConsent').checked = true;
-  await w.startRecording();
-  check('telehealth start without getDisplayMedia alerts loopback workaround and does not record',
-    capturedAlerts.some((m) => m.includes('无法直接捕获系统音频')) && w.eval('recState') === null && !w.document.getElementById('aiRecBtn').disabled);
-  w.alert = () => {};
-  w.document.getElementById('aiRecSource').value = 'mic';
-  w.onRecSourceChange();
-  check('source restored to mic + persisted', w.eval("window.desktopDB.getPref('aiRecSource')") === 'mic');
 
   // ---- Customization: font size / density / header style / home modules / landing page ----
   w.showView('settings');
@@ -568,33 +447,26 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   const endState = savedState();
   check('client fully deleted with cascade', !endState.clients.some((c) => c.id === clientId) && !endState.sessions.some((s) => s.clientId === clientId) && !endState.finance.some((f) => f.clientId === clientId) && !endState.assessments.some((a) => a.clientId === clientId));
 
-  // ---- AI components: installed -> full UI; missing -> enable card; portable -> no AI entry ----
-  check('components installed keeps the AI nav entry', !!w.document.querySelector('nav button[data-view="ai"]'));
-  compState.installed = false; w.eval('window.__aiComp=null'); await w.renderAi(); await tick();
-  check('components missing shows the enable/download card', w.document.getElementById('aiBody').innerHTML.includes('下载并启用智能记录组件'));
-  await w.installAiComponents(); await new Promise((r) => setTimeout(r, 1300));
-  check('component install completes into the full AI UI', w.document.getElementById('aiBody').innerHTML.includes('录音转写引擎'));
-  check('no in-app no-AI labeling anywhere', !w.document.body.textContent.includes('无 AI'));
+  // ---- No AI anywhere: no nav entry, no bridge methods, no view ----
+  check('no AI nav entry exists', !w.document.querySelector('nav button[data-view="ai"]'));
+  check('renderAi / initAiGate are gone', typeof w.renderAi === 'undefined' && typeof w.initAiGate === 'undefined');
+  check('desktop bridge has no AI methods', typeof w.desktopDB.aiCompStatus === 'undefined' && typeof w.desktopDB.transcribeStart === 'undefined' && typeof w.desktopDB.generateStart === 'undefined');
+  check('no 智能记录 text anywhere in the UI', !w.document.body.textContent.includes('智能记录'));
   w.options();
   check('manual templates stay in session picker', [...w.document.getElementById('sTemplate').options].some((o) => o.textContent === '督导记录'));
   w.renderPhrasePanel();
-  const liteWork = w.document.getElementById('sWork'); liteWork.value = '';
+  const manWork = w.document.getElementById('sWork'); manWork.value = '';
   w.eval('sessionFocusField=null');
-  const liteChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('无条件积极关注'));
-  liteChip.click(); await tick();
-  check('phrase panel renders and inserts for manual writing', liteWork.value.includes('咨询师以无条件积极关注与温暖接纳建立咨询关系与信任。'));
-  compState.portable = true; await w.initAiGate();
-  check('portable mode removes the AI nav entry', !w.document.querySelector('nav button[data-view="ai"]'));
-
-  // Portable (no AI at all): phrase panel + My Phrases remain fully usable for manual writing
-  w.renderPhrasePanel();
+  const manChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('无条件积极关注'));
+  manChip.click(); await tick();
+  check('phrase panel renders and inserts for manual writing', manWork.value.includes('咨询师以无条件积极关注与温暖接纳建立咨询关系与信任。'));
   const portPanelHtml = w.document.getElementById('phrasePanel').innerHTML;
-  check('portable (no AI) keeps My Phrases + problem groups in phrase panel', portPanelHtml.includes('★ 我的常用') && portPanelHtml.includes('问题句式：焦虑') && portPanelHtml.includes(favText));
+  check('My Phrases + problem groups stay in phrase panel', portPanelHtml.includes('★ 我的常用') && portPanelHtml.includes('问题句式：焦虑') && portPanelHtml.includes(favText));
   const portWork = w.document.getElementById('sWork'); portWork.value = '';
   w.eval('sessionFocusField=null');
   const portChip = [...w.document.querySelectorAll('.phrase-chip')].find((b) => b.textContent.includes('灾难化预期'));
   portChip.click(); await tick();
-  check('portable (no AI) problem phrase insert still works', portWork.value.includes('灾难化预期'));
+  check('problem phrase insert still works', portWork.value.includes('灾难化预期'));
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
