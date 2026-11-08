@@ -1,6 +1,6 @@
 [package]
 name = "therapist-workstation"
-version = "3.3.0"
+version = "3.4.0"
 description = "心理咨询师工作台"
 authors = ["Mind X社区"]
 edition = "2021"

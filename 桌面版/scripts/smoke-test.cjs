@@ -554,6 +554,34 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   fs.value = ''; w.filterPhrases();
   w.eval('sessionDialog.close()');
 
+  // ---- V3.4.0: scripts (TextExpander) + PDF export + hints + 微信脚本 rename ----
+  w.eval(`window.desktopDB.setPref('aiCustomPhrases', JSON.stringify(['旧句式一条〔空〕'])); window.desktopDB.setPref('twScripts', '[]'); twScriptsCache = null; aiCustomPhrasesCache = null;`);
+  check('legacy custom phrases migrated into script store', w.eval('loadScripts()').some((s) => s.body.includes('旧句式一条')));
+  w.eval(`aiAddCustomPhrase('复诊开场：上次以来〔变化〕如何。', 'fz')`);
+  check('script with shortcut stored', w.eval('loadScripts()').some((s) => s.shortcut === 'fz'));
+  w.openSession('', liveClient); await tick();
+  const work = w.document.getElementById('sWork');
+  work.focus(); work.value = '记录：fz'; work.setSelectionRange(5, 5);
+  work.dispatchEvent(new w.Event('input', { bubbles: true })); await tick();
+  const dd = w.document.getElementById('expDropdown');
+  check('shortcut typing opens script dropdown', !!dd && dd.style.display === 'block' && dd.textContent.includes('复诊开场'));
+  work.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); await tick();
+  check('enter expands shortcut into script text', work.value === '记录：复诊开场：上次以来〔变化〕如何。' && dd.style.display === 'none');
+  work.value = '补充/苏格拉底'; work.setSelectionRange(7, 7);
+  work.dispatchEvent(new w.Event('input', { bubbles: true })); await tick();
+  check('slash search finds corpus scripts', dd.style.display === 'block' && dd.textContent.includes('苏格拉底式提问'));
+  work.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); await tick();
+  check('escape closes dropdown without changing text', dd.style.display === 'none' && work.value === '补充/苏格拉底');
+  w.eval('sessionDialog.close()');
+  w.showView('finance'); w.renderFinance(); await tick();
+  check('wechat feature renamed to 脚本', w.document.getElementById('wxDialog').innerHTML.includes('微信脚本') && w.document.querySelector('#financeTable').innerHTML.includes('>脚本</a>'));
+  check('hint tooltips present across features', w.document.querySelectorAll('.hint[data-hint]').length >= 6);
+  w.exportClientPdf(liveClient); await tick();
+  const expHtml = w.document.getElementById('exportBody').innerHTML;
+  check('single-client PDF export renders full record', expHtml.includes('来访者记录档案') && expHtml.includes('咨询记录') && expHtml.includes('收费记录') && expHtml.includes('敏感个人信息'));
+  await w.exportAllPdf(); await tick();
+  check('all-clients export renders too', w.document.getElementById('exportBody').innerHTML.length > 200);
+
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
   process.exit(failed.length ? 1 : 0);
