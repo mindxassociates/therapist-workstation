@@ -490,7 +490,7 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   w.document.getElementById('crLevel').value = '高';
   w.document.getElementById('crRiskFactors').value = '有自伤意念，无具体计划';
   w.document.getElementById('crActions').value = '已共同制定安全计划，约定危机时拨打 12356';
-  w.document.getElementById('crFollowUp').value = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  w.document.getElementById('crFollowUp').value = w.eval(`(()=>{const d=new Date();d.setDate(d.getDate()-2);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})()`);
   await w.saveCrisis(); await flush();
   check('risk assessment persisted', savedState().riskAssessments.length === 1 && savedState().riskAssessments[0].level === '高');
   w.showView('assessments'); await tick();
@@ -538,6 +538,21 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   await w.genGroupFees(logId); await flush();
   check('attendance fees generated as 待收款 finance rows', savedState().finance.some((f) => f.type === '团体咨询' && f.status === '待收款' && Number(f.amount) === 150));
   check('log marked feeGenerated (no duplicates)', savedState().groups[0].logs[0].feeGenerated === true);
+
+  // ---- V3.3.0: layout integrity + phrase panel UX + quick actions ----
+  check('all view sections are direct children of main (no blank-page nesting)', [...w.document.querySelectorAll('section.view')].every((s) => s.parentElement.tagName === 'MAIN'));
+  check('dashboard quick actions present', w.document.querySelector('.quick-actions') !== null && w.document.querySelectorAll('.quick-actions button').length === 5);
+  w.openSession('', liveClient); await tick();
+  if (w.document.getElementById('phrasePanel').style.display === 'none') w.togglePhrasePanel(); await tick();
+  const groupHeads = w.document.querySelectorAll('.phrase-group-head');
+  const groupBodies = w.document.querySelectorAll('.phrase-group-body');
+  check('phrase panel groups are collapsible (later groups start collapsed)', groupHeads.length >= 10 && groupBodies.length >= 10 && groupBodies[groupBodies.length - 1].style.display === 'none');
+  const fs = w.document.getElementById('phraseSearch');
+  fs.value = '苏格拉底'; w.filterPhrases();
+  const visChips = [...w.document.querySelectorAll('.phrase-chip')].filter((b) => b.closest('.phrase-unit').style.display !== 'none');
+  check('phrase search filters to matching phrases', visChips.length >= 1 && visChips.every((b) => b.textContent.includes('苏格拉底')));
+  fs.value = ''; w.filterPhrases();
+  w.eval('sessionDialog.close()');
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);

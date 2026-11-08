@@ -77,6 +77,24 @@ dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);paddi
 }
 @media print{header,nav,.no-print{display:none!important}.shell{display:block}main{padding:0}.view{display:none!important}.view.active{display:block!important}.card{border:0;box-shadow:none}body{background:#fff;color:#000}}
 .password-wrap{position:relative}.password-wrap input{padding-right:44px}.password-eye{position:absolute;right:5px;top:5px;width:34px;height:34px;padding:0;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}.caps-hint{display:none;color:#a56324;font-size:12px;margin-top:5px}
+
+/* ---- V3.3.0 舒适度与书写体验 ---- */
+body{line-height:1.65}
+dialog .inner{padding:26px 28px}
+#sessionDialog{max-width:920px}
+#clientDialog{max-width:900px}
+#sessionDialog textarea{min-height:112px;line-height:1.75;font-size:15px}
+#sessionDialog input,#sessionDialog select{font-size:15px}
+.phrase-group{border:1px solid var(--line);border-radius:12px;margin:8px 0;overflow:hidden;background:var(--card)}
+.phrase-group-head{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;background:var(--soft);border:0;padding:10px 14px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink);text-align:left}
+.phrase-group-head .pg-meta{font-weight:400;color:var(--muted);font-size:12px;white-space:nowrap}
+.phrase-group-body{padding:10px 12px}
+.phrase-chip{line-height:1.55;white-space:normal;text-align:left;height:auto}
+.quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.quick-actions button{padding:14px 12px;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--soft);border-radius:12px;cursor:pointer;text-align:center;color:var(--ink);transition:.15s}
+.quick-actions button:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+td{padding:13px 10px}
+.item{padding:12px 2px}
 </style>
 </head>
 <body>
@@ -117,12 +135,13 @@ dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);paddi
 <button data-view="settings">个性化设置</button>
 <button data-view="privacy">隐私与合规</button>
 </div></div>
-<div class="nav-developer"><div>程序开发</div><a onclick="openMindX()">Mind X社区 ↗</a><div class="nav-version">Desktop V3.2.0</div></div>
+<div class="nav-developer"><div>程序开发</div><a onclick="openMindX()">Mind X社区 ↗</a><div class="nav-version">Desktop V3.3.0</div></div>
 </nav>
 <main>
 <section id="dashboard" class="view active">
 <div class="between row"><div><h2>今日工作台</h2><div class="muted">集中处理今日咨询、待办、待收费和建档未完成项目</div></div><div class="row"><button class="secondary" onclick="openEvent()">+ 添加日程</button><button class="primary" onclick="openClient()">+ 新建来访者</button></div></div>
 <div class="grid"><div class="card"><div class="muted">活跃来访者</div><div class="stat" id="statClients">0</div></div><div class="card"><div class="muted">咨询记录</div><div class="stat" id="statSessions">0</div></div><div class="card"><div class="muted">今日安排</div><div class="stat" id="statToday">0</div></div></div>
+<div class="card"><h3 style="margin-top:0">快捷操作</h3><div class="quick-actions"><button type="button" onclick="openSession()">＋ 写咨询记录</button><button type="button" onclick="openEvent()">＋ 安排日程</button><button type="button" onclick="openClient()">＋ 新建来访者</button><button type="button" onclick="openFinance()">＋ 记录收费</button><button type="button" onclick="openQuick()">＋ 写随手记</button></div></div>
 <div id="backupReminder"></div>
 <div class="two">
 <div class="card"><div class="between row"><h3>今日日程</h3><a class="action" onclick="showView('calendar')">查看日程</a></div><div id="todayEvents"></div></div>
@@ -231,8 +250,8 @@ dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);paddi
 <label>文档联系方式</label><input id="docContact" placeholder="例如：电话 / 微信 / 邮箱（可空）">
 <label><input type="checkbox" id="docShowContact" style="width:auto"> 在文档页眉 / 页脚显示联系方式</label></div>
 <div class="card"><h3>账户与自动锁定</h3><p class="muted">工作台使用独立用户账户控制访问。锁定后必须重新输入当前用户密码。</p><label>无操作自动锁定</label><select id="autoLockMinutes" onchange="saveAutoLockSetting()"><option value="5">5 分钟</option><option value="10">10 分钟</option><option value="15">15 分钟（推荐）</option><option value="30">30 分钟</option><option value="60">60 分钟</option><option value="0">关闭自动锁定</option></select><div class="row" style="margin-top:12px"><button class="secondary" onclick="lockWorkspace()">立即锁定</button></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>修改登录密码</h3><label>当前密码</label><input id="currentUserPassword" type="password" autocomplete="current-password"><label>新密码</label><input id="newUserPassword" type="password" autocomplete="new-password" placeholder="至少 10 位"><label>再次输入新密码</label><input id="confirmUserPassword" type="password" autocomplete="new-password"><button class="primary" style="margin-top:12px" onclick="changeUserPassword()">修改密码</button></div></div>
-<div class="card"><h3>关于</h3><p><b>心理咨询师工作台</b></p><p class="muted">Desktop V3.2.0 · 本地加密数据存储</p><p>程序开发：<a class="action" onclick="openMindX()">Mind X社区 ↗</a></p></div>
-</div></section>
+<div class="card"><h3>关于</h3><p><b>心理咨询师工作台</b></p><p class="muted">Desktop V3.3.0 · 本地加密数据存储</p><p>程序开发：<a class="action" onclick="openMindX()">Mind X社区 ↗</a></p></div>
+</section>
 
 <section id="security" class="view"><h2>安全与审计</h2><div class="two"><div class="card"><h3>当前用户</h3><p id="currentUserInfo" class="muted">—</p><p>审计日志用于记录登录、锁定以及工作台数据修改。普通界面不提供修改或删除审计日志的功能。</p><button class="secondary" onclick="verifyAuditLog()">校验审计日志完整性</button><p id="auditVerifyResult" class="muted"></p></div><div class="card"><h3>自动锁定</h3><p class="muted">达到设定的无操作时间后，工作台会遮蔽全部来访者资料并要求重新登录。</p><p id="autoLockSummary"></p><button class="secondary" onclick="lockWorkspace()">立即锁定</button></div></div><div class="card" id="userManagementCard"><div class="between row"><div><h3>用户与权限</h3><div class="muted">管理员可以创建或停用用户。咨询师账户可使用工作台，但不能管理其他用户。</div></div><button class="secondary" onclick="renderUsers()">刷新</button></div><div id="usersTable"></div><div class="two" style="margin-top:14px"><div><label>用户名</label><input id="newAccountUsername"></div><div><label>显示姓名</label><input id="newAccountDisplayName"></div><div><label>角色</label><select id="newAccountRole"><option>咨询师</option><option>管理员</option></select></div><div><label>初始密码</label><input id="newAccountPassword" type="password" placeholder="至少 10 位"></div></div><button class="primary" style="margin-top:12px" onclick="createUserAccount()">创建用户</button></div><div class="card"><div class="between row"><h3>审计日志</h3><button class="secondary" onclick="renderAuditLog()">刷新</button></div><div id="auditTable"><div class="empty">正在读取审计日志…</div></div></div></section>
 
@@ -288,7 +307,7 @@ dialog{border:0;border-radius:18px;max-width:800px;width:calc(100% - 32px);paddi
 
 <dialog id="sessionDialog"><div class="inner"><div class="between row"><h3>心理咨询记录</h3><button class="secondary" type="button" onclick="copyPreviousSession()">从前次咨询记录复制</button></div><input type="hidden" id="sId"><input type="hidden" id="sEventId">
 <div class="card" style="box-shadow:none;margin:10px 0 16px"><div class="two"><div><label>使用记录模板</label><select id="sTemplate" onchange="applyTemplate(this.value)"><option value="">不使用模板</option></select><div class="muted" id="templateHint" style="padding-top:7px">选择模板：套用固定的记录框架。</div></div><div><label>继续上次记录</label><div class="muted" style="padding-top:10px">「从前次咨询记录复制」会复制该来访者上一条真实记录，适合在其基础上继续编辑。</div></div></div></div>
-<div class="card" style="box-shadow:none;margin:0 0 16px"><div class="row"><button class="secondary" type="button" id="phraseToggle" onclick="togglePhrasePanel()" aria-expanded="false">常用句式</button><span class="muted">点开后点击任意句式，即可插入到当前正在填写的字段光标处；句式中的〔〕请按实际内容修改。</span></div><div id="phrasePanel" style="display:none;margin-top:6px;max-height:320px;overflow:auto"></div></div>
+<div class="card" style="box-shadow:none;margin:0 0 16px"><div class="row"><button class="secondary" type="button" id="phraseToggle" onclick="togglePhrasePanel()" aria-expanded="false">常用句式</button><span class="muted">按分组展开或搜索关键词定位句式，点击即可插入到当前正在填写的字段光标处；句式中的〔〕请按实际内容修改。</span></div><div id="phrasePanel" style="display:none;margin-top:6px;max-height:420px;overflow:auto"></div></div>
 <div class="two"><div><label>来访者</label><select id="sClient" onchange="renderSessionAttendees()"></select></div><div><label>日期</label><input id="sDate" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div></div><div id="sAttendeesWrap" style="display:none"><label>出席成员（伴侣 / 家庭个案）</label><div id="sAttendees" class="checklist"></div></div>
 <label>记录方式</label><select id="sRecordMode" onchange="updateSessionMode()"><option value="detailed">详细记录</option><option value="simple">简洁记录</option><option value="key">只记关键点</option></select>
 <div class="two"><div><label>时长（分钟）</label><input id="sDuration" type="number"></div><div><label>形式</label><select id="sMode"><option>视频</option><option>面询</option><option>电话</option><option>其他</option></select></div></div>
@@ -672,14 +691,13 @@ function renderPhrasePanel(){
 aiLoadPhrasePrefs();
 const favs=aiFavPhrasesCache||[],customs=aiCustomPhrasesCache||[];
 const chipTexts=[],starTexts=[],delTexts=[];
-const chipHtml=(t,del)=>{chipTexts.push(t);starTexts.push(t);const ci=chipTexts.length-1,si=starTexts.length-1;const isFav=favs.includes(t);let dh='';if(del){delTexts.push(t);dh=`<button type="button" class="secondary phrase-del" data-di="${delTexts.length-1}" title="删除这条自定义句式" style="padding:5px 8px;font-size:12px">×</button>`}return `<span style="display:inline-flex;gap:2px"><button type="button" class="secondary phrase-chip" data-ci="${ci}" style="padding:5px 10px;font-size:12px">${esc(t)}</button><button type="button" class="secondary phrase-star" data-si="${si}" title="收藏到「★ 我的常用」" style="padding:5px 8px;font-size:12px;${isFav?'color:#e8a13a;font-weight:700':''}">${isFav?'★':'☆'}</button>${dh}</span>`};
-const groupHtml=(label,items,del)=>`<div style="margin:12px 0 2px"><div class="muted" style="font-weight:600;margin-bottom:6px">${esc(label)}</div><div class="row" style="flex-wrap:wrap;gap:6px">${items.map(t=>chipHtml(t,del)).join('')}</div></div>`;
-let html=`<div style="margin:12px 0 2px"><div class="muted" style="font-weight:600;margin-bottom:6px">★ 我的常用</div>`;
-if(favs.length||customs.length)html+=`<div class="row" style="flex-wrap:wrap;gap:6px">${favs.map(t=>chipHtml(t,false)).join('')}${customs.map(t=>chipHtml(t,true)).join('')}</div>`;
-else html+='<div class="muted">点击任意句式右侧的 ☆ 即可收藏到这里，也可以添加你自己的常用句式。</div>';
-html+=`<div class="row" style="margin-top:8px;gap:6px"><input id="myPhraseInput" placeholder="输入你自己的常用句式，点「添加」保存到我的常用" style="flex:1;min-width:220px"><button type="button" class="secondary" id="myPhraseAdd">添加</button></div></div>`;
+const chipHtml=(tx,del)=>{chipTexts.push(tx);starTexts.push(tx);const ci=chipTexts.length-1,si=starTexts.length-1;const isFav=favs.includes(tx);let dh='';if(del){delTexts.push(tx);dh=`<button type="button" class="secondary phrase-del" data-di="${delTexts.length-1}" title="删除这条自定义句式" style="padding:5px 8px;font-size:12px">×</button>`}return `<span class="phrase-unit" style="display:inline-flex;gap:2px"><button type="button" class="secondary phrase-chip" data-ci="${ci}" style="padding:5px 10px;font-size:12px">${esc(tx)}</button><button type="button" class="secondary phrase-star" data-si="${si}" title="收藏到「★ 我的常用」" style="padding:5px 8px;font-size:12px;${isFav?'color:#e8a13a;font-weight:700':''}">${isFav?'★':'☆'}</button>${dh}</span>`};
+const groupHtml=(label,items,del,open)=>`<div class="phrase-group"><button type="button" class="phrase-group-head" data-open="${open?1:0}" onclick="togglePhraseGroup(this)"><span>${esc(label)}</span><span class="pg-meta">${items.length} 条 <span class="pg-arrow">${open?'▾':'▸'}</span></span></button><div class="phrase-group-body"${open?'':' style="display:none"'}><div class="row" style="flex-wrap:wrap;gap:6px">${items.map(x=>chipHtml(x,del)).join('')}</div></div></div>`;
+let html=`<div class="row" style="gap:8px;margin-bottom:4px"><input id="phraseSearch" placeholder="搜索句式（例如：焦虑、共情、作业、结束、睡眠）" oninput="filterPhrases()" style="flex:1"></div>`;
+const mine=[...favs,...customs];
+html+=`<div class="phrase-group"><div class="phrase-group-head" style="cursor:default"><span>★ 我的常用</span><span class="pg-meta">${mine.length} 条</span></div><div class="phrase-group-body">${mine.length?`<div class="row" style="flex-wrap:wrap;gap:6px">${favs.map(x=>chipHtml(x,false)).join('')}${customs.map(x=>chipHtml(x,true)).join('')}</div>`:'<div class="muted">点击任意句式右侧的 ☆ 即可收藏到这里，也可以添加你自己的常用句式。</div>'}<div class="row" style="margin-top:8px;gap:6px"><input id="myPhraseInput" placeholder="输入你自己的常用句式，点「添加」保存到我的常用" style="flex:1;min-width:220px"><button type="button" class="secondary" id="myPhraseAdd">添加</button></div></div></div>`;
 const groups=[['呈现',CORPUS_ZH.presentation],['评估与进展',CORPUS_ZH.assessmentProgress],['干预 · 通用',CORPUS_ZH.interventionsGeneral],...CORPUS_ZH.modalityOrder.map(id=>['干预 · '+CORPUS_ZH.interventionsByModality[id].label,CORPUS_ZH.interventionsByModality[id].frames]),['反应',CORPUS_ZH.response],['计划',CORPUS_ZH.plan],...CORPUS_ZH.problemOrder.map(id=>['问题句式：'+CORPUS_ZH.problems[id].label,CORPUS_ZH.problems[id].frames])];
-html+=groups.map(([label,items])=>groupHtml(label,items,false)).join('');
+html+=groups.map(([label,items],gi)=>groupHtml(label,items,false,gi===0)).join('');
 phrasePanel.innerHTML=html;
 phrasePanel.querySelectorAll('.phrase-chip').forEach(b=>b.addEventListener('click',()=>insertPhrase(chipTexts[Number(b.dataset.ci)])));
 phrasePanel.querySelectorAll('.phrase-star').forEach(b=>b.addEventListener('click',()=>aiToggleFav(starTexts[Number(b.dataset.si)])));
@@ -687,6 +705,8 @@ phrasePanel.querySelectorAll('.phrase-del').forEach(b=>b.addEventListener('click
 const addBtn=phrasePanel.querySelector('#myPhraseAdd'),inp=phrasePanel.querySelector('#myPhraseInput');
 if(addBtn&&inp){addBtn.addEventListener('click',()=>{if(aiAddCustomPhrase(inp.value))inp.value=''});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(aiAddCustomPhrase(inp.value))inp.value=''}})}
 }
+function togglePhraseGroup(btn){const body=btn.nextElementSibling;const open=btn.dataset.open==='1';btn.dataset.open=open?'0':'1';body.style.display=open?'none':'';const ar=btn.querySelector('.pg-arrow');if(ar)ar.textContent=open?'▸':'▾'}
+function filterPhrases(){const q=(document.getElementById('phraseSearch').value||'').trim();phrasePanel.querySelectorAll('.phrase-group').forEach((g,gi)=>{const body=g.querySelector('.phrase-group-body');if(!body)return;let vis=0;g.querySelectorAll('.phrase-unit').forEach(u=>{const hit=!q||u.textContent.includes(q);u.style.display=hit?'inline-flex':'none';if(hit)vis++});if(q){g.style.display=vis?'':'none';body.style.display=vis?'':'none'}else{g.style.display='';body.style.display=gi<=1?'':'none';const head=g.querySelector('.phrase-group-head');if(head&&head.dataset.open!==undefined){head.dataset.open=gi===1?'1':'0';const ar=head.querySelector('.pg-arrow');if(ar)ar.textContent=gi===1?'▾':'▸'}}})}
 function togglePhrasePanel(){const open=phrasePanel.style.display!=='none';if(!open)renderPhrasePanel();phrasePanel.style.display=open?'none':'block';phraseToggle.setAttribute('aria-expanded',String(!open))}
 function insertPhrase(text){const el=phraseTargetField();if(!el||!text)return;const start=typeof el.selectionStart==='number'?el.selectionStart:el.value.length,end=typeof el.selectionEnd==='number'?el.selectionEnd:start;el.value=el.value.slice(0,start)+text+el.value.slice(end);sessionFocusField=el;el.focus();const slot=text.indexOf('〔'),close=slot>=0?text.indexOf('〕',slot):-1;if(slot>=0)el.setSelectionRange(start+slot,close>=0?start+close+1:start+slot+1);else el.setSelectionRange(start+text.length,start+text.length);el.dispatchEvent(new Event('input',{bubbles:true}))}
 function updateSessionMode(){const m=sRecordMode.value;detailedFields.classList.toggle('active',m==='detailed');simpleFields.classList.toggle('active',m==='simple');keyFields.classList.toggle('active',m==='key')}
