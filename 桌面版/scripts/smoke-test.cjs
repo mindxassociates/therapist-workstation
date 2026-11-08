@@ -582,6 +582,88 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   await w.exportAllPdf(); await tick();
   check('all-clients export renders too', w.document.getElementById('exportBody').innerHTML.length > 200);
 
+
+  // ===== V3.5.0 TESTS: intuitive workflow round =====
+  try {
+    const st35 = savedState();
+    const cidA = st35.clients[0].id;
+    w.eval(`(()=>{const c=db.clients.find(x=>x.id==='${cidA}');c.defaultFee=500;save()})()`);
+    w.eval(`openSession('','${cidA}','2026-09-01')`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`sRecordMode.value='key';updateSessionMode();sKeyFocus.value='关键主题A';sKeyNext.value='关键下次安排A';sGenFee.checked=false;saveSession()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`openSession('','${cidA}','2026-09-08')`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 last-review strip shows previous plan', w.eval(`document.getElementById('sLastReview').style.display`) === 'block' && w.eval(`document.getElementById('sLastReview').textContent`).includes('关键下次安排A'));
+    check('V3.5 new session inherits previous record mode', w.eval(`sRecordMode.value`) === 'key');
+    check('V3.5 fee row visible + amount prefilled from default fee', w.eval(`document.getElementById('sFeeRow').style.display`) === 'flex' && Number(w.eval(`sFeeAmount.value`)) === 500);
+    w.eval(`sKeyFocus.value='第二讲';saveSession()`); await new Promise(r => setTimeout(r, 60));
+    const fees1 = savedState().finance.filter(f => f.clientId === cidA && f.type === '心理咨询' && Number(f.amount) === 500);
+    check('V3.5 saving a new session generates one pending fee', fees1.length === 1 && fees1[0].status === '待收款');
+    w.eval(`openSession('','${cidA}','2026-09-08')`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`sGenFee.checked=true;sFeeAmount.value='500';sKeyFocus.value='重复收费守卫';saveSession()`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 duplicate fee is not generated twice', savedState().finance.filter(f => f.clientId === cidA && f.type === '心理咨询' && Number(f.amount) === 500).length === 1);
+    w.eval(`openEvent('','${cidA}','2026-10-05')`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 repeat row visible for new event', w.eval(`document.getElementById('eRepeatRow').style.display`) !== 'none');
+    w.eval(`eTime.value='10:00';eRepeat.value='weekly';eRepeatCount.value='3';saveEvent()`); await new Promise(r => setTimeout(r, 60));
+    const reps = savedState().events.filter(e => e.clientId === cidA && e.time === '10:00' && e.date >= '2026-10-05');
+    check('V3.5 weekly repeat creates 3 weekly events', reps.length === 3 && reps.map(e => e.date).sort().join(',') === '2026-10-05,2026-10-12,2026-10-19');
+    const evId = reps.slice().sort((a,b)=>a.date.localeCompare(b.date))[0].id;
+    w.eval(`openEvent('${evId}')`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 reschedule button visible for existing event', w.eval(`document.getElementById('eRescheduleBtn').style.display`) === 'inline-block');
+    w.eval(`openReschedule()`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 reschedule defaults to +7 days', w.eval(`rsDate.value`) === '2026-10-12');
+    w.eval(`rsDate.value='2026-10-07';doReschedule()`); await new Promise(r => setTimeout(r, 60));
+    const stR = savedState(); const orig = stR.events.find(e => e.id === evId);
+    check('V3.5 reschedule cancels original with note + creates new confirmed event', orig.status === '已取消' && (orig.notes || '').includes('已改期至 2026-10-07') && stR.events.some(e => e.clientId === cidA && e.date === '2026-10-07' && e.status === '已确认' && e.time === '10:00'));
+    const ev2 = reps.slice().sort((a,b)=>a.date.localeCompare(b.date))[1].id;
+    w.eval(`openEvent('${ev2}')`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`eStatus.value='爽约';saveEvent()`); await new Promise(r => setTimeout(r, 120));
+    check('V3.5 marking no-show opens follow-up dialog', !!w.eval(`document.getElementById('followupDialog').open`));
+    w.eval(`makeFollowTask()`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 follow-up creates a task', savedState().tasks.some(t => (t.title || '').includes('跟进') && t.clientId === cidA));
+    w.eval(`openFollowup(db.events.find(e=>e.id==='${ev2}'))`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`openFollowWx()`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 follow-up opens WeChat script with no-show kind', !!w.eval(`document.getElementById('wxDialog').open`) && w.eval(`wxKind.value`) === 'noshow');
+    w.eval(`wxDialog.close()`);
+    w.eval(`moveEventToDate('${ev2}','2026-10-15')`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 drag-move changes event date keeping time', savedState().events.find(e => e.id === ev2).date === '2026-10-15');
+    w.eval(`openAssessment('','${cidA}');aScale.value='PHQ-9';aDate.value='2026-08-10';document.querySelectorAll('#aItems input').forEach((el,i)=>{el.checked=i<5});saveAssessment()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`openAssessment('','${cidA}');aScale.value='PHQ-9';aDate.value='2026-09-10';document.querySelectorAll('#aItems input').forEach(el=>el.checked=false);saveAssessment()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`viewClient('${cidA}')`); await new Promise(r => setTimeout(r, 60));
+    const profileHtml = w.eval(`document.getElementById('clientDetail').innerHTML`);
+    check('V3.5 profile shows scale trend sparkline', profileHtml.includes('<svg') && profileHtml.includes('趋势'));
+    check('V3.5 profile shows timeline with session entries', profileHtml.includes('时间线') && profileHtml.includes('咨询记录'));
+    w.eval(`openStageSummary('${cidA}')`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`ssFrom.value='2026-08-01';ssTo.value='2026-10-31';generateStageSummary()`); await new Promise(r => setTimeout(r, 60));
+    const ssText = w.eval(`ssText.value`);
+    check('V3.5 stage summary assembles counts + scale change', ssText.includes('咨询概况') && ssText.includes('PHQ-9') && ssText.includes('后续建议'));
+    w.eval(`printStageSummary()`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 stage summary prints via export view', w.eval(`document.getElementById('exportView').classList.contains('active')`));
+    w.eval(`stageSummaryDialog.close()`);
+    w.eval(`openQuickJump()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`qjInput.value='收费';renderQJ('收费')`); await new Promise(r => setTimeout(r, 40));
+    check('V3.5 quick jump filters pages', w.eval(`qjItems.some(i=>i.label==='收费对账单')`));
+    w.eval(`runQJ(qjItems.findIndex(i=>i.label==='收费对账单'))`); await new Promise(r => setTimeout(r, 60));
+    check('V3.5 quick jump navigates to finance', w.eval(`document.getElementById('finance').classList.contains('active')`));
+    w.eval(`showView('clients');openClient()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`document.getElementById('cName').value='快捷保存来访'`);
+    w.eval(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'s',ctrlKey:true,bubbles:true}))`); await new Promise(r => setTimeout(r, 80));
+    check('V3.5 Ctrl+S saves open dialog', savedState().clients.some(c => c.name === '快捷保存来访'));
+    const old40 = w.eval(`addDaysStr(todayLocal(),-40)`);
+    const act = savedState().clients.find(c => c.status === '进行中');
+    if (act) {
+      w.eval(`openAssessment('','${act.id}');aScale.value='GAD-7';aDate.value='${old40}';document.querySelectorAll('#aItems input').forEach(el=>el.checked=false);saveAssessment()`); await new Promise(r => setTimeout(r, 60));
+      w.eval(`showView('dashboard');renderTodayWorkspace()`); await new Promise(r => setTimeout(r, 60));
+      check('V3.5 retest reminder lists stale-assessment client', w.eval(`document.getElementById('retestCard').style.display`) === 'block' && w.eval(`document.getElementById('retestCard').textContent`).includes(act.name));
+    }
+    check('V3.5 onboarding checklist function present', w.eval('typeof renderOnboarding') === 'function');
+    w.eval(`(()=>{db.settings.lastBackup=new Date().toISOString();save();renderOnboarding()})()`); await new Promise(r => setTimeout(r, 40));
+    check('V3.5 onboarding hides when all steps done', w.eval(`document.getElementById('onboardCard').style.display`) === 'none');
+    w.eval(`renderFavNav()`); await new Promise(r => setTimeout(r, 40));
+    check('V3.5 favorites nav renders default entries', w.eval(`document.getElementById('favNav').querySelectorAll('button[data-view]').length`) >= 4);
+    w.eval(`toggleFav('insights',true)`); await new Promise(r => setTimeout(r, 40));
+    check('V3.5 toggling a favorite persists + shows in nav', w.eval(`favViewsGet().includes('insights')`) && w.eval(`!!document.querySelector('#favNav button[data-view="insights"]')`));
+    w.eval(`toggleFav('insights',false)`); await new Promise(r => setTimeout(r, 40));
+  } catch (e) { console.error('V35 TEST ERROR', e); check('V3.5 block completed without exception', false); }
+
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
   process.exit(failed.length ? 1 : 0);
