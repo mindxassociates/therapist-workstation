@@ -49,6 +49,7 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
     url: 'http://localhost/', runScripts: 'dangerously', pretendToBeVisual: true,
     beforeParse(window) {
       window.__TAURI__ = { core: { invoke: fakeInvoke } };
+      try { Object.defineProperty(window.navigator, 'language', { value: 'zh-CN', configurable: true }); } catch (e) {}
       window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
       window.HTMLDialogElement.prototype.close = function () { this.open = false; };
       window.alert = () => {}; window.confirm = () => true; window.scrollTo = () => {};
@@ -693,6 +694,41 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
     w.eval(`viewClient('${cidT}')`); await new Promise(r => setTimeout(r, 60));
     check('V3.6 profile trend sparkline still renders', w.eval(`document.getElementById('clientDetail').innerHTML`).includes('<svg'));
   } catch (e) { console.error('V36 TEST ERROR', e); check('V3.6 block completed without exception', false); }
+
+
+  // ===== V3.7.0 TESTS: bilingual UI =====
+  try {
+    prefs.delete('uiLang');
+    const domEn = new JSDOM(html, {
+      url: 'http://localhost/', runScripts: 'dangerously', pretendToBeVisual: true,
+      beforeParse(window) {
+        window.__TAURI__ = { core: { invoke: fakeInvoke } };
+        window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+        window.HTMLDialogElement.prototype.close = function () { this.open = false; };
+        window.alert = () => {}; window.confirm = () => true; window.scrollTo = () => {};
+        window.URL.createObjectURL = () => 'blob:fake'; window.URL.revokeObjectURL = () => {};
+      },
+    });
+    const we = domEn.window;
+    await new Promise(r => setTimeout(r, 90));
+    check('V3.7 English system auto-detects English UI', we.eval(`i18nState.lang`) === 'en');
+    check('V3.7 pill switcher present with EN active', !!we.document.getElementById('langEn') && we.document.getElementById('langEn').classList.contains('on'));
+    check('V3.7 header subtitle translated', we.document.getElementById('appSubtitle').textContent.includes('Local counseling records'));
+    check('V3.7 nav translated', we.document.body.textContent.includes('Task board') && !we.document.querySelector('[data-view="tasks"]').textContent.includes('任务看板'));
+    // option display translates but the semantic value stays Chinese
+    const optCheck = we.eval(`(() => { const s = document.getElementById('eStatus'); if (!s) return 'no-select'; const o = [...s.options].find(x => x.value === '已确认'); return o ? o.textContent.trim() : 'no-option'; })()`);
+    check('V3.7 status option shows English but keeps Chinese value', optCheck === 'Confirmed');
+    // an in-English rendered dialog: open the event dialog and read a label
+    we.eval(`openEvent()`); await new Promise(r => setTimeout(r, 60));
+    check('V3.7 dialog labels translated live', we.document.getElementById('eventDialog').textContent.includes('Linked client'));
+    // switching back to Chinese restores, and the choice persists as a pref
+    we.eval(`setUiLang('zh')`); await new Promise(r => setTimeout(r, 60));
+    check('V3.7 switching to Chinese restores labels', we.document.querySelector('[data-view="tasks"]').textContent.includes('任务看板'));
+    check('V3.7 language choice persisted to prefs', prefs.get('uiLang') === 'zh');
+    we.eval(`setUiLang('en')`); await new Promise(r => setTimeout(r, 60));
+    check('V3.7 switching back to English re-translates', we.document.querySelector('[data-view="tasks"]').textContent.includes('Task board'));
+    prefs.delete('uiLang');
+  } catch (e) { console.error('V37 TEST ERROR', e); check('V3.7 block completed without exception', false); }
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
