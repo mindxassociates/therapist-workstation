@@ -664,6 +664,36 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
     w.eval(`toggleFav('insights',false)`); await new Promise(r => setTimeout(r, 40));
   } catch (e) { console.error('V35 TEST ERROR', e); check('V3.5 block completed without exception', false); }
 
+
+  // ===== V3.6.0 TESTS: trend lines + live auto-scoring =====
+  try {
+    w.eval(`openClient();document.getElementById('cName').value='趋势线测试';saveClient()`); await new Promise(r => setTimeout(r, 60));
+    const cidT = savedState().clients.find(c => c.name === '趋势线测试').id;
+    const setAns = pairs => { pairs.forEach(([i, v]) => { const el = document.querySelector(`input[name="aq${i}"][value="${v}"]`); if (el) el.click(); }); };
+    w.eval(`openAssessment('','${cidT}');aScale.value='GAD-7';renderAssessmentItems()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`(${setAns.toString()})([[0,3],[1,3]])`); await new Promise(r => setTimeout(r, 60));
+    check('V3.6 live auto-scoring updates total before saving', w.eval(`aTotal.textContent`) === '6');
+    w.eval(`aDate.value='2026-07-05';saveAssessment()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`openAssessment('','${cidT}');aScale.value='GAD-7';renderAssessmentItems();(${setAns.toString()})([[0,2],[1,2]]);aDate.value='2026-08-05';saveAssessment()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`openAssessment('','${cidT}');aScale.value='GAD-7';renderAssessmentItems();(${setAns.toString()})([[0,1],[1,1]]);aDate.value='2026-09-05';saveAssessment()`); await new Promise(r => setTimeout(r, 60));
+    const gads = savedState().assessments.filter(a => a.clientId === cidT && a.scale === 'GAD-7').map(a => a.total).sort((x, y) => x - y);
+    check('V3.6 auto-scored totals stored (2/4/6)', JSON.stringify(gads) === '[2,4,6]');
+    w.eval(`showView('assessments');renderAssessments()`); await new Promise(r => setTimeout(r, 80));
+    const trendsHtml = w.eval(`(document.getElementById('assessmentTrends')||{innerHTML:''}).innerHTML`);
+    check('V3.6 assessments page renders score trend line', trendsHtml.includes('<svg') && trendsHtml.includes('GAD-7') && trendsHtml.includes('分数趋势'));
+    check('V3.6 trend header shows first→latest change', trendsHtml.includes('首测 6 分') && trendsHtml.includes('最近 2 分'));
+    // income trend: finance in current + previous month (page-relative)
+    const mk = w.eval(`(()=>{const t=todayLocal();const d=new Date(t+'T00:00:00');const cur=t.slice(0,8)+'10';d.setMonth(d.getMonth()-1);const prev=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-10';return {cur,prev}})()`);
+    w.eval(`(()=>{db.finance.push({id:'tf1',date:'${mk.cur}',type:'心理咨询',clientId:'${cidT}',title:'趋势收入',amount:1000,received:800,status:'部分收款',paymentMethod:'',invoiceStatus:'未开票',invoiceNo:'',dueDate:'',notes:'',createdAt:new Date().toISOString()});db.finance.push({id:'tf2',date:'${mk.prev}',type:'心理咨询',clientId:'${cidT}',title:'趋势收入',amount:600,received:600,status:'已结清',paymentMethod:'',invoiceStatus:'未开票',invoiceNo:'',dueDate:'',notes:'',createdAt:new Date().toISOString()});save()})()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`showView('insights');renderInsights()`); await new Promise(r => setTimeout(r, 80));
+    const insHtml = w.eval(`document.getElementById('insightsBody').innerHTML`);
+    check('V3.6 insights shows income trend line chart', insHtml.includes('近 6 个月收入趋势') && insHtml.includes('<svg') && insHtml.includes('实收') && insHtml.includes('应收'));
+    check('V3.6 insights no longer uses bar rows for the trend', !insHtml.includes('近 6 个月实收</h3>'));
+    // profile sparkline still intact after refactor-free addition
+    w.eval(`viewClient('${cidT}')`); await new Promise(r => setTimeout(r, 60));
+    check('V3.6 profile trend sparkline still renders', w.eval(`document.getElementById('clientDetail').innerHTML`).includes('<svg'));
+  } catch (e) { console.error('V36 TEST ERROR', e); check('V3.6 block completed without exception', false); }
+
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
   process.exit(failed.length ? 1 : 0);
