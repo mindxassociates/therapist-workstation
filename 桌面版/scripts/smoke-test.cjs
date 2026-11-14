@@ -730,6 +730,103 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
     prefs.delete('uiLang');
   } catch (e) { console.error('V37 TEST ERROR', e); check('V3.7 block completed without exception', false); }
 
+  // ===== V3.8.0 TESTS: services / sign & lock / reminders / forms / supervision / CSV / ICS =====
+  try {
+    let st38 = savedState();
+    check('V3.8 service catalog seeded with defaults', Array.isArray(st38.services) && st38.services.length >= 6 && st38.services.some(s => s.name === '个体咨询'));
+    check('V3.8 builtin form templates seeded', Array.isArray(st38.forms) && st38.forms.length >= 3 && st38.forms.some(f => f.name === '来访者登记表'));
+    check('V3.8 snapshot carries formRecords + supervisions', Array.isArray(st38.formRecords) && Array.isArray(st38.supervisions));
+    const cid38 = w.eval(`(() => { const c = { id: 'v38client', name: 'V38测试来访者', status: '进行中', dob: '', gender: '', contact: '13700000000', defaultFee: '', start: '', tags: [], goals: '', context: '', caseType: '个人咨询', memberIds: [], invoiceTitle: '', invoiceTaxId: '', invoiceNote: '', checklist: {}, plan: {}, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }; db.clients.push(c); persistWorkspace('test'); return c.id })()`);
+    // --- services: create + apply to finance ---
+    w.eval('openService()');
+    w.document.getElementById('svName').value = '深度个体咨询';
+    w.document.getElementById('svDuration').value = '60';
+    w.document.getElementById('svFee').value = '600';
+    w.eval('saveService()'); await flush();
+    st38 = savedState();
+    const svc38 = st38.services.find(s => s.name === '深度个体咨询');
+    check('V3.8 custom service saved with fee', !!svc38 && Number(svc38.fee) === 600);
+    w.eval('openFinance()');
+    w.document.getElementById('fService').value = svc38.id;
+    w.eval('applyFinanceService()');
+    check('V3.8 finance dialog applies service fee + description', w.document.getElementById('fAmount').value === '600' && w.document.getElementById('fDescription').value === '深度个体咨询');
+    w.eval('financeDialog.close()');
+    // --- sign & lock the suite's first session ---
+    const sesId = w.eval('db.sessions[0].id');
+    w.eval("openSession('" + sesId + "')"); await flush();
+    check('V3.8 sign button visible for unsigned note', w.document.getElementById('sSignBtn').style.display !== 'none');
+    await w.eval('signSession()'); await flush();
+    st38 = savedState();
+    const signedSes = st38.sessions.find(s => s.id === sesId);
+    check('V3.8 signing stamps signedAt + signedBy', !!signedSes.signedAt && !!signedSes.signedBy);
+    w.eval("openSession('" + sesId + "')"); await flush();
+    check('V3.8 locked note hides save + disables fields + shows lock bar', w.document.getElementById('sSaveBtn').style.display === 'none' && w.document.getElementById('sFocus').disabled === true && w.document.getElementById('sLockBar').style.display === 'block');
+    w.document.getElementById('sAddendumText').value = '更正：本次时长为 60 分钟';
+    w.eval('addSessionAddendum()'); await flush();
+    st38 = savedState();
+    check('V3.8 addendum appended to locked note', (st38.sessions.find(s => s.id === sesId).addendums || []).length === 1);
+    const sesCount = w.eval('db.sessions.length');
+    w.eval("delSession('" + sesId + "')");
+    check('V3.8 signed note cannot be deleted', w.eval('db.sessions.length') === sesCount);
+    w.eval('sessionDialog.close()');
+    // --- reminder card: tomorrow event for the first client ---
+    const remEvId = w.eval(`(() => { const e = { id: 'v38rem', date: addDaysStr(todayLocal(), 1), time: '10:00', type: '心理咨询', clientId: '${cid38}', title: '心理咨询', notes: '', mode: '视频', timezone: 'Asia/Shanghai', status: '已确认', videoLink: '' }; db.events.push(e); persistWorkspace('test'); return e.id })()`);
+    w.eval('renderReminderCard()');
+        check('V3.8 reminder card shows tomorrow appointment', w.document.getElementById('reminderCard').style.display === 'block' && w.document.getElementById('reminderCard').innerHTML.includes('V38测试来访者'));
+    w.eval("toggleReminded('" + remEvId + "', true)"); await flush();
+    st38 = savedState();
+    check('V3.8 reminded flag persisted on the event', st38.events.find(e => e.id === remEvId).reminded === true);
+    // --- forms: assign, fill, sign, print ---
+    w.eval("showView('forms')");
+    check('V3.8 forms view lists seeded templates', w.document.getElementById('formTplList').innerHTML.includes('来访者登记表'));
+    const tplId = w.eval('db.forms[0].id');
+    w.eval("openFormAssign('" + tplId + "')");
+    w.document.getElementById('faClient').value = cid38;
+    w.eval('saveFormAssign()'); await flush();
+    st38 = savedState();
+    check('V3.8 form assigned with status 待填写', st38.formRecords.length === 1 && st38.formRecords[0].status === '待填写');
+    const recId = st38.formRecords[0].id;
+    w.eval("openFormFill('" + recId + "')");
+    w.eval("document.querySelectorAll('.ff-in')[0].value = 'V38测试来访者'; document.querySelectorAll('.ff-in')[2].value = '13800000000'");
+    w.document.getElementById('ffStatus').value = '已签署';
+    w.eval('saveFormFill()'); await flush();
+    st38 = savedState();
+    const rec38 = st38.formRecords[0];
+    check('V3.8 filled form stores answers + signed date', Object.values(rec38.answers || {}).includes('V38测试来访者') && rec38.status === '已签署' && !!rec38.signedDate);
+    w.eval("printFormRecord('" + recId + "')");
+    check('V3.8 printed form shows answers', w.document.getElementById('exportBody').innerHTML.includes('13800000000'));
+    // --- supervision ---
+    w.eval('openSupervision()');
+    w.document.getElementById('spSupervisor').value = '王督导';
+    w.document.getElementById('spTopics').value = '移情与反移情';
+    w.eval('saveSupervision()'); await flush();
+    st38 = savedState();
+    check('V3.8 supervision record saved', st38.supervisions.length === 1 && st38.supervisions[0].supervisor === '王督导');
+    // --- CSV import ---
+    const csv38 = '姓名,联系方式,性别,出生日期,状态\n导入甲,13811112222,女,1990/3/5,进行中\n导入甲,13811112222,女,1990/3/5,进行中\n导入乙,13933334444,男,,暂停';
+    const clientsBefore = w.eval('db.clients.length');
+    w.eval('importRows = parseCSV(' + JSON.stringify(csv38) + '); renderImportPreview();');
+    check('V3.8 CSV preview counts data rows', w.document.getElementById('importPreview').innerHTML.includes('共 3 行'));
+    w.eval('doImportClients()'); await flush();
+    check('V3.8 CSV import adds 2 and skips the duplicate', w.eval('db.clients.length') === clientsBefore + 2);
+    const impB = w.eval("db.clients.find(c => c.name === '导入乙')");
+    const impA = w.eval("db.clients.find(c => c.name === '导入甲')");
+    check('V3.8 imported rows normalized (status + date)', impB.status === '暂停' && impA.dob === '1990-03-05');
+    // --- ICS export / import round trip ---
+    const ics38 = w.eval('buildICS()');
+    check('V3.8 ICS export has calendar + events', ics38.includes('BEGIN:VCALENDAR') && ics38.includes('BEGIN:VEVENT'));
+    const sampleIcs = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:x1@test\r\nDTSTART:20261201T140000\r\nSUMMARY:心理咨询 · V38测试来访者\r\nEND:VEVENT\r\nEND:VCALENDAR';
+    const added38 = w.eval('importICS(' + JSON.stringify(sampleIcs) + ')');
+    const impEv = w.eval("db.events.find(e => e.date === '2026-12-01')");
+        check('V3.8 ICS import parses event + matches client by name', added38 === 1 && !!impEv && impEv.clientId === cid38 && impEv.time === '14:00');
+    // --- EN spot checks for the new views ---
+    w.eval("setUiLang('en')"); await flush();
+    check('V3.8 EN nav shows Forms center + Supervision log', w.document.querySelector('[data-view="forms"]').textContent.includes('Forms center') && w.document.querySelector('[data-view="supervision"]').textContent.includes('Supervision log'));
+    w.eval("showView('forms')"); await flush();
+    check('V3.8 EN forms view renders in English', w.document.querySelector('#forms h2').textContent.includes('Forms center') && w.document.getElementById('formTplList').innerHTML.includes('Client intake form'));
+    w.eval("setUiLang('zh')"); await flush();
+  } catch (e) { console.error('V38 TEST ERROR', e); check('V3.8 block completed without exception', false); }
+
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
   process.exit(failed.length ? 1 : 0);
