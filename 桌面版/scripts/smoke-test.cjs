@@ -827,6 +827,81 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
     w.eval("setUiLang('zh')"); await flush();
   } catch (e) { console.error('V38 TEST ERROR', e); check('V3.8 block completed without exception', false); }
 
+  // ================= V3.9 效率包 =================
+  try {
+    const cid39 = w.eval(`(() => { const c = {id:'v39c', name:'V39测试来访者', dob:'1992-05-06', gender:'女', status:'进行中', caseType:'个人咨询', fee:'', tags:[], notes:'', checklist:{}, plan:{}, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()}; db.clients.push(c); persistWorkspace('test'); return c.id })()`);
+    // seed: unsigned session today, past event without note, task, overdue fee, pending form
+    w.eval(`db.sessions.push({id:'v39s', clientId:'v39c', date: todayLocal(), focus:'V39焦点词', duration:'50'})`);
+    w.eval(`db.events.push({id:'v39ev', date: addDaysStr(todayLocal(),-1), time:'09:00', type:'心理咨询', clientId:'v39c', title:'心理咨询', status:'已确认', notes:'', mode:'视频', timezone:'Asia/Shanghai', videoLink:''})`);
+    w.eval(`db.tasks.push({id:'v39t', title:'V39独特任务', status:'待处理', clientId:'v39c', priority:'中', due:'', tags:[], details:'', category:'', repeat:'', subtasks:[]})`);
+    w.eval(`db.finance.push({id:'v39f', date: addDaysStr(todayLocal(),-3), type:'心理咨询', clientId:'v39c', amount:'400', received:'0', status:'待收款', method:'', description:''})`);
+    w.eval(`db.formRecords.push({id:'v39fr', formId: db.forms[0].id, clientId:'v39c', status:'待填写', answers:{}, assignedDate: todayLocal()})`);
+    w.eval(`persistWorkspace('test')`);
+    // 1) global search across collections + actions
+    w.eval(`renderQJ('V39焦点词')`);
+    check('V3.9 QJ finds session by note text', w.eval(`qjItems.some(i => i.t === '咨询记录')`));
+    w.eval(`renderQJ('V39测试')`);
+    check('V3.9 QJ finds client + task + form', w.eval(`qjItems.some(i => i.t === '来访者') && qjItems.some(i => i.t === '任务') && qjItems.some(i => i.t === '表单')`));
+    w.eval(`renderQJ('新建任务')`);
+    check('V3.9 QJ offers quick-create actions', w.eval(`qjItems.some(i => i.t === '操作')`));
+    w.eval(`renderQJ('')`);
+    check('V3.9 QJ empty query shows actions first', w.eval(`qjItems.length >= 6 && qjItems[0].t === '操作'`));
+    // 2) pending queue aggregates all five kinds
+    w.eval(`showView('dashboard'); renderPendingQueue()`);
+    const pq = w.document.getElementById('pendingCard').innerHTML;
+    check('V3.9 pending queue visible with all kinds', w.document.getElementById('pendingCard').style.display === 'block' && pq.includes('未写记录') && pq.includes('未签名记录') && pq.includes('待填写表单') && pq.includes('逾期未收'));
+    // 3) trash: delete -> trash -> undo restores; finance delete too
+    w.eval(`del('tasks','v39t')`); await flush();
+    let st39 = savedState();
+    check('V3.9 del moves item to trash (persisted)', !st39.tasks.some(t => t.id === 'v39t') && (st39.trash || []).length === 1 && st39.trash[0].collection === 'tasks');
+    const trashId = st39.trash[0].id;
+    w.eval(`undoTrash('${trashId}')`); await flush();
+    st39 = savedState();
+    check('V3.9 undo restores item and empties trash', st39.tasks.some(t => t.id === 'v39t') && (st39.trash || []).length === 0);
+    w.eval(`deleteFinance('v39f')`); await flush();
+    st39 = savedState();
+    check('V3.9 finance delete also goes to trash', !st39.finance.some(f => f.id === 'v39f') && (st39.trash || []).some(x => x.collection === 'finance'));
+    w.eval(`db.trash = []; persistWorkspace('test')`);
+    // 4) backup health badge states
+    w.eval(`db.settings.lastBackup = ''; renderBackupHealth()`);
+    check('V3.9 backup health warns when never backed up', w.document.getElementById('backupHealth').innerHTML.includes('尚未备份'));
+    w.eval(`db.settings.lastBackup = new Date().toISOString(); renderBackupHealth()`);
+    check('V3.9 backup health green when backed up today', w.document.getElementById('backupHealth').innerHTML.includes('今天已备份'));
+    // 5) xlarge font + compact density
+    check('V3.9 settings offer xlarge font size', !!w.document.querySelector('#fontSize option[value="xlarge"]'));
+    w.eval(`db.settings.fontSize = 'xlarge'; db.settings.density = 'compact'; applyAppearance()`);
+    check('V3.9 xlarge zoom + compact class applied', w.document.body.style.zoom === '1.16' && w.document.body.classList.contains('compact'));
+    w.eval(`db.settings.fontSize = 'normal'; db.settings.density = 'comfortable'; applyAppearance()`);
+    // 6) batch tomorrow reminders
+    w.eval(`db.events.push({id:'v39tm', date: addDaysStr(todayLocal(),1), time:'11:00', type:'心理咨询', clientId:'v39c', title:'心理咨询', status:'已确认', notes:'', mode:'视频', timezone:'Asia/Shanghai', videoLink:''}); renderReminderCard()`);
+    check('V3.9 reminder card has batch-copy button', w.document.getElementById('reminderCard').innerHTML.includes('复制明日全部提醒'));
+    check('V3.9 reminder text built for an event', w.eval(`reminderTextFor(db.events.find(e => e.id === 'v39tm'))`).includes('V39测试来访者'));
+    // 7) sticky client header
+    w.eval(`viewClient('v39c')`);
+    const cd = w.document.getElementById('clientDetailBody').innerHTML;
+    check('V3.9 client page has sticky summary bar', cd.includes('client-sticky') && cd.includes('下次咨询') && cd.includes('未结费用'));
+    // 8) form packet merges all assigned forms into export view
+    w.eval(`db.formRecords.push({id:'v39fr2', formId: db.forms[1].id, clientId:'v39c', status:'待填写', answers:{}, assignedDate: todayLocal()}); persistWorkspace('test')`);
+    w.eval(`showView('forms'); document.getElementById('formRecClientFilter').value = 'v39c'; printFormPacket()`);
+    const pkt = w.document.getElementById('exportBody').innerHTML;
+    check('V3.9 form packet contains both forms with page break', pkt.includes('来访者登记表') && pkt.includes('page-break-before'));
+    // 9) conflict detection (60-min window, ignores cancelled)
+    check('V3.9 conflict within 60 minutes detected', !!w.eval(`eventConflict({date: addDaysStr(todayLocal(),1), time:'11:30'}, 'none')`));
+    check('V3.9 no conflict two hours apart', w.eval(`eventConflict({date: addDaysStr(todayLocal(),1), time:'13:00'}, 'none')`) === null);
+    // 10) sample client + active-view rendering
+    const nBefore = w.eval('db.clients.length');
+    w.eval(`addSampleClient()`);
+    check('V3.9 sample fictional client added + labelled', w.eval('db.clients.length') === nBefore + 1 && w.eval(`db.clients.some(c => c.name.includes('虚构'))`));
+    check('V3.9 renderAllFull retained for full renders', w.eval(`typeof renderAllFull === 'function'`));
+    // EN spot checks
+    w.eval(`setUiLang('en')`); await flush();
+    w.eval(`showView('dashboard')`); await flush();
+    check('V3.9 EN pending queue heading translates', w.document.getElementById('pendingCard').innerHTML.includes('Pending queue'));
+    w.eval(`showView('datacenter')`); await flush();
+    check('V3.9 EN trash card translates', w.document.getElementById('trashList').innerHTML.includes('Trash is empty'));
+    w.eval(`setUiLang('zh')`); await flush();
+  } catch (e) { console.error('V39 TEST ERROR', e); check('V3.9 block completed without exception', false); }
+
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
   process.exit(failed.length ? 1 : 0);
