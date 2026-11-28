@@ -304,7 +304,7 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
   check('no-show color coding is red', w.eventStatusColor(ev) === '#a13b3b');
 
   w.showView('insights');
-  check('insights page renders stats', w.document.getElementById('insightsBody').innerHTML.includes('咨询场次'));
+  check('insights page renders stats', w.document.getElementById('insightsBody').innerHTML.includes('咨询次数（记录）')); // V3.10: insights redesigned (Sessions-style overview cards)
   w.showView('statement');
   w.initStatement();
   w.document.getElementById('stmtClient').value = clientId;
@@ -688,7 +688,7 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
     w.eval(`(()=>{db.finance.push({id:'tf1',date:'${mk.cur}',type:'心理咨询',clientId:'${cidT}',title:'趋势收入',amount:1000,received:800,status:'部分收款',paymentMethod:'',invoiceStatus:'未开票',invoiceNo:'',dueDate:'',notes:'',createdAt:new Date().toISOString()});db.finance.push({id:'tf2',date:'${mk.prev}',type:'心理咨询',clientId:'${cidT}',title:'趋势收入',amount:600,received:600,status:'已结清',paymentMethod:'',invoiceStatus:'未开票',invoiceNo:'',dueDate:'',notes:'',createdAt:new Date().toISOString()});save()})()`); await new Promise(r => setTimeout(r, 60));
     w.eval(`showView('insights');renderInsights()`); await new Promise(r => setTimeout(r, 80));
     const insHtml = w.eval(`document.getElementById('insightsBody').innerHTML`);
-    check('V3.6 insights shows income trend line chart', insHtml.includes('近 6 个月收入趋势') && insHtml.includes('<svg') && insHtml.includes('实收') && insHtml.includes('应收'));
+    check('V3.6 insights shows income trend line chart', insHtml.includes('收入趋势（实收）') && insHtml.includes('<svg') && insHtml.includes('本期实收')); // V3.10: period-based revenue chart supersedes the fixed 6-month chart
     check('V3.6 insights no longer uses bar rows for the trend', !insHtml.includes('近 6 个月实收</h3>'));
     // profile sparkline still intact after refactor-free addition
     w.eval(`viewClient('${cidT}')`); await new Promise(r => setTimeout(r, 60));
@@ -901,6 +901,95 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
     check('V3.9 EN trash card translates', w.document.getElementById('trashList').innerHTML.includes('Trash is empty'));
     w.eval(`setUiLang('zh')`); await flush();
   } catch (e) { console.error('V39 TEST ERROR', e); check('V3.9 block completed without exception', false); }
+
+  // ================= V3.10 Sessions 式布局与功能 =================
+  try {
+    const cid310 = w.eval(`(() => { const c = {id:'v310c', name:'V310测试来访者', dob:'1990-01-01', gender:'女', status:'进行中', caseType:'个人咨询', defaultFee:'500', tags:['焦虑'], checklist:{}, plan:{}, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()}; db.clients.push(c); persistWorkspace('test'); return c.id })()`);
+    w.eval(`db.sessions.push({id:'v310s1', clientId:'v310c', date: addDaysStr(todayLocal(),-1), recordMode:'detailed', presenting:'旧主诉', focus:'旧主题', duration:'50', mode:'视频'})`);
+    w.eval(`db.sessions.push({id:'v310s2', clientId:'v310c', eventId:'v310ev', date: todayLocal(), recordMode:'detailed', presenting:'V310主诉', impairments:['社会功能','工作 / 学习'], focusTags:['家庭关系'], medications:'未用药', mse:{mood:'低落'}, focus:'今日主题', duration:'50', mode:'视频'})`);
+    w.eval(`db.events.push({id:'v310ev', date: todayLocal(), time:'10:00', endTime:'10:50', type:'心理咨询', kind:'咨询会谈', color:'#a13b3b', clientId:'v310c', title:'心理咨询', status:'已确认', notes:'V310补充说明', mode:'视频', timezone:'Asia/Shanghai', videoLink:''})`);
+    w.eval(`db.finance.push({id:'v310f', date: todayLocal(), type:'心理咨询', clientId:'v310c', amount:'500', received:'500', status:'已收款', method:'微信', description:'个体咨询'})`);
+    // 1) day timeline view
+    w.eval(`calDate = new Date(); setCalendarView('day')`); await flush();
+    check('V3.10 day view container visible', w.document.getElementById('calendarDayView').style.display === 'block');
+    check('V3.10 day timeline block renders with end time', w.document.getElementById('dayTimeline').innerHTML.includes('tl-block') && w.document.getElementById('dayTimeline').innerHTML.includes('10:50'));
+    // 2) privacy mode masks names on calendar
+    w.eval(`togglePrivacyMode()`); await flush();
+    check('V3.10 privacy mode on masks client name', w.eval('privacyMode') === true && w.document.getElementById('dayTimeline').innerHTML.includes('V**') && !w.document.getElementById('dayTimeline').innerHTML.includes('V310测试来访者'));
+    w.eval(`togglePrivacyMode()`); await flush();
+    check('V3.10 privacy mode off restores name', w.eval('privacyMode') === false && w.document.getElementById('dayTimeline').innerHTML.includes('V310测试来访者'));
+    // 3) event detail dialog, notes tab shows structured sections
+    w.eval(`openEventDetail('v310ev')`); await flush();
+    check('V3.10 event detail shows time range + kind', w.document.getElementById('edDetails').innerHTML.includes('10:50') && w.document.getElementById('edDetails').innerHTML.includes('咨询会谈'));
+    w.eval(`edTab('n')`); await flush();
+    check('V3.10 event detail notes tab shows structured note', w.document.getElementById('edNotes').innerHTML.includes('V310主诉') && w.document.getElementById('edNotes').innerHTML.includes('家庭关系') && w.document.getElementById('edNotes').innerHTML.includes('相关记录'));
+    w.eval(`eventDetailDialog.close()`);
+    // 4) load last note into a new session
+    w.eval(`openSession('', 'v310c')`); await flush();
+    w.eval(`loadLastNoteV310()`); await flush();
+    check('V3.10 load last note fills structured fields', w.document.getElementById('sPresenting').value === 'V310主诉' && w.document.getElementById('sMedications').value === '未用药' && w.eval(`[...document.querySelectorAll('.s-impair:checked')].length`) === 2 && w.eval(`document.querySelector('.s-mse[data-k="mood"]').value`) === '低落');
+    // 5) structured fields persist on save
+    w.eval(`saveSession()`); await flush();
+    const newSid = w.eval(`(db.sessions.filter(x => x.clientId === 'v310c' && x.presenting === 'V310主诉' && !x.eventId).slice(-1)[0] || {}).id || ''`);
+    check('V3.10 structured session saved with fields', !!newSid && w.eval(`(db.sessions.find(x => x.id === '${newSid}') || {}).impairments.length`) === 2);
+    // 6) sign + unlock policy
+    w.eval(`openSession('${newSid}')`); await flush();
+    await w.eval(`signSession()`); await flush();
+    check('V3.10 signed session shows unlock button per settings', w.eval(`(db.sessions.find(x => x.id === '${newSid}') || {}).signedAt`) && [...w.document.querySelectorAll('#sLockBar button')].some(b => b.textContent === '解锁记录'));
+    w.eval(`db.settings.notesAllowUnlock = false; applySessionLockState(db.sessions.find(x => x.id === '${newSid}'))`);
+    check('V3.10 unlock hidden when setting off', ![...w.document.querySelectorAll('#sLockBar button')].some(b => b.textContent === '解锁记录'));
+    w.eval(`db.settings.notesAllowUnlock = true; applySessionLockState(db.sessions.find(x => x.id === '${newSid}'))`);
+    await w.eval(`unlockSessionV310()`); await flush();
+    check('V3.10 unlock clears signature', !w.eval(`(db.sessions.find(x => x.id === '${newSid}') || {}).signedAt`));
+    w.eval(`sessionDialog.close()`);
+    // 7) forms tabs + categories + archived
+    w.eval(`db.forms.push({id:'v310f1', name:'V310同意书', kind:'知情同意', fields:[{id:'ff1', label:'签名', type:'signature', options:[], required:true}], isDefault:true, isRequired:true}); db.forms.push({id:'v310f2', name:'V310旧表', kind:'登记表', fields:[], archived:true}); renderForms()`);
+    check('V3.10 forms grouped by category with badges', w.document.getElementById('formTplList').innerHTML.includes('知情同意') && w.document.getElementById('formTplList').innerHTML.includes('V310同意书') && w.document.getElementById('formTplList').innerHTML.includes('默认') && !w.document.getElementById('formTplList').innerHTML.includes('V310旧表'));
+    w.eval(`setFormsTab('arch')`);
+    check('V3.10 archived forms in internal files tab', w.document.getElementById('formArchList').innerHTML.includes('V310旧表') && w.document.getElementById('formTplCard').style.display === 'none');
+    w.eval(`setFormsTab('tpl')`);
+    // 8) services / products with codes
+    w.eval(`db.services.push({id:'v310p1', name:'V310报告撰写', code:'P01', kind:'产品', fee:200, duration:'', note:''}); setServiceKindTab('产品')`);
+    check('V3.10 products tab lists product with code', w.document.getElementById('servicesList').innerHTML.includes('V310报告撰写') && w.document.getElementById('servicesList').innerHTML.includes('P01'));
+    w.eval(`setServiceKindTab('服务')`);
+    check('V3.10 services tab hides products', !w.document.getElementById('servicesList').innerHTML.includes('V310报告撰写'));
+    w.eval(`openService('v310p1')`);
+    check('V3.10 service dialog carries code + kind', w.document.getElementById('svCode').value === 'P01' && w.document.getElementById('svKind').value === '产品');
+    w.eval(`serviceDialog.close()`);
+    // 9) settings tabs + reminder template
+    w.eval(`showView('settings'); setSettingsTab('notify')`); await flush();
+    check('V3.10 settings tabs switch cards', w.document.querySelector('[data-stab="notify"]').style.display === '' && w.document.getElementById('toolName').closest('.card').style.display === 'none');
+    w.eval(`stRemindOn.checked = true; stRemindTemplate.value = '{name}您好，{date} {time} 有{title}'; savePracticeSettingsV310()`);
+    check('V3.10 reminder template saved + used', w.eval(`db.settings.reminderTemplate`) === '{name}您好，{date} {time} 有{title}' && w.eval(`reminderTextFor({clientId:'v310c', date: addDaysStr(todayLocal(),1), time:'09:30', title:'心理咨询'})`).includes('V310测试来访者您好') && w.eval(`reminderTextFor({clientId:'v310c', date: addDaysStr(todayLocal(),1), time:'09:30', title:'心理咨询'})`).includes('09:30'));
+    // 10) telehealth prefill on new event
+    w.eval(`db.settings.telehealthUrl = 'https://video.example.com/x'; db.settings.telehealthInstructions = 'V310远程说明'; openEvent()`); await flush();
+    check('V3.10 telehealth defaults prefilled', w.document.getElementById('eVideo').value === 'https://video.example.com/x' && w.document.getElementById('eNotes').value.includes('V310远程说明'));
+    w.eval(`eventDialog.close(); db.settings.telehealthUrl = ''; db.settings.telehealthInstructions = ''`);
+    // 11) insights overview / reports / activity
+    w.eval(`showView('insights')`); await flush();
+    check('V3.10 insights overview cards render', w.document.getElementById('insightsBody').innerHTML.includes('总收入（实收）') && w.document.getElementById('insightsBody').innerHTML.includes('预计收入') && w.document.getElementById('insightsBody').innerHTML.includes('收入趋势（实收）'));
+    w.eval(`insPeriod = 'd30'; insCompare = true; renderInsights()`); await flush();
+    check('V3.10 insights period + compare render', w.document.getElementById('insightsBody').innerHTML.includes('上期实收'));
+    w.eval(`setInsTab('reports')`);
+    check('V3.10 insights reports list renders', w.document.getElementById('insReports').innerHTML.includes('未结清余额'));
+    w.eval(`openReportV310('balances')`); await flush();
+    check('V3.10 report opens printable view', w.document.getElementById('exportBody').innerHTML.includes('未结清余额'));
+    w.eval(`showView('insights'); setInsTab('activity')`); await flush();
+    check('V3.10 insights activity feed renders', w.document.getElementById('insActivity').innerHTML.length > 20);
+    // 12) data export dialog (single client, demographics)
+    w.eval(`showView('settings'); openDataExport()`); await flush();
+    w.eval(`document.querySelector('input[name="dxScope"][value="single"]').checked = true; dxScopeChange(); dxClient.value = 'v310c'; document.querySelector('input[name="dxContent"][value="demo"]').checked = true; doDataExport()`); await flush();
+    check('V3.10 data export single demographics renders doc', w.document.getElementById('exportBody').innerHTML.includes('V310测试来访者'));
+    // 13) nav search jumps to quick jump with query
+    w.eval(`navSearch.value = 'V310'; navSearchGo()`);
+    check('V3.10 nav search feeds quick jump', w.document.getElementById('qjInput').value === 'V310');
+    w.eval(`quickJumpDialog.close()`);
+    // EN spot check
+    w.eval(`setUiLang('en')`); await flush();
+    w.eval(`showView('calendar')`); await flush();
+    check('V3.10 EN privacy button translates', w.document.getElementById('privacyBtn').textContent.includes('Privacy'));
+    w.eval(`setUiLang('zh')`); await flush();
+  } catch (e) { console.error('V310 TEST ERROR', e); check('V3.10 block completed without exception', false); }
 
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
