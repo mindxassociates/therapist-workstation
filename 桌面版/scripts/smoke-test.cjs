@@ -991,6 +991,52 @@ const check = (name, cond) => { results.push([name, !!cond]); if (!cond) console
     w.eval(`setUiLang('zh')`); await flush();
   } catch (e) { console.error('V310 TEST ERROR', e); check('V3.10 block completed without exception', false); }
 
+
+  // ===== V3.11 client chart =====
+  try {
+    const T = w.eval(`todayLocal()`);
+    const cid = 'v311c';
+    w.eval(`(()=>{db.clients.push({id:'${cid}',name:'V311来访者',status:'咨询中',dob:'1992-06-03',gender:'女',contact:'v311@example.com',start:'2026-01-05',defaultFee:'500',tags:[],goals:'目标',context:'背景',checklist:{},plan:{},createdAt:new Date().toISOString()});
+    db.sessions.push({id:'v311s',clientId:'${cid}',date:'${T}',type:'个体咨询',template:'进展记录',presenting:'V311主诉',focus:'',updates:'',work:'',response:'',plan:'',next:'',createdAt:new Date().toISOString()});
+    db.quickNotes.push({id:'v311pin',clientId:'${cid}',title:'行政便签',body:'V311置顶内容',tags:[],pinned:true,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+    db.quickNotes.push({id:'v311note',clientId:'${cid}',title:'行政便签',body:'V311普通便签',tags:[],pinned:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+    db.finance.push({id:'v311f',clientId:'${cid}',date:'${T}',type:'心理咨询',title:'咨询费',amount:500,received:0,status:'待收款',invoiceStatus:'未开票',createdAt:new Date().toISOString()});
+    db.events.push({id:'v311ev',clientId:'${cid}',date:'${T}',time:'15:00',title:'V311咨询',status:'已确认',modality:'视频',duration:50,createdAt:new Date().toISOString()});
+    save()})()`); await new Promise(r => setTimeout(r, 60));
+    w.eval(`viewClient('${cid}')`); await new Promise(r => setTimeout(r, 60));
+    const body = () => w.eval(`document.getElementById('clientDetailBody').innerHTML`);
+    check('V3.11 chart head shows breadcrumb + age', body().includes('来访者 ›') && body().includes('岁）'));
+    check('V3.11 chart tabs exist', !!w.eval(`document.querySelector('[data-ctab="assess"]')`));
+    check('V3.11 summary shows sticky note card', !!w.eval(`document.querySelector('#chartTabSummary .sticky-note')`) && body().includes('V311置顶内容'));
+    check('V3.11 summary timeline merges session + admin note by year', body().includes('记录动态') && body().includes('V311主诉') && body().includes('V311普通便签') && body().includes('tl-year'));
+    check('V3.11 summary visible by default, details hidden', w.eval(`document.getElementById('chartTabSummary').style.display`) !== 'none' && w.eval(`document.getElementById('chartTabDetails').style.display`) === 'none');
+    w.eval(`setChartTabV311('assess')`);
+    check('V3.11 assess tab holds scale + risk cards', w.eval(`document.getElementById('chartTabAssess').innerHTML`).includes('量表评估') && w.eval(`document.getElementById('chartTabAssess').innerHTML`).includes('危机风险评估'));
+    w.eval(`setChartTabV311('details')`);
+    check('V3.11 details tab holds contact prefs + legacy cards', w.eval(`document.getElementById('chartTabDetails').innerHTML`).includes('联系偏好') && w.eval(`document.getElementById('chartTabDetails').innerHTML`).includes('建档清单'));
+    // contact prefs: custom per-client reminder template wins
+    w.eval(`document.getElementById('cpRemindMode').value='custom';document.getElementById('cpTplWrap').style.display='block';document.getElementById('cpTpl').value='提醒 {name} {date} {time}';saveContactPrefsV311('${cid}')`); await new Promise(r => setTimeout(r, 40));
+    check('V3.11 per-client reminder template saved + used', (savedState().clients.find(x => x.id === cid) || {}).reminderTpl === '提醒 {name} {date} {time}' && w.eval(`reminderTextFor(db.events.find(e=>e.id==='v311ev'))`).includes('V311来访者') && w.eval(`reminderTextFor(db.events.find(e=>e.id==='v311ev'))`).includes('15:00'));
+    // admin note via quick dialog preset
+    w.eval(`openAdminNoteV311('','${cid}')`); await new Promise(r => setTimeout(r, 40));
+    check('V3.11 admin note opens quick dialog preset', w.eval(`document.getElementById('qClient').value`) === cid && w.eval(`document.getElementById('qTitle').value`) === '行政便签');
+    w.eval(`document.getElementById('quickDialog').close()`);
+    w.eval(`openStickyNoteV311('${cid}')`); await new Promise(r => setTimeout(r, 40));
+    check('V3.11 sticky note preset pins', w.eval(`document.getElementById('qPinned').checked`) === true);
+    w.eval(`document.getElementById('quickDialog').close()`);
+    // info panel
+    w.eval(`renderClientInfoV311('${cid}')`); await new Promise(r => setTimeout(r, 40));
+    const cip = w.eval(`document.getElementById('cipBody').innerHTML`);
+    check('V3.11 info panel shows insights + billing + attention', cip.includes('概览数据') && cip.includes('未结清余额') && cip.includes('¥500') && cip.includes('需要关注') && cip.includes('即将到来的日程'));
+    check('V3.11 info panel opens', w.eval(`document.getElementById('clientInfoPanel').classList.contains('open')`));
+    w.eval(`closeClientInfoV311()`);
+    // unpin sticky
+    w.eval(`unpinStickyV311('v311pin','${cid}')`); await new Promise(r => setTimeout(r, 40));
+    check('V3.11 unpin clears pinned flag', savedState().quickNotes.find(q => q.id === 'v311pin').pinned === false);
+    w.eval(`setUiLang('en')`); await new Promise(r => setTimeout(r, 60));
+    check('V3.11 EN chart tab label', w.eval(`document.querySelector('[data-ctab="summary"]').textContent`).includes('Summary'));
+    w.eval(`setUiLang('zh')`); await new Promise(r => setTimeout(r, 40));
+  } catch (e) { console.error('V311 TEST ERROR', e); check('V3.11 block completed without exception', false); }
   const failed = results.filter(([, ok]) => !ok);
   console.log(`\nSMOKE TEST: ${results.length - failed.length}/${results.length} passed`);
   process.exit(failed.length ? 1 : 0);

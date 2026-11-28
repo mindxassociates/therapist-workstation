@@ -158,6 +158,22 @@ body.compact h2{font-size:21px}
 .tgl input:checked + .tr{background:var(--accent)}
 .tgl input:checked + .tr:before{transform:translateX(20px)}
 </style>
+<style id="v311css">
+.chart-head{padding:16px 18px}.chart-head h2{margin:2px 0 4px;font-size:22px}.chart-crumb{font-size:12.5px;color:var(--muted)}
+.chart-tabs{margin:12px 0 4px}.tl-year{background:var(--surface2,#eef2f5);padding:5px 12px;border-radius:6px;font-weight:600;margin:16px 0 4px}
+.tl-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.tl-item:last-child{border-bottom:0}
+.date-chip{background:#e8f1f7;border-radius:8px;padding:6px 0;width:54px;text-align:center;flex:none;height:fit-content}
+.date-chip small{display:block;font-size:11px;color:var(--muted)}.date-chip b{display:block;font-size:16px;line-height:1.1}
+.sticky-note{background:#fffbe6;border:1px solid #f0df9a;border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.sticky-note .sn-body{white-space:pre-wrap;margin-top:4px}
+.chart-add-wrap{position:relative;display:inline-block}.chart-add-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card,#fff);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(20,40,60,.16);min-width:180px;z-index:55;padding:6px}
+.chart-add-menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:8px 10px;cursor:pointer;border-radius:6px;font:inherit}
+.chart-add-menu button:hover{background:var(--surface2,#f0f4f7)}
+#clientInfoPanel{position:fixed;top:0;right:0;width:min(370px,94vw);height:100dvh;background:var(--card,#fff);box-shadow:-8px 0 28px rgba(20,40,60,.2);transform:translateX(106%);transition:transform .25s ease;z-index:58;overflow-y:auto;padding:18px}
+#clientInfoPanel.open{transform:none}#clientInfoPanel .cip-card{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+#clientInfoPanel .cip-card h3{text-align:center;margin:0 0 10px}.cip-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line)}.cip-row:last-child{border-bottom:0}
+.pref-row{display:flex;align-items:center;gap:8px;padding:6px 0}
+</style>
 </head>
 <body>
 <header><div class="row" style="align-items:center;gap:12px"><img id="brandLogo" alt="" style="display:none;height:38px;max-width:150px;object-fit:contain"><div><h1 id="appTitle">心理咨询师工作台</h1><small id="appSubtitle">本地心理咨询记录与工作管理</small></div></div><div class="row"><div class="lang-pill no-print" role="group" aria-label="Language"><button type="button" id="langZh" onclick="setUiLang('zh')">中文</button><button type="button" id="langEn" onclick="setUiLang('en')">EN</button></div><div><div id="saveStatus">已保存在本机</div><div class="privacy-strip">数据只保存在本机加密数据库中，不上传云端</div></div><button class="secondary no-print" style="padding:7px 10px" onclick="lockWorkspace()">锁定</button></div></header>
@@ -436,6 +452,7 @@ body.compact h2{font-size:21px}
 <label>导出范围</label><div><label style="font-weight:400"><input type="radio" name="dxScope" value="all" checked style="width:auto" onchange="dxScopeChange()"> 全部来访者</label></div><div><label style="font-weight:400"><input type="radio" name="dxScope" value="single" style="width:auto" onchange="dxScopeChange()"> 单个来访者</label> <select id="dxClient" style="width:auto" disabled></select></div>
 <label>导出内容</label><div><label style="font-weight:400"><input type="radio" name="dxContent" value="all" checked style="width:auto"> 全部数据</label></div><div><label style="font-weight:400"><input type="radio" name="dxContent" value="demo" style="width:auto"> 仅基本信息（姓名、性别、出生日期、联系方式、状态、首次咨询、议题）</label></div>
 <div class="row" style="margin-top:14px"><button class="primary" onclick="doDataExport()">生成导出</button><button class="secondary" onclick="dataExportDialog.close()">取消</button></div></div></dialog>
+<aside id="clientInfoPanel" class="no-print" aria-hidden="true"><div class="between row"><h3 style="margin:0">来访者信息</h3><button class="secondary" onclick="closeClientInfoV311()">×</button></div><div id="cipBody" style="margin-top:12px"></div></aside>
 <dialog id="rescheduleDialog"><div class="inner"><h3>改期</h3><input type="hidden" id="rsId">
 <p class="muted" id="rsInfo"></p>
 <div class="two"><div><label>新日期</label><input id="rsDate" type="text" class="date-cn" placeholder="YYYY-MM-DD" inputmode="numeric"></div><div><label>新时间</label><input id="rsTime" type="time"></div></div>
@@ -2127,5 +2144,83 @@ if(window.__I18N_EN__)Object.assign(window.__I18N_EN__,{'搜索来访者…':'Se
 syncPrivacyBtn();
 try{renderAll()}catch(_){}
 </script>
+<script>
+// ===== V3.11 来访者档案（图表式）：概要 / 详情 / 量表 标签 + 置顶便签 + 信息面板 =====
+function el311(id){return document.getElementById(id)}
+let __chartTab='summary',__chartCid='';
+function ageTextV311(dob){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(dob||'');if(!m)return '';const t=new Date();let a=t.getFullYear()-+m[1];if(t.getMonth()+1<+m[2]||(t.getMonth()+1===+m[2]&&t.getDate()<+m[3]))a--;return a>=0&&a<130?'（'+a+' 岁）':''}
+function toggleAddMenuV311(ev){ev.stopPropagation();const m=el311('chartAddMenu');if(m)m.style.display=m.style.display==='none'?'block':'none'}
+document.addEventListener('click',e=>{if(!e.target.closest('.chart-add-wrap')){const m=el311('chartAddMenu');if(m)m.style.display='none'}});
+function openAdminNoteV311(qid,cid){openQuick(qid||'');if(!qid){if(cid)qClient.value=cid;qTitle.value='行政便签'}qBody.focus()}
+function openStickyNoteV311(cid){openQuick('');qClient.value=cid;qTitle.value='行政便签';qPinned.checked=true;qBody.focus()}
+function unpinStickyV311(qid,cid){const q=db.quickNotes.find(x=>x.id===qid);if(q){q.pinned=false;q.updatedAt=new Date().toISOString();save();viewClient(cid);toast('已取消置顶')}}
+function chartEntriesV311(c){const es=[];
+ (db.sessions||[]).filter(x=>x.clientId===c.id).forEach(x=>es.push({date:x.date||'',type:'咨询记录',title:x.template||x.type||'咨询记录',sum:(x.presenting||x.focus||'').slice(0,90)||(x.signedAt?'已签名':'草稿'),act:"openSession('"+x.id+"')"}));
+ (db.assessments||[]).filter(x=>x.clientId===c.id).forEach(x=>es.push({date:x.date||'',type:'量表评估',title:((x.scale||x.type||'量表')+' '+(x.total!=null?x.total+' 分':'')),sum:x.level||'',act:"openAssessment('"+x.id+"')"}));
+ (db.formRecords||[]).filter(x=>x.clientId===c.id).forEach(x=>{const f=(db.forms||[]).find(y=>y.id===x.formId);es.push({date:(x.updatedAt||x.createdAt||'').slice(0,10),type:'表单',title:f?f.title:'表单',sum:x.status||'',act:"openFormFill('"+x.id+"')"})});
+ (db.quickNotes||[]).filter(x=>x.clientId===c.id&&!x.pinned).forEach(x=>es.push({date:(x.updatedAt||x.createdAt||'').slice(0,10),type:x.title==='行政便签'?'行政便签':'随手记',title:x.title||'随手记',sum:(x.body||'').slice(0,90),act:"openAdminNoteV311('"+x.id+"')"}));
+ return es.filter(e=>e.date).sort((a,b)=>b.date.localeCompare(a.date))}
+function chartTimelineHtmlV311(c){const es=chartEntriesV311(c);if(!es.length)return '<p class="muted">暂无记录动态</p>';let h='',yr='';
+ es.forEach(e=>{const y=e.date.slice(0,4);if(y!==yr){yr=y;h+='<div class="tl-year">'+esc(y)+'</div>'}
+  h+='<div class="tl-item"><div class="date-chip"><small>'+esc(e.date.slice(5,7))+' 月</small><b>'+esc(e.date.slice(8,10))+'</b></div><div style="flex:1"><div class="between row"><b>'+esc(e.type)+'</b><button class="secondary" onclick="'+e.act+'">详情</button></div><div>'+esc(e.title)+'</div>'+(e.sum?'<div class="muted">'+esc(e.sum)+'</div>':'')+'</div></div>'});
+ return h}
+function chartStickyHtmlV311(c){const qs=(db.quickNotes||[]).filter(q=>q.clientId===c.id&&q.pinned).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+ return qs.map(q=>'<div class="sticky-note"><div class="between row"><b>'+esc(q.title||'行政便签')+'</b><span><button class="secondary" onclick="openAdminNoteV311(\''+q.id+'\')">编辑</button> <button class="secondary" onclick="unpinStickyV311(\''+q.id+'\',\''+c.id+'\')">取消置顶</button> <button class="secondary" onclick="del(\'quickNotes\',\''+q.id+'\');viewClient(\''+c.id+'\')">删除</button></span></div><div class="sn-body">'+esc(q.body||'')+'</div></div>').join('')}
+function contactPrefsCardV311(c){const d=document.createElement('div');d.className='card';d.id='contactPrefsCard';
+ d.innerHTML='<h3>联系偏好</h3>'
+ +'<label class="pref-row"><input type="checkbox" id="cpOkContact" '+(c.prefOkContact===false?'':'checked')+'> 可以联系（电话 / 微信 / 邮件）</label>'
+ +'<label class="pref-row"><input type="checkbox" id="cpOkReminder" '+(c.prefOkReminder===false?'':'checked')+'> 可以发送预约提醒</label>'
+ +'<div class="field" style="margin-top:8px"><label>提醒设置</label><select id="cpRemindMode" onchange="el(\'cpTplWrap\').style.display=this.value===\'custom\'?\'block\':\'none\'"><option value="">使用默认设置（全局提醒模板 / 微信脚本）</option><option value="custom"'+(c.reminderTpl?' selected':'')+'>使用这位来访者的自定义提醒模板</option></select></div>'
+ +'<div class="field" id="cpTplWrap" style="display:'+(c.reminderTpl?'block':'none')+'"><label>自定义提醒模板（变量 {name} {date} {time} {title}）</label><textarea id="cpTpl" rows="3">'+esc(c.reminderTpl||'')+'</textarea></div>'
+ +'<div class="row" style="margin-top:10px"><button class="primary" onclick="saveContactPrefsV311(\''+c.id+'\')">保存联系偏好</button></div>';
+ return d}
+function saveContactPrefsV311(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;c.prefOkContact=el311('cpOkContact').checked;c.prefOkReminder=el311('cpOkReminder').checked;c.reminderTpl=el311('cpRemindMode').value==='custom'?el311('cpTpl').value.trim():'';c.updatedAt=new Date().toISOString();save();toast('联系偏好已保存');viewClient(cid)}
+const _rtf311=reminderTextFor;
+reminderTextFor=function(ev){try{const cl=(db.clients||[]).find(x=>x.id===(ev&&ev.clientId));if(cl&&cl.reminderTpl)return String(cl.reminderTpl).replaceAll('{name}',cl.name||'').replaceAll('{date}',ev.date||'').replaceAll('{time}',ev.time||'').replaceAll('{title}',ev.title||'心理咨询')}catch(e){}return _rtf311(ev)};
+function renderClientInfoV311(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;const T=todayLocal();
+ const sess=(db.sessions||[]).filter(x=>x.clientId===cid),evs=(db.events||[]).filter(x=>x.clientId===cid);
+ const done=evs.filter(e=>e.status==='已完成').length,canc=evs.filter(e=>['已取消','迟到取消','爽约'].includes(e.status)).length;
+ const due=(db.finance||[]).filter(f=>f.clientId===cid&&['待收款','部分收款'].includes(f.status)).reduce((n,f)=>n+Math.max(0,Number(f.amount||0)-Number(f.received||0)),0);
+ const unb=(db.finance||[]).filter(f=>f.clientId===cid&&f.invoiceStatus==='未开票').reduce((n,f)=>n+Math.max(0,Number(f.amount||0)-Number(f.received||0)),0);
+ const next=evs.filter(e=>e.date>=T&&e.status!=='已取消').sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))).slice(0,3);
+ const unsigned=sess.filter(x=>!x.signedAt).length,pf=(db.formRecords||[]).filter(r=>r.clientId===cid&&r.status==='待填写').length;
+ el311('cipBody').innerHTML='<div class="sticky-note" style="margin-bottom:14px"><b>'+esc(c.name)+'</b><div class="muted">'+esc(c.status||'')+(c.dob?' · '+esc(c.dob)+ageTextV311(c.dob):'')+'</div></div>'
+ +'<div class="cip-card"><h3>概览数据</h3><div class="cip-row"><span>咨询记录</span><b>'+sess.length+'</b></div><div class="cip-row"><span>已完成日程</span><b>'+done+'</b></div><div class="cip-row"><span>取消 / 爽约</span><b>'+canc+'</b></div></div>'
+ +'<div class="cip-card"><h3>收费概览</h3><div class="cip-row"><span>未结清余额</span><b>¥'+due+'</b></div><div class="cip-row"><span>未开票金额</span><b>¥'+unb+'</b></div><button class="primary" style="width:100%;margin-top:10px" onclick="closeClientInfoV311();openFinance(\'\',\''+cid+'\')">记录收费</button></div>'
+ +'<div class="cip-card"><h3>即将到来的日程</h3>'+(next.length?next.map(e=>'<div class="cip-row"><span>'+esc(e.date+' '+(e.time||''))+'</span><span>'+esc(e.title||'')+'</span></div>').join(''):'<p class="muted">暂无</p>')+'</div>'
+ +'<div class="cip-card"><h3>需要关注</h3><div class="cip-row"><span>未签名记录</span><b>'+unsigned+'</b></div><div class="cip-row"><span>待填写表单</span><b>'+pf+'</b></div><div class="cip-row"><span>已排日程（未来）</span><b>'+evs.filter(e=>e.date>=T&&e.status!=='已取消').length+'</b></div></div>';
+ el311('clientInfoPanel').classList.add('open');el311('clientInfoPanel').setAttribute('aria-hidden','false')}
+function closeClientInfoV311(){el311('clientInfoPanel').classList.remove('open');el311('clientInfoPanel').setAttribute('aria-hidden','true')}
+function setChartTabV311(t){__chartTab=t;['summary','details','assess'].forEach(k=>{const p=el311('chartTab'+k[0].toUpperCase()+k.slice(1));if(p)p.style.display=k===t?'block':'none'});document.querySelectorAll('[data-ctab]').forEach(b=>b.classList.toggle('active',b.dataset.ctab===t))}
+const _vc311=viewClient;
+viewClient=function(cid){_vc311(cid);try{enhanceChartV311(cid)}catch(e){}};
+function enhanceChartV311(cid){const c=db.clients.find(x=>x.id===cid);if(!c)return;__chartCid=cid;const body=el311('clientDetailBody');if(!body)return;
+ const sticky=body.querySelector('.client-sticky');
+ const cards=[...body.querySelectorAll('.card')];
+ const assessCards=cards.filter(k=>{const h=k.querySelector('h3');return h&&/^(量表评估|危机风险评估)/.test(h.textContent.trim())});
+ const head=document.createElement('div');head.className='chart-head card';
+ head.innerHTML='<div class="chart-crumb">来访者 › '+esc(c.name)+'</div><div class="between row"><div><h2>'+esc(c.name)+'</h2><div class="muted">'+(c.dob?esc(c.dob)+' '+ageTextV311(c.dob)+' · ':'')+esc(c.contact||'未填写联系方式')+'</div></div>'
+ +'<div class="row no-print"><button class="secondary" title="来访者信息" onclick="renderClientInfoV311(\''+cid+'\')">i</button> <button class="secondary" onclick="openClient(\''+cid+'\')">编辑档案</button> '
+ +'<span class="chart-add-wrap"><button class="primary" onclick="toggleAddMenuV311(event)">+ 添加</button><span class="chart-add-menu" id="chartAddMenu" style="display:none">'
+ +'<button onclick="openEvent(\'\',\''+cid+'\')">新建日程</button><button onclick="openSession(\'\',\''+cid+'\')">咨询记录</button><button onclick="openAdminNoteV311(\'\',\''+cid+'\')">行政便签</button><button onclick="openStickyNoteV311(\''+cid+'\')">置顶便签</button><button onclick="openAssessment(\'\',\''+cid+'\')">量表评估</button><button onclick="openFinance(\'\',\''+cid+'\')">收费记录</button></span></span></div></div>';
+ const tabs=document.createElement('div');tabs.className='set-tabs chart-tabs no-print';
+ tabs.innerHTML='<button data-ctab="summary" onclick="setChartTabV311(\'summary\')">概要</button><button data-ctab="details" onclick="setChartTabV311(\'details\')">详情</button><button data-ctab="assess" onclick="setChartTabV311(\'assess\')">量表评估</button>';
+ const sum=document.createElement('div');sum.id='chartTabSummary';
+ sum.innerHTML=chartStickyHtmlV311(c)+'<div class="card"><h3 style="margin-top:0">记录动态</h3>'+chartTimelineHtmlV311(c)+'</div>';
+ const det=document.createElement('div');det.id='chartTabDetails';
+ const asm=document.createElement('div');asm.id='chartTabAssess';
+ det.appendChild(contactPrefsCardV311(c));
+ cards.forEach(k=>{(assessCards.includes(k)?asm:det).appendChild(k)});
+ if(!assessCards.length)asm.innerHTML='<div class="card"><p class="muted">暂无量表评估</p></div>';
+ const foot=[...body.children].find(x=>x.tagName==='DIV'&&/text-align:\s*center/.test(x.getAttribute('style')||''));
+ if(foot)det.appendChild(foot);
+ body.querySelectorAll('.two').forEach(t=>{if(!t.children.length)t.remove()});
+ const anchor=sticky||body.firstChild;
+ if(sticky)sticky.after(head);else body.prepend(head);
+ head.after(tabs);tabs.after(sum);sum.after(det);det.after(asm);
+ setChartTabV311(__chartTab||'summary')}
+Object.assign(window.__I18N_EN__,{'概要':'Summary','详情':'Details','记录动态':'Notes timeline','暂无记录动态':'No activity yet','行政便签':'Administrative Note','置顶便签':'Sticky Note','取消置顶':'Unpin','联系偏好':'Contact Preferences','可以联系（电话 / 微信 / 邮件）':'OK to contact (phone / WeChat / email)','可以发送预约提醒':'OK to send appointment reminders','提醒设置':'Reminder Settings','使用默认设置（全局提醒模板 / 微信脚本）':'Use default settings (global reminder template / scripts)','使用这位来访者的自定义提醒模板':'Use a custom reminder template for this client','保存联系偏好':'Save Preferences','联系偏好已保存':'Contact preferences saved','来访者信息':'Client Info','概览数据':'Insights','已完成日程':'Completed Appointments','取消 / 爽约':'Cancellations / No-shows','收费概览':'Billing Overview','未结清余额':'Current Balance','未开票金额':'Unbilled','记录收费':'Add Payment','即将到来的日程':'Upcoming Appointments','需要关注':'Needs Attention','未签名记录':'Unsigned Notes','已排日程（未来）':'Scheduled (future)','新建日程':'New Appointment','咨询记录':'Clinical Note','量表评估':'Assessments','收费记录':'Payment','编辑档案':'Edit Client','来访者':'Clients','已取消置顶':'Unpinned'});
+</script>
+
 </body>
 </html>
